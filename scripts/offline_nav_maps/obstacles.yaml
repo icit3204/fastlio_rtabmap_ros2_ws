@@ -1,0 +1,21 @@
+obstacles:
+- cx: 2.628
+  cy: -27.006
+  width: 2.2
+  height: 2.2
+- cx: 4.38
+  cy: -51.063
+  width: 2.6
+  height: 2.6
+- cx: 4.932
+  cy: -75.143
+  width: 2.2
+  height: 2.2
+- cx: 24.114
+  cy: -81.109
+  width: 2.6
+  height: 2.6
+- cx: 23.583
+  cy: -57.053
+  width: 2.2
+  height: 2.2

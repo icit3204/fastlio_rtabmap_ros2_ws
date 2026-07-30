@@ -1,0 +1,63 @@
+# 播放数据集建图
+
+  终端 1：启动离线建图
+
+  cd /home/dog/fastlio_rtabmap_ros2_ws
+
+  set +u
+  source /opt/ros/humble/setup.bash
+  source scripts/use_rtabmap_0234_env.sh
+  source install/setup.bash
+
+source /opt/ros/humble/setup.bash && source scripts/use_rtabmap_0234_env.sh && source install/setup.bash
+
+  mkdir -p /home/dog/fastlio_rtabmap_ros2_ws/maps/mapping_20260717_174551
+
+  ros2 launch robot_bringup fastlio_mapping_infra_2d.launch.py \
+    start_livox:=false \
+    start_realsense:=false \
+    use_sim_time:=true \
+    sensor_profile:=lidar_stereo \
+    delete_db_on_start:=true \
+    rtabmap_viz:=true
+    #database_path:=/home/dog/fastlio_rtabmap_ros2_ws/maps/mapping_20260719_144105/rtabmap.db \
+
+  等 5 秒左右，让节点启动完成。
+
+  终端 2：回放数据集
+
+  cd /home/dog/fastlio_rtabmap_ros2_ws
+
+  set +u
+  source /opt/ros/humble/setup.bash
+  source scripts/use_rtabmap_0234_env.sh
+  source install/setup.bash
+
+  ros2 bag play /home/dog/fastlio_rtabmap_ros2_ws/bags/mapping_20260719_161900 \
+    --clock \
+    -r 0.5 \
+    --remap /tf_static:=/bag_tf_static
+
+  等 bag 播放结束后，再等 10 到 20 秒让 RTAB-Map 写数据库，然后在两个终端都按 Ctrl+C 退出。
+
+  生成的地图数据库在：
+
+  /home/dog/fastlio_rtabmap_ros2_ws/maps/mapping_20260717_174551/rtabmap.db
+
+  如果建图过程中卡顿或丢数据，把回放速度降到：
+
+  ros2 bag play /home/dog/fastlio_rtabmap_ros2_ws/bags/mapping_20260719_165436 --clock -r 0.25 --remap /
+  tf_static:=/bag_tf_static
+
+  检查建图话题是否正常：
+
+  ros2 topic hz /Odometry
+  ros2 topic hz /cloud_registered_body
+  ros2 topic echo /rtabmap/info --once
+
+  查看 bag 内容：
+
+  ros2 bag info /home/dog/fastlio_rtabmap_ros2_ws/bags/mapping_20260717_174551
+
+  这次离线建图不要启动真机驱动，不要运行录包脚本，只运行上面的建图 launch 和 bag play。
+

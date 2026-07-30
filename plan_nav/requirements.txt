@@ -1,0 +1,14 @@
+# Underground Map Editor (2D) — Ubuntu 22.04 依赖
+# 与项目实际 import 一致；ROS2 相关包通过 apt 安装，不在此列
+PyQt5==5.15.9
+PyQt5-sip>=12.12
+numpy>=1.24
+opencv-python>=4.8
+networkx>=3.1
+requests>=2.31
+# 本地 YOLO 推理（替代 Roboflow 云端 API）
+torch>=2.0
+torchvision>=0.15
+ultralytics>=8.0
+# Roboflow SDK（数据集下载 / 模型管理，仅 api.roboflow.com 可达）
+roboflow>=1.3

@@ -1,0 +1,16 @@
+codex --dangerously-bypass-approvals-and-sandbox
+
+python: /usr/bin/python3.10
+  numpy: 1.26.1
+  cv2: 4.11.0
+  matplotlib: 3.5.1
+  torch: 2.8.0
+  torchvision: 0.23.0
+  torch.cuda.is_available: True
+  torch.version.cuda: 12.6
+  torch.cuda.device_name: Orin
+
+
+
+
+ros2 topic info -v /plan_nav

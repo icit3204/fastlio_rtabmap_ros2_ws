@@ -1,0 +1,20 @@
+wheelchair_controller_node:
+  ros__parameters:
+    'output_transport': 'can'        # can=JETSON 直接 SocketCAN 控制；udp=兼容旧下位机 UDP 控制
+    'target_ip': '10.42.0.1'         # 轮椅控制板 IP
+    'target_port': 9999              # 轮椅控制板端口
+    'auto_start': false              # false 时需要在节点终端按空格启动/暂停
+    'min_command_interval_ms': 20.0  # 接收 /wheelchair_control_command 的最小间隔，单位毫秒
+    'command_timeout_ms': 500.0      # 超过该时间没有新指令时，CAN 输出一次停止帧
+
+    # SocketCAN 参数。CAN 口应提前配置为 can0, 500000 bitrate。
+    'can_interface': 'can0'
+    'can_frame_id': 8393728          # 0x801400，扩展帧 ID
+    'can_velocity_limit': 16380      # 下发到左右轮 int16 速度前的绝对限幅
+    'can_wheel_half_track_mm': 300.0 # 沿用 Can2026 中 WHEEL_RADIUS=300，实际含义为轮距半宽/转向计算半径
+    'can_straight_radius_threshold_mm': 10000.0
+    'can_min_turn_radius_mm': 1000.0
+    'can_invert_radius': true        # 复刻旧 UDP 下位机逻辑：收到非直行半径后先取反
+    'can_send_period_ms': 20.0       # CAN 保持帧发送周期
+    'can_use_command_distance': false
+    'can_default_distance': 0

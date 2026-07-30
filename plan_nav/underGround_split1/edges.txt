@@ -1,0 +1,12 @@
+# from_id, to_id, length_m, direction, traj_file
+1, 2, 1.975, uni, edge_1_traj.txt
+2, 3, 4.616, uni, edge_2_traj.txt
+3, 4, 3.629, uni, edge_3_traj.txt
+5, 6, 3.978, uni, edge_4_traj.txt
+4, 5, 4.761, uni, edge_5_traj.txt
+6, 7, 3.223, uni, edge_6_traj.txt
+7, 8, 3.535, uni, edge_7_traj.txt
+8, 9, 4.777, uni, edge_8_traj.txt
+7, 6, 3.223, uni, edge_9_traj.txt
+5, 4, 4.761, uni, edge_10_traj.txt
+9, 10, 3.639, uni, edge_11_traj.txt

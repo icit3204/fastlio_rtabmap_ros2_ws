@@ -1,0 +1,9 @@
+Reg/Strategy 1 ：
+bringup_2d.launch.py
+bringup_2d_infra.launch.py
+fastlio_mapping_infra_2d.launch.py
+
+
+Vis/MaxFeatures 800:
+bringup_2d.launch.py
+bringup_2d_infra.launch.py
