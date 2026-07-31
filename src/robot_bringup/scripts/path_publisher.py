@@ -15,7 +15,10 @@ import numpy as np
 class PathPublisher(Node):
     def __init__(self):
         super().__init__('path_publisher')
-        self.declare_parameter('database_path', '/data/maps/db/first_version_0514.db')
+        self.declare_parameter(
+            'database_path',
+            os.environ.get('PARKING_ROBOT_OFFLINE_PATH_DATABASE', ''),
+        )
         self.declare_parameter('path_yaml', '')
         self.declare_parameter('frame_id', 'map')
         self.declare_parameter('publish_rate', 1.0)  # Hz, just once is enough but periodic for late subscribers
@@ -32,7 +35,17 @@ class PathPublisher(Node):
         frame_id = self.get_parameter('frame_id').value
 
         poses = []
-        if path_yaml and os.path.exists(path_yaml):
+        if path_yaml:
+            if not os.path.isfile(path_yaml):
+                self.get_logger().error(
+                    f'path_yaml is not a readable file: {path_yaml}'
+                )
+                return
+            if not path_yaml.lower().endswith(('.yaml', '.yml')):
+                self.get_logger().error(
+                    f'path_yaml must be a YAML file (.yaml/.yml): {path_yaml}'
+                )
+                return
             try:
                 with open(path_yaml, 'r') as f:
                     data = yaml.safe_load(f)
@@ -42,6 +55,17 @@ class PathPublisher(Node):
                 self.get_logger().error(f'Failed to load path YAML: {e}')
                 return
         else:
+            if not db_path:
+                self.get_logger().error(
+                    'No offline path input configured. Set path_yaml, database_path, '
+                    'or PARKING_ROBOT_OFFLINE_PATH_DATABASE.'
+                )
+                return
+            if not os.path.isfile(db_path):
+                self.get_logger().error(
+                    f'database_path is not a readable file: {db_path}'
+                )
+                return
             conn = sqlite3.connect(db_path)
             cur = conn.cursor()
             cur.execute("SELECT id, pose FROM Node WHERE pose IS NOT NULL ORDER BY id")

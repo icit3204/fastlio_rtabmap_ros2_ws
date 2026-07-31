@@ -20,7 +20,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, SetRemap
 from launch_ros.substitutions import FindPackageShare
@@ -54,13 +54,12 @@ def generate_launch_description() -> LaunchDescription:
             description='Path to map YAML file for map_server'),
         DeclareLaunchArgument(
             'path_yaml',
-            default_value=PathJoinSubstitution([robot_bringup_share, '..', '..', '..', '..',
-                                               'data', 'maps', 'db', 'path_waypoints.yaml']),
-            description='Path to waypoints YAML extracted from database'),
+            default_value=EnvironmentVariable('PARKING_ROBOT_WAYPOINTS_FILE', default_value=''),
+            description='Path to waypoints YAML extracted from database. Explicit launch argument overrides PARKING_ROBOT_WAYPOINTS_FILE.'),
         DeclareLaunchArgument(
             'database_path',
-            default_value='/data/maps/db/first_version_0514.db',
-            description='Path to RTAB-Map database for extracting mapping trajectory'),
+            default_value=EnvironmentVariable('PARKING_ROBOT_OFFLINE_PATH_DATABASE', default_value=''),
+            description='RTAB-Map database for extracting mapping trajectory. Explicit launch argument overrides PARKING_ROBOT_OFFLINE_PATH_DATABASE.'),
         DeclareLaunchArgument('enable_rviz', default_value='true'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),

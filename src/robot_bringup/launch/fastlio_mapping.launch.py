@@ -21,7 +21,7 @@ from launch.actions import (
     SetEnvironmentVariable,
 )
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -61,8 +61,11 @@ def generate_launch_description() -> LaunchDescription:
             default_value='/unused_imu',
             description='Optional RTAB-Map IMU topic. FAST-LIO still uses /livox/imu from its own config.',
         ),
-        DeclareLaunchArgument('database_path', default_value='/data/maps/site_a/rtabmap.db',
-                              description='Path to save/load the RTAB-Map database'),
+        DeclareLaunchArgument(
+            'database_path',
+            default_value=EnvironmentVariable('PARKING_ROBOT_RTABMAP_DATABASE', default_value=''),
+            description='RTAB-Map database path. Explicit launch argument overrides PARKING_ROBOT_RTABMAP_DATABASE.',
+        ),
         DeclareLaunchArgument('frame_id', default_value='base_footprint',
                               description='Robot base frame'),
         DeclareLaunchArgument('odom_frame_id', default_value='',
@@ -154,9 +157,16 @@ def generate_launch_description() -> LaunchDescription:
     if _colcon_prefix:
         _ws_root = os.path.dirname(_colcon_prefix.split(':')[0])
         _rtabmap_lib = os.path.join(_ws_root, 'third_party', 'rtabmap-0.23.4', 'install', 'lib')
-        _torch_lib = '/home/dog/.local/lib/python3.10/site-packages/torch/lib'
         _existing_ldpath = os.environ.get('LD_LIBRARY_PATH', '')
-        _extra_libs = ':'.join([_rtabmap_lib, _torch_lib])
+        _extra_libs_list = [_rtabmap_lib]
+        _torch_lib = os.environ.get('RTABMAP_TORCH_LIB_DIR', '')
+        if _torch_lib:
+            if os.path.isdir(_torch_lib):
+                if _torch_lib not in _extra_libs_list and _torch_lib not in _existing_ldpath.split(':'):
+                    _extra_libs_list.append(_torch_lib)
+            else:
+                print(f'[robot_bringup] Ignoring invalid RTABMAP_TORCH_LIB_DIR: {_torch_lib}')
+        _extra_libs = ':'.join(_extra_libs_list)
         ld.add_action(SetEnvironmentVariable('LD_LIBRARY_PATH',
             _extra_libs + ':' + _existing_ldpath if _existing_ldpath else _extra_libs
         ))

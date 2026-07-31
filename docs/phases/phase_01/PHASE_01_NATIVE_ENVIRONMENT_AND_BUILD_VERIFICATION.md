@@ -174,20 +174,24 @@ See: `evidence/PHASE1_INTERRUPTED_BUILD_RECOVERY_AUDIT.md`
 
 See: `evidence/PHASE1_CAMERA_AND_TORCH_DECISION.md`
 
-## 11. Active feature-default incompatibility
+## 11. Stable camera/default compatibility
 
-Three authoritative launch files currently select SuperPoint/PyMatcher
-defaults that are unavailable in this stable build:
+Three authoritative launch files previously selected SuperPoint/PyMatcher
+defaults unavailable in the stable no-Torch/no-Python build:
 
 - `src/robot_bringup/launch/fastlio_mapping_infra_2d.launch.py`
 - `src/robot_bringup/launch/bringup_2d.launch.py`
 - `src/robot_bringup/launch/bringup_2d_infra.launch.py`
 
-These were **not edited** in Phase 1. Their defaults must be corrected
-before those camera modes are used. This is a Phase 2 or later configuration
-task. It does not invalidate the LiDAR-centered Phase 1 build.
+These stable defaults are now corrected by the hard-coded runtime-path
+remediation. The stable profile no longer selects SuperPoint detector
+strategy, SuperPoint model paths, PyMatcher scripts/models, or Python/CUDA
+matcher settings by default. Explicit `rtabmap_args:=...` overrides remain
+supported for a future optional Torch/Python profile. This does not
+constitute physical camera validation.
 
 See: `evidence/PHASE1_OPENCV454D_FEATURE_AVAILABILITY_AUDIT.md`
+See also: `evidence/PHASE1_HARD_CODED_PATH_REMEDIATION_RESULT.md`
 
 ## 12. Preserved experimental profile
 
@@ -219,10 +223,11 @@ in a single process.
 
 **Phase 1 native environment and single-ABI build verification are complete
 and frozen at tag `phase1_native_build_verified`.** Broader V3.1 Phase 1
-authority closure remains open for hard-coded path parameterization. Static
-command-authority reconciliation, the initial unified RViz profile, and
-Collision Monitor Humble capability/schema auditing are now recorded as
-complete Phase 1 closure items. Physical
+authority closure remains open for the final independent authority-closure
+audit. Static command-authority reconciliation, the initial unified RViz
+profile, Collision Monitor Humble capability/schema auditing, and active
+runtime hard-coded path parameterization are now recorded as complete Phase 1
+closure items. Physical
 body-to-base_footprint z-offset validation remains deferred to the
 live-sensor phase as required by the authority.
 
@@ -250,15 +255,19 @@ authority requirement matrix and classification of every Phase 1 task.
 - clock/timestamp policy created (derived from V3.1 §10A);
 - static command-authority reconciliation complete;
 - Collision Monitor Humble capability/schema audit complete;
-- governance artifact discovery audit complete.
+- governance artifact discovery audit complete;
 - unified initial RViz profile complete:
   `src/robot_bringup/config/phase1_authority_baseline.rviz` exists,
   YAML/plugin validation passed, package installation validation passed, and
-  the profile contains no machine-specific path.
+  the profile contains no machine-specific path;
+- hard-coded runtime-path parameterization complete:
+  all 21 `MUST_FIX_FOR_PHASE1_CLOSURE` findings are resolved, explicit
+  overrides remain functional, stable launch defaults no longer select
+  Torch/Python-only features, and package build/install validation passed.
 
 ### Still open
 
-- relevant hard-coded path parameterization.
+- final independent Phase 1 authority-closure audit.
 
 ### Deferred by authority
 
@@ -266,14 +275,20 @@ authority requirement matrix and classification of every Phase 1 task.
   sensor phase;
 - physical sensor timing/skew measurement;
 - physical camera validation;
-- optional Torch-enabled visual profile.
+- optional Torch-enabled visual profile;
+- replay/manual helper path cleanup;
+- optional LVX playback path cleanup;
+- YDLIDAR device-path parameterization beyond current hardware defaults;
+- historical, backup, generated, and documentation-only path cleanup;
+- future physical calibration;
+- runtime RViz GUI smoke test;
+- live perception and motion validation.
 
 **Phase 2 must not begin until the non-hardware Phase 1 authority-closure
 items are resolved or formally reclassified by an updated authority.**
 
 ## 16. Deferred work
 
-- Update unsupported camera feature defaults in a later phase
 - Physical camera validation
 - Optional separate Torch-enabled profile
 - Build reproducible startup/environment tooling

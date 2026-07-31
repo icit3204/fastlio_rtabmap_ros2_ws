@@ -12,7 +12,7 @@ Optional:
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -30,8 +30,11 @@ def generate_launch_description() -> LaunchDescription:
     sensor_profile = LaunchConfiguration('sensor_profile')
 
     declare_args = [
-        DeclareLaunchArgument('database_path', default_value='/data/maps/site_a/rtabmap.db',
-                              description='Path to RTAB-Map .db file'),
+        DeclareLaunchArgument(
+            'database_path',
+            default_value=EnvironmentVariable('PARKING_ROBOT_RTABMAP_DATABASE', default_value=''),
+            description='RTAB-Map database path. Explicit launch argument overrides PARKING_ROBOT_RTABMAP_DATABASE.',
+        ),
         DeclareLaunchArgument('enable_rviz', default_value='true',
                               description='Launch RViz with Nav2 navigation config'),
         DeclareLaunchArgument('rtabmap_viz', default_value='false',

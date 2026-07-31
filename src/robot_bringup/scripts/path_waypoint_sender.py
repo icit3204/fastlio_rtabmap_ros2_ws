@@ -26,7 +26,10 @@ def yaw_to_quat(yaw):
 class PathWaypointSender(Node):
     def __init__(self):
         super().__init__('path_waypoint_sender')
-        self.declare_parameter('input', '/data/maps/db/path_waypoints.yaml')
+        self.declare_parameter(
+            'input',
+            os.environ.get('PARKING_ROBOT_WAYPOINTS_FILE', ''),
+        )
         self.declare_parameter('frame_id', 'map')
         self.declare_parameter('map_yaml', '')
         self.declare_parameter('max_waypoint_step', 8.0)
@@ -96,6 +99,20 @@ class PathWaypointSender(Node):
         self.timer.cancel()
 
         # Load waypoints
+        if not self.input_path:
+            self.get_logger().error(
+                'No waypoint input configured. Set the input parameter or '
+                'PARKING_ROBOT_WAYPOINTS_FILE.'
+            )
+            return
+        if not os.path.isfile(self.input_path):
+            self.get_logger().error(f'Waypoint input is not a readable file: {self.input_path}')
+            return
+        if not self.input_path.lower().endswith(('.yaml', '.yml')):
+            self.get_logger().error(
+                f'Waypoint input must be a YAML file (.yaml/.yml): {self.input_path}'
+            )
+            return
         with open(self.input_path, 'r') as f:
             data = yaml.safe_load(f)
         waypoints = data['waypoints']
