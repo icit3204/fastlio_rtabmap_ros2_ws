@@ -1,0 +1,34 @@
+PHASE1 OpenCV 4.5.4d package verification
+ROS install: /home/dog/phase1_builds/clean_build_opencv454d_single_abi_20260731_045543/install
+Total discovered: 21
+Installed and verified: 21
+Missing: 0
+Failed: 0
+Incomplete: 0
+
+fast_lio PASS
+livox_ros_driver2 PASS
+robot_bringup PASS
+rtabmap_conversions PASS
+rtabmap_costmap_plugins PASS
+rtabmap_demos PASS
+rtabmap_examples PASS
+rtabmap_launch PASS
+rtabmap_msgs PASS
+rtabmap_odom PASS
+rtabmap_python PASS
+rtabmap_ros PASS
+rtabmap_rviz_plugins PASS
+rtabmap_slam PASS
+rtabmap_sync PASS
+rtabmap_util PASS
+rtabmap_viz PASS
+rtsp_camera_bridge PASS
+wheelchair_controller PASS
+ydlidar_ros2_driver PASS
+ydlidar_sdk PASS_NON_AMENT_CMAKE
+
+All explicitly required ROS package prefixes resolve to the ROS install
+above. ydlidar_sdk is a plain CMake package and is verified through its
+colcon hook, static library, headers, CMake config, and pkg-config metadata.
+Installed robot_bringup and rtabmap_launch launch/config assets were found.
