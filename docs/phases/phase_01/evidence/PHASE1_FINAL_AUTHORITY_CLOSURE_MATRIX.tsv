@@ -1,0 +1,24 @@
+ID	Authority Section	Requirement	Classification	Tracked Evidence	Untracked Evidence	Source Verification	Permitted Deferral Basis	Blocks Technical Closure	Blocks Documentation/Freeze	Corrective Action
+T1	§25	Rebuild without stale build/install/cache/log	PASS_DIRECT	PHASE1_OPENCV454D_CLEAN_ROS_BUILD.md, PHASE1_INTERRUPTED_BUILD_RECOVERY_AUDIT.md	None	Clean-room env -i build confirmed	None	No	No	None
+T2	§25	Parameterize hard-coded paths	PASS_DIRECT	PHASE1_HARD_CODED_PATH_REMEDIATION_RESULT.md, PHASE1_HARD_CODED_PATH_POST_REMEDIATION_MATRIX.tsv	None	Commit 8162f73: 21/21 MUST_FIX resolved	None	No	No	None
+T3	§25	Verify packages	PASS_DIRECT	PHASE1_OPENCV454D_PACKAGE_VERIFICATION.txt	None	21/21 packages verified	None	No	No	None
+T4	§25	Verify maps	PASS_DIRECT	None (files under map/)	None	10 .pgm files readable	None	No	No	None
+T5	§25	Verify RTAB-Map database	PASS_DIRECT	None (files under map/, plan_nav/)	None	10 .db files readable	None	No	No	None
+T6	§25	Verify plan_nav	PASS_DIRECT	None (file inventory in static command audit)	None	plan_nav/ assets readable; plan_nav07202900 excluded	None	No	No	None
+T7	§25	Verify TF configuration	PASS_WITH_AUTHORITY_DEFERRAL	PHASE_01_CALIBRATION_MANIFEST.yaml (CONFLICTING_SOURCE_VALUES)	None	Static source confirms chain; z-offset conflict recorded	V3.1 §10: physical verification required before live navigation	No	No	Physical measurement in Phase 5
+T8	§25	Verify frame truth map->odom->body->base_footprint	PASS_WITH_AUTHORITY_DEFERRAL	Same as T7	None	Same as T7	V3.1 §10	No	No	Physical measurement in Phase 5
+T9	§25	Statically verify all possible command publishers	PASS_DIRECT	None	PHASE1_COMMAND_AUTHORITY_RECONCILIATION.md, PHASE1_WHEELCHAIR_CONTROLLER_WATCHDOG_TRUTH.md, PHASE1_STATIC_COMMAND_PUBLISHER_AND_AUTHORITY_AUDIT.md, PHASE1_CAN_AND_LOWER_CONTROLLER_WRITER_INVENTORY.md	All publishers/CAN writers identified; /vehicle_cmd_safe NOT_IMPLEMENTED	None	No	Yes — 4 reports untracked	Copy to evidence/
+T10	§25	Keep sensors/CAN disconnected or command nodes absent	PASS_DIRECT	Main doc §13	None	Confirmed in native build integrity	None	No	No	None
+T11	§25	Create initial RViz profile	PASS_DIRECT	PHASE1_UNIFIED_RVIZ_PROFILE_VALIDATION.md, phase1_authority_baseline.rviz	None	Profile exists, YAML validates, fixed frame map, no machine paths	None	No	No	None
+T12	§25	Verify installed Humble Collision Monitor capabilities/schema	PASS_DIRECT	None	PHASE1_COLLISION_MONITOR_HUMBLE_CAPABILITY_AND_SCHEMA_AUDIT.md, PHASE1_COLLISION_MONITOR_CONFIG_COMPATIBILITY_MATRIX.tsv, PHASE1_COLLISION_MONITOR_POINTCLOUD_REQUIREMENTS.md	v1.1.20, PointCloud2 confirmed, schema valid	None	No	Yes — 3 reports untracked	Copy to evidence/
+P1	§25	Clean build	PASS_DIRECT	PHASE1_OPENCV454D_CLEAN_ROS_BUILD.md	None	21/21 built	None	No	No	None
+P2	§25	Launch inspection succeeds	PASS_DIRECT	Main doc, launch files exist	None	All launch files parse; no hardware auto-start	None	No	No	None
+P3	§25	No duplicate package	PASS_DIRECT	PHASE1_OPENCV454D_PACKAGE_VERIFICATION.txt	None	21 unique	None	No	No	None
+P4	§25	No physical command publisher	PASS_DIRECT	Main doc §13	None	Confirmed	None	No	No	None
+P5	§25	Map/database and plan_nav assets readable	PASS_DIRECT	File existence checks	None	Files readable	None	No	No	None
+CR1	§56.3+§56.11	Module registry	PASS_DIRECT	PHASE_01_MODULE_REGISTRY.md	None	43 modules, all fields	None	No	No	None
+CR2	§56.12	Calibration manifest	PASS_DIRECT	PHASE_01_CALIBRATION_MANIFEST.yaml	None	Valid YAML, explicit unknowns	None	No	No	None
+CR3	§56.13	Clock/timestamp policy	PASS_DIRECT	PHASE_01_CLOCK_TIMESTAMP_POLICY.md	None	Derived from §10A	None	No	No	None
+CR4	§10A	Timestamp policy implementation	PASS_DIRECT	PHASE_01_CLOCK_TIMESTAMP_POLICY.md	None	Live/bag/sim rules; unknowns documented	None	No	No	None
+CR5	§45	Software acceptance (applicable items)	PASS_DIRECT	Main doc	None	Clean build, reproducible	None	No	No	None
+CR6	§20C	Calibration evidence in manifest	PASS_DIRECT	PHASE_01_CALIBRATION_MANIFEST.yaml	None	z-offset conflict explicit; source defaults marked	None	No	No	None

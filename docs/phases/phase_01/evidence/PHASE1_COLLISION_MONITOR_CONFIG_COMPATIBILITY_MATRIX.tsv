@@ -1,0 +1,39 @@
+Launch File	Parameter	Value	Classification	Evidence
+bringup.launch.py	use_sim_time	launch variable	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	base_frame_id	base_footprint	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	odom_frame_id	odom	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	cmd_vel_in_topic	/cmd_vel_nav	VALID_EXACT_SCHEMA	Default YAML (remapped from /cmd_vel)
+bringup.launch.py	cmd_vel_out_topic	/cmd_vel	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	transform_tolerance	0.3	VALID_BUT_NONDEFAULT	Default is 0.5
+bringup.launch.py	source_timeout	1.0	VALID_BUT_NONDEFAULT	Default is 5.0
+bringup.launch.py	base_shift_correction	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	stop_pub_timeout	1.0	VALID_BUT_NONDEFAULT	Default is 2.0
+bringup.launch.py	polygons	[StopZone, SlowZone]	VALID_EXACT_SCHEMA	Default YAML (different names)
+bringup.launch.py	observation_sources	[pointcloud]	VALID_EXACT_SCHEMA	Default YAML (scan default)
+bringup.launch.py	StopZone.type	polygon	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	StopZone.points	[0.35,0.30,0.35,-0.30,-0.10,-0.30,-0.10,0.30]	VALID_EXACT_SCHEMA	Default YAML (different dimensions)
+bringup.launch.py	StopZone.action_type	stop	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	StopZone.max_points	3	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	StopZone.visualize	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	StopZone.polygon_pub_topic	collision_monitor/stop_zone	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	StopZone.enabled	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.type	polygon	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.points	[0.55,0.40,0.55,-0.40,-0.25,-0.40,-0.25,0.40]	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.action_type	slowdown	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.max_points	3	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.slowdown_ratio	0.35	VALID_BUT_NONDEFAULT	Default is 0.3
+bringup.launch.py	SlowZone.visualize	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.polygon_pub_topic	collision_monitor/slow_zone	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	SlowZone.enabled	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	pointcloud.type	pointcloud	VALID_EXACT_SCHEMA	pointcloud.hpp + Default YAML
+bringup.launch.py	pointcloud.topic	/cloud_registered_body	VALID_EXACT_SCHEMA	pointcloud.hpp
+bringup.launch.py	pointcloud.min_height	0.05	VALID_EXACT_SCHEMA	pointcloud.hpp min_height_
+bringup.launch.py	pointcloud.max_height	1.80	VALID_EXACT_SCHEMA	pointcloud.hpp max_height_
+bringup.launch.py	pointcloud.enabled	True	VALID_EXACT_SCHEMA	Default YAML
+bringup.launch.py	(entire node)	ACTIVE (ld.add_action)	ACTIVE_IN_LAUNCH	l.336-337
+bringup_2d.launch.py	(entire node)	COMMENTED OUT (# ld.add_action)	COMMENTED_OR_INACTIVE	l.572-573
+bringup_2d.launch.py	(all 24 inline params)	same schema as bringup.launch.py	VALID_EXACT_SCHEMA	Same schema
+bringup_2d.launch.py	pointcloud.min_height	-1.1	VALID_BUT_NONDEFAULT	Different from bringup.launch.py
+bringup_2d.launch.py	pointcloud.max_height	0.1	VALID_BUT_NONDEFAULT	Different from bringup.launch.py
+NOT_IN_HUMBLE_1.1.20	velocity_polygon	N/A	UNSUPPORTED_PARAMETER	No header, no type support
+NOT_IN_HUMBLE_1.1.20	action_type: limit	N/A	UNSUPPORTED_PARAMETER	Not in ActionType enum (types.hpp)

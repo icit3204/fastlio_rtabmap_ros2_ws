@@ -265,27 +265,58 @@ authority requirement matrix and classification of every Phase 1 task.
   overrides remain functional, stable launch defaults no longer select
   Torch/Python-only features, and package build/install validation passed.
 
-### Still open
+### Technical authority closure: COMPLETE
 
-- final independent Phase 1 authority-closure audit.
+All 12 V3.1 Phase 1 tasks and all 5 Phase 1 pass criteria are satisfied
+directly or satisfied with explicit authority-approved deferral.
 
-### Deferred by authority
+### Tracked evidence preservation: COMPLETE
 
-- physical `body → base_footprint` z-offset verification during the live
-  sensor phase;
-- physical sensor timing/skew measurement;
-- physical camera validation;
-- optional Torch-enabled visual profile;
-- replay/manual helper path cleanup;
-- optional LVX playback path cleanup;
-- YDLIDAR device-path parameterization beyond current hardware defaults;
-- historical, backup, generated, and documentation-only path cleanup;
-- future physical calibration;
-- runtime RViz GUI smoke test;
-- live perception and motion validation.
+31 evidence files preserved in `docs/phases/phase_01/evidence/` with
+verified SHA256 checksums covering the native build, ABI verification,
+sysroot recovery, feature audits, authority compliance, governance
+artifacts, RViz profile, path remediation, command-authority reconciliation,
+Collision Monitor schema audit, CAN writer inventory, and final
+authority-closure audit.
 
-**Phase 2 must not begin until the non-hardware Phase 1 authority-closure
-items are resolved or formally reclassified by an updated authority.**
+### Final independent audit: PASS
+
+The final audit confirmed all non-hardware Phase 1 requirements are
+satisfied. See `evidence/PHASE1_FINAL_AUTHORITY_CLOSURE_AUDIT.md`.
+
+### Permitted deferrals
+
+The following items are explicitly deferred by V3.1 authority and remain
+governed by later authority gates:
+
+- physical `body → base_footprint` z-offset verification before the Phase 5
+  live-sensor gate;
+- physical sensor timestamp and skew measurement during the live-sensor
+  phase;
+- Collision Monitor perception-safety testing during Phase 5-6 no-motion
+  validation;
+- physical camera validation in its later optional evaluation phase;
+- optional Torch-enabled visual profile (deferred, not abandoned).
+
+### Phase 1 did NOT validate
+
+Phase 1 did NOT claim or validate:
+- physical robot motion;
+- physical obstacle avoidance;
+- physical sensor timing;
+- final calibration values;
+- physical camera operation;
+- the future Generic Command Safety Gate;
+- `/vehicle_cmd_safe`;
+- Wheelchair Command Adapter;
+- Mission Manager;
+- semantic_grid_tools integration.
+
+These are later-phase items governed by the V3.1 authority.
+
+**Phase 1 V3.1 authority closure is complete and frozen at the final
+Phase 1 authority-closure tag. Physical and later implementation gates
+remain governed by the V3.1 authority.**
 
 ## 16. Deferred work
 
