@@ -104,6 +104,40 @@ def test_plugin_identifiers_are_expected_phase2_set():
         assert plugin not in dumped
 
 
+def test_bt_navigator_has_required_humble_default_tree_plugins():
+    params = yaml.safe_load(PARAMS.read_text())
+    bt_params = params["bt_navigator"]["ros__parameters"]
+
+    assert (
+        bt_params["default_nav_to_pose_bt_xml"]
+        == "/opt/ros/humble/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    )
+    assert (
+        bt_params["default_nav_through_poses_bt_xml"]
+        == "/opt/ros/humble/share/nav2_bt_navigator/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml"
+    )
+
+    libs = set(bt_params["plugin_lib_names"])
+    required_humble_default_bt_libs = {
+        "nav2_compute_path_to_pose_action_bt_node",
+        "nav2_navigate_to_pose_action_bt_node",
+        "nav2_compute_path_through_poses_action_bt_node",
+        "nav2_navigate_through_poses_action_bt_node",
+        "nav2_remove_passed_goals_action_bt_node",
+        "nav2_follow_path_action_bt_node",
+        "nav2_clear_costmap_service_bt_node",
+        "nav2_spin_action_bt_node",
+        "nav2_wait_action_bt_node",
+        "nav2_back_up_action_bt_node",
+        "nav2_goal_updated_condition_bt_node",
+        "nav2_rate_controller_bt_node",
+        "nav2_recovery_node_bt_node",
+        "nav2_pipeline_sequence_bt_node",
+        "nav2_round_robin_node_bt_node",
+    }
+    assert required_humble_default_bt_libs <= libs
+
+
 def test_launch_node_packages_are_explicit_phase2_set():
     text = LAUNCH.read_text()
     packages = set(re.findall(r'package="([^"]+)"', text))
@@ -117,4 +151,3 @@ def test_launch_node_packages_are_explicit_phase2_set():
         "nav2_bt_navigator",
         "nav2_lifecycle_manager",
     }
-

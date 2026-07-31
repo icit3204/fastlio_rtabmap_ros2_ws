@@ -1,0 +1,247 @@
+[INFO] [launch]: All log files can be found below /home/dog/phase2_runtime/p2c_no_goal_20260801_030415/ros_log/2026-08-01-03-06-47-250612-dog-desktop-94845
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [map_server-1]: process started with pid [94863]
+[INFO] [static_transform_publisher-2]: process started with pid [94865]
+[INFO] [phase2_fake_base-3]: process started with pid [94867]
+[INFO] [planner_server-4]: process started with pid [94869]
+[INFO] [controller_server-5]: process started with pid [94871]
+[INFO] [behavior_server-6]: process started with pid [94873]
+[INFO] [bt_navigator-7]: process started with pid [94875]
+[INFO] [lifecycle_manager-8]: process started with pid [94877]
+[static_transform_publisher-2] [WARN] [1785524807.435044718] []: Old-style arguments are deprecated; see --help for new-style arguments
+[static_transform_publisher-2] [INFO] [1785524807.478346317] [phase2_map_to_odom_static_tf]: Spinning until stopped - publishing transform
+[static_transform_publisher-2] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-2] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-2] from 'map' to 'odom'
+[lifecycle_manager-8] [INFO] [1785524807.499530060] [lifecycle_manager_navigation]: Creating
+[controller_server-5] [INFO] [1785524807.513211206] [controller_server]: 
+[controller_server-5] 	controller_server lifecycle node launched. 
+[controller_server-5] 	Waiting on external lifecycle transitions to activate
+[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1785524807.514399792] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[controller_server-5] [INFO] [1785524807.536867131] [controller_server]: Creating controller server
+[map_server-1] [INFO] [1785524807.550355663] [map_server]: 
+[map_server-1] 	map_server lifecycle node launched. 
+[map_server-1] 	Waiting on external lifecycle transitions to activate
+[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-1] [INFO] [1785524807.552327700] [map_server]: Creating
+[bt_navigator-7] [INFO] [1785524807.565100751] [bt_navigator]: 
+[bt_navigator-7] 	bt_navigator lifecycle node launched. 
+[bt_navigator-7] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-7] [INFO] [1785524807.565439771] [bt_navigator]: Creating
+[behavior_server-6] [INFO] [1785524807.565536830] [behavior_server]: 
+[behavior_server-6] 	behavior_server lifecycle node launched. 
+[behavior_server-6] 	Waiting on external lifecycle transitions to activate
+[behavior_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-5] [INFO] [1785524807.602549058] [local_costmap.local_costmap]: 
+[controller_server-5] 	local_costmap lifecycle node launched. 
+[controller_server-5] 	Waiting on external lifecycle transitions to activate
+[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-5] [INFO] [1785524807.612468571] [local_costmap.local_costmap]: Creating Costmap
+[planner_server-4] [INFO] [1785524807.621401841] [planner_server]: 
+[planner_server-4] 	planner_server lifecycle node launched. 
+[planner_server-4] 	Waiting on external lifecycle transitions to activate
+[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-4] [INFO] [1785524807.624214994] [planner_server]: Creating
+[planner_server-4] [INFO] [1785524807.649755208] [global_costmap.global_costmap]: 
+[planner_server-4] 	global_costmap lifecycle node launched. 
+[planner_server-4] 	Waiting on external lifecycle transitions to activate
+[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-4] [INFO] [1785524807.652211774] [global_costmap.global_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1785524807.653498314] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785524807.653674512] [lifecycle_manager_navigation]: [34m[1mConfiguring map_server[0m[0m
+[map_server-1] [INFO] [1785524807.654448459] [map_server]: Configuring
+[map_server-1] [INFO] [1785524807.654636914] [map_io]: Loading yaml file: /home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/share/parking_robot_bringup/maps/phase2_clean_map.yaml
+[map_server-1] [INFO] [1785524807.655266504] [map_io]: resolution: 0.05
+[map_server-1] [INFO] [1785524807.655294985] [map_io]: origin[0]: -39.1
+[map_server-1] [INFO] [1785524807.655305001] [map_io]: origin[1]: -85.15
+[map_server-1] [INFO] [1785524807.655312457] [map_io]: origin[2]: 0
+[map_server-1] [INFO] [1785524807.655319785] [map_io]: free_thresh: 0.196
+[map_server-1] [INFO] [1785524807.655326986] [map_io]: occupied_thresh: 0.65
+[map_server-1] [INFO] [1785524807.655335946] [map_io]: mode: trinary
+[map_server-1] [INFO] [1785524807.655346666] [map_io]: negate: 0
+[map_server-1] [INFO] [1785524807.659111149] [map_io]: Loading image_file: /home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/share/parking_robot_bringup/maps/phase2_clean_map.pgm
+[map_server-1] [INFO] [1785524808.504015059] [map_io]: Read map /home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/share/parking_robot_bringup/maps/phase2_clean_map.pgm: 1744 X 2683 map @ 0.05 m/cell
+[lifecycle_manager-8] [INFO] [1785524808.520975135] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-4] [INFO] [1785524808.521511602] [planner_server]: Configuring
+[planner_server-4] [INFO] [1785524808.521621142] [global_costmap.global_costmap]: Configuring
+[planner_server-4] [INFO] [1785524808.531757781] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-4] [INFO] [1785524808.542555148] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-4] [INFO] [1785524808.545237001] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-4] [INFO] [1785524808.545324364] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-4] [INFO] [1785524808.546393905] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-4] [INFO] [1785524808.563553637] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner
+[planner_server-4] [INFO] [1785524808.563659464] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785524808.564161882] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-8] [INFO] [1785524808.577347747] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-5] [INFO] [1785524808.577906391] [controller_server]: Configuring controller interface
+[controller_server-5] [INFO] [1785524808.578244930] [controller_server]: getting goal checker plugins..
+[controller_server-5] [INFO] [1785524808.578408424] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-5] [INFO] [1785524808.578496203] [local_costmap.local_costmap]: Configuring
+[controller_server-5] [INFO] [1785524808.591182403] [local_costmap.local_costmap]: Using plugin "static_layer"
+[controller_server-5] [INFO] [1785524808.601884631] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability
+[controller_server-5] [INFO] [1785524808.606661340] [local_costmap.local_costmap]: Initialized plugin "static_layer"
+[controller_server-5] [INFO] [1785524808.606777408] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-5] [INFO] [1785524808.610475809] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[controller_server-5] [INFO] [1785524808.652950275] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[controller_server-5] [INFO] [1785524808.657612420] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-5] [INFO] [1785524808.660234591] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-5] [INFO] [1785524808.664035587] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController
+[controller_server-5] [INFO] [1785524808.674509103] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON
+[controller_server-5] [INFO] [1785524808.681879086] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.
+[controller_server-5] [INFO] [1785524808.681995731] [controller_server]: Critic loaded : mppi::critics::GoalCritic
+[controller_server-5] [INFO] [1785524808.684325443] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, and 0.500000 angular threshold.
+[controller_server-5] [INFO] [1785524808.684433415] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic
+[controller_server-5] [INFO] [1785524808.689242734] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 10.000000 weight
+[controller_server-5] [INFO] [1785524808.689402068] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic
+[controller_server-5] [INFO] [1785524808.691121679] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic
+[controller_server-5] [INFO] [1785524808.694666986] [controller_server]: ObstaclesCritic instantiated with 1 power and 20.000000 / 1.500000 weights. Critic will collision check based on circular cost.
+[controller_server-5] [INFO] [1785524808.694778030] [controller_server]: Critic loaded : mppi::critics::ObstaclesCritic
+[controller_server-5] [INFO] [1785524808.697498572] [controller_server]: Optimizer reset
+[controller_server-5] [INFO] [1785524808.705925137] [MPPIController]: Configured MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785524808.706003668] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-8] [INFO] [1785524808.718148505] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-6] [INFO] [1785524808.718739405] [behavior_server]: Configuring
+[behavior_server-6] [INFO] [1785524808.744618031] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-6] [INFO] [1785524808.747707259] [behavior_server]: Configuring spin
+[behavior_server-6] [INFO] [1785524808.770656055] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp
+[behavior_server-6] [INFO] [1785524808.775552129] [behavior_server]: Configuring backup
+[behavior_server-6] [INFO] [1785524808.789015444] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-6] [INFO] [1785524808.791586125] [behavior_server]: Configuring wait
+[lifecycle_manager-8] [INFO] [1785524808.801311711] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-7] [INFO] [1785524808.801859794] [bt_navigator]: Configuring
+[lifecycle_manager-8] [INFO] [1785524808.897703759] [lifecycle_manager_navigation]: [34m[1mActivating map_server[0m[0m
+[map_server-1] [INFO] [1785524808.898172512] [map_server]: Activating
+[map_server-1] [INFO] [1785524808.907552933] [map_server]: Creating bond (map_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785524808.929824650] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 1744 X 2683 at 0.050000 m/pix
+[controller_server-5] [INFO] [1785524808.929947182] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 1744 X 2683 at 0.050000 m/pix
+[lifecycle_manager-8] [INFO] [1785524809.018590546] [lifecycle_manager_navigation]: Server map_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785524809.018794105] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-4] [INFO] [1785524809.019473809] [planner_server]: Activating
+[planner_server-4] [INFO] [1785524809.019602133] [global_costmap.global_costmap]: Activating
+[planner_server-4] [INFO] [1785524809.019640087] [global_costmap.global_costmap]: Checking transform
+[planner_server-4] [INFO] [1785524809.019705177] [global_costmap.global_costmap]: Timed out waiting for transform from base_footprint to map to become available, tf error: Invalid frame ID "base_footprint" passed to canTransform argument source_frame - frame does not exist
+[planner_server-4] [INFO] [1785524809.519782465] [global_costmap.global_costmap]: Timed out waiting for transform from base_footprint to map to become available, tf error: Invalid frame ID "base_footprint" passed to canTransform argument source_frame - frame does not exist
+[planner_server-4] [INFO] [1785524810.019995982] [global_costmap.global_costmap]: start
+[planner_server-4] [INFO] [1785524811.120351828] [planner_server]: Activating plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785524811.122383867] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785524811.240897035] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785524811.241042832] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-5] [INFO] [1785524811.241746793] [controller_server]: Activating
+[controller_server-5] [INFO] [1785524811.241894670] [local_costmap.local_costmap]: Activating
+[controller_server-5] [INFO] [1785524811.241929487] [local_costmap.local_costmap]: Checking transform
+[controller_server-5] [INFO] [1785524811.242153911] [local_costmap.local_costmap]: start
+[controller_server-5] [WARN] [1785524811.292477161] [controller_server]: Parameter controller_server.verbose not found
+[controller_server-5] [INFO] [1785524811.293883226] [controller_server]: Optimizer reset
+[controller_server-5] [INFO] [1785524811.294314665] [MPPIController]: Activated MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785524811.294371019] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785524811.403427347] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785524811.403913572] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-6] [INFO] [1785524811.404488248] [behavior_server]: Activating
+[behavior_server-6] [INFO] [1785524811.404583867] [behavior_server]: Activating spin
+[behavior_server-6] [INFO] [1785524811.404615260] [behavior_server]: Activating backup
+[behavior_server-6] [INFO] [1785524811.404636605] [behavior_server]: Activating wait
+[behavior_server-6] [INFO] [1785524811.404685599] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785524811.512590015] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785524811.512805926] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-7] [INFO] [1785524811.513512383] [bt_navigator]: Activating
+[bt_navigator-7] [ERROR] [1785524811.514841453] [bt_navigator]: Exception when loading BT: Error at line 12: -> Node not recognized: RemovePassedGoals
+[bt_navigator-7] [ERROR] [1785524811.515039636] [bt_navigator]: Error loading XML file: /opt/ros/humble/share/nav2_bt_navigator/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml
+[lifecycle_manager-8] [ERROR] [1785524811.515795918] [lifecycle_manager_navigation]: Failed to change state for node: bt_navigator
+[lifecycle_manager-8] [ERROR] [1785524811.515932691] [lifecycle_manager_navigation]: Failed to bring up all requested nodes. Aborting bringup.
+[bt_navigator-7] [WARN] [1785524984.535118954] [bt_navigator.rclcpp]: failed to send response to /bt_navigator/get_state (timeout): client will not receive response, at ./src/rmw_response.cpp:154, at ./src/rcl/service.c:314
+[lifecycle_manager-8] [INFO] [1785525043.002279946] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1785525043.002477073] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[bt_navigator-7] [INFO] [1785525043.002305643] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-7] [INFO] [1785525043.002478545] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-7] [INFO] [1785525043.002660951] [bt_navigator]: Cleaning up
+[planner_server-4] [INFO] [1785525043.002301995] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-4] [INFO] [1785525043.002479409] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-4] [INFO] [1785525043.002662615] [planner_server]: Deactivating
+[planner_server-4] [INFO] [1785525043.002800060] [global_costmap.global_costmap]: Deactivating
+[static_transform_publisher-2] [INFO] [1785525043.002339116] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-5] [INFO] [1785525043.002372237] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-5] [INFO] [1785525043.002505202] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[controller_server-5] [INFO] [1785525043.002640086] [controller_server]: Deactivating
+[controller_server-5] [INFO] [1785525043.002703000] [MPPIController]: Deactivated MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785525043.002746106] [local_costmap.local_costmap]: Deactivating
+[behavior_server-6] [INFO] [1785525043.002391822] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-6] [INFO] [1785525043.002666615] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-6] [INFO] [1785525043.002830781] [behavior_server]: Deactivating
+[behavior_server-6] [INFO] [1785525043.003004578] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[map_server-1] [INFO] [1785525043.002651703] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-1] [INFO] [1785525043.002766874] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-1] [INFO] [1785525043.002908479] [map_server]: Deactivating
+[map_server-1] [INFO] [1785525043.002946848] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[behavior_server-6] [INFO] [1785525043.013600163] [behavior_server]: Cleaning up
+[map_server-1] [INFO] [1785525043.014144149] [map_server]: Cleaning up
+[map_server-1] [INFO] [1785525043.014440319] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785525043.022319845] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785525043.022457641] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[map_server-1] [INFO] [1785525043.024240644] [map_server]: Destroying
+[planner_server-4] [INFO] [1785525043.033010728] [planner_server]: Cleaning up
+[behavior_server-6] [INFO] [1785525043.042837647] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[controller_server-5] [INFO] [1785525043.046372068] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-5] [INFO] [1785525043.057028167] [controller_server]: Cleaning up
+[controller_server-5] [INFO] [1785525043.057320368] [MPPIController]: Cleaned up MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785525043.057556760] [local_costmap.local_costmap]: Cleaning up
+[bt_navigator-7] [INFO] [1785525043.062417466] [bt_navigator]: Completed Cleaning up
+[bt_navigator-7] [INFO] [1785525043.062583871] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785525043.071715375] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[behavior_server-6] [INFO] [1785525043.079433136] [behavior_server]: Destroying
+[planner_server-4] [INFO] [1785525043.079630390] [global_costmap.global_costmap]: Cleaning up
+[planner_server-4] [INFO] [1785525043.094013909] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785525043.094321375] [planner_server]: Destroying plugin GridBased of type NavfnPlanner
+[controller_server-5] [INFO] [1785525043.096306657] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785525043.101788599] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[controller_server-5] [INFO] [1785525043.101993022] [local_costmap.local_costmap]: Destroying
+[planner_server-4] [INFO] [1785525043.104732025] [global_costmap.global_costmap]: Destroying
+[controller_server-5] [INFO] [1785525043.113134384] [controller_server]: Destroying
+[planner_server-4] [INFO] [1785525043.114688836] [planner_server]: Destroying
+[bt_navigator-7] [INFO] [1785525043.115050384] [bt_navigator]: Destroying
+[phase2_fake_base-3] Traceback (most recent call last):
+[phase2_fake_base-3]   File "/home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/lib/python3.10/site-packages/parking_robot_bringup/phase2_fake_base.py", line 152, in main
+[phase2_fake_base-3]     rclpy.spin(node)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+[phase2_fake_base-3]     executor.spin_once()
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 808, in spin_once
+[phase2_fake_base-3]     self._spin_once_impl(timeout_sec)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 805, in _spin_once_impl
+[phase2_fake_base-3]     raise handler.exception()
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/task.py", line 272, in _execute_coroutine_step
+[phase2_fake_base-3]     result = coro.send(None)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 488, in handler
+[phase2_fake_base-3]     await call_coroutine(entity, arg)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 396, in _execute_timer
+[phase2_fake_base-3]     await await_or_execute(tmr.callback)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 110, in await_or_execute
+[phase2_fake_base-3]     return callback(*args)
+[phase2_fake_base-3]   File "/home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/lib/python3.10/site-packages/parking_robot_bringup/phase2_fake_base.py", line 144, in _timer_cb
+[phase2_fake_base-3]     self._odom_pub.publish(odom)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/publisher.py", line 70, in publish
+[phase2_fake_base-3]     self.__publisher.publish(msg)
+[phase2_fake_base-3] rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:389
+[phase2_fake_base-3] 
+[phase2_fake_base-3] During handling of the above exception, another exception occurred:
+[phase2_fake_base-3] 
+[phase2_fake_base-3] Traceback (most recent call last):
+[phase2_fake_base-3]   File "/home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/lib/parking_robot_bringup/phase2_fake_base", line 33, in <module>
+[phase2_fake_base-3]     sys.exit(load_entry_point('parking-robot-bringup==0.1.0', 'console_scripts', 'phase2_fake_base')())
+[phase2_fake_base-3]   File "/home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/lib/python3.10/site-packages/parking_robot_bringup/phase2_fake_base.py", line 155, in main
+[phase2_fake_base-3]     rclpy.shutdown()
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+[phase2_fake_base-3]     _shutdown(context=context)
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+[phase2_fake_base-3]     return context.shutdown()
+[phase2_fake_base-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+[phase2_fake_base-3]     self.__context.shutdown()
+[phase2_fake_base-3] rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+[INFO] [static_transform_publisher-2]: process has finished cleanly [pid 94865]
+[INFO] [map_server-1]: process has finished cleanly [pid 94863]
+[INFO] [behavior_server-6]: process has finished cleanly [pid 94873]
+[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 94877]
+[INFO] [planner_server-4]: process has finished cleanly [pid 94869]
+[INFO] [bt_navigator-7]: process has finished cleanly [pid 94875]
+[INFO] [controller_server-5]: process has finished cleanly [pid 94871]
+[ERROR] [phase2_fake_base-3]: process has died [pid 94867, exit code 1, cmd '/home/dog/phase2_builds/p2ab_scaffolding_validation_20260801_025103/install/lib/parking_robot_bringup/phase2_fake_base --ros-args -r __node:=phase2_fake_base --params-file /tmp/launch_params_o2774m32'].

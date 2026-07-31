@@ -1,0 +1,28 @@
+item	kind	runtime_name_or_topic	type_or_executable	state_or_count	evidence	scope_classification	notes
+map_server	node	/map_server	nav2_map_server/map_server	active	lifecycle_poll.txt; node_info_map_server.txt	PHASE2_ALLOWED	Map server loaded installed phase2_clean_map.yaml.
+map_to_odom_static_tf	node	/phase2_map_to_odom_static_tf	tf2_ros/static_transform_publisher	running during test; exited cleanly	topic_info__tf_static.txt; tf2_echo_map_odom.txt	PHASE2_ALLOWED	Publishes static identity map->odom; old-style argument warning only.
+phase2_fake_base	node	/phase2_fake_base	parking_robot_bringup/phase2_fake_base	running during test; exit code 1 on shutdown	odometry_observation.txt; shutdown_output.txt; runtime log	PHASE2_ALLOWED_BUT_BLOCKING_SHUTDOWN_FAILURE	Published stable /Odometry and odom->base_footprint; failed clean-shutdown criterion.
+planner_server	node	/planner_server	nav2_planner/planner_server	active	lifecycle_poll.txt; runtime log	PHASE2_ALLOWED	NavFn configured and activated.
+controller_server	node	/controller_server	nav2_controller/controller_server	active	lifecycle_poll.txt; topic_info__cmd_vel_phase2_mock.txt	PHASE2_ALLOWED	/cmd_vel remapped to /cmd_vel_phase2_mock; MPPI configured and activated.
+behavior_server	node	/behavior_server	nav2_behaviors/behavior_server	active	lifecycle_poll.txt; topic_info__cmd_vel_phase2_mock.txt	PHASE2_ALLOWED	Spin/BackUp/Wait configured and activated; /cmd_vel remapped to mock topic.
+bt_navigator	node	/bt_navigator	nav2_bt_navigator/bt_navigator	inactive	runtime log; lifecycle_poll.txt	PHASE2_ALLOWED_BUT_BLOCKING_LIFECYCLE_FAILURE	Failed activation while loading default NavigateThroughPoses BT: RemovePassedGoals node not recognized.
+lifecycle_manager	node	/lifecycle_manager_navigation	nav2_lifecycle_manager/lifecycle_manager	running; bringup aborted	runtime log; node_info_lifecycle_manager_navigation.txt	PHASE2_ALLOWED	Reported failed state change for bt_navigator and aborted full bringup.
+global_costmap	node	/global_costmap/global_costmap	internal lifecycle costmap	active as planner child	graph_inventory.txt; params__global_costmap_global_costmap.yaml	PHASE2_ALLOWED_INTERNAL	Static + inflation layers only; no obstacle/voxel layer.
+local_costmap	node	/local_costmap/local_costmap	internal lifecycle costmap	active as controller child	graph_inventory.txt; params__local_costmap_local_costmap.yaml	PHASE2_ALLOWED_INTERNAL	Static + inflation layers only; no obstacle/voxel layer.
+bt_aux_node	node	/bt_navigator_navigate_to_pose_rclcpp_node	internal bt_navigator node	present	graph_inventory.txt	PHASE2_ALLOWED_INTERNAL	Standard internal BT action node.
+bt_aux_node	node	/bt_navigator_navigate_through_poses_rclcpp_node	internal bt_navigator node	present	graph_inventory.txt	PHASE2_ALLOWED_INTERNAL	Standard internal BT action node; related default BT loading caused activation failure.
+tf_listener_internal	node	/transform_listener_impl_*	internal transform listener	present	graph_inventory.txt	PHASE2_ALLOWED_INTERNAL	Standard transform listener nodes created by Nav2 components.
+/map	topic	/map	nav_msgs/msg/OccupancyGrid	1 publisher; 2 subscribers	topic_info__map.txt; map_info_echo.txt	PHASE2_ALLOWED	Map frame; 0.05 m resolution; 1744x2683; transient local publisher map_server.
+/Odometry	topic	/Odometry	nav_msgs/msg/Odometry	1 publisher; 2 subscribers	topic_info__Odometry.txt; odometry_observation.txt	PHASE2_ALLOWED	50.0017 Hz measured over 10s; stable at x=5.425 y=-53.725 yaw=0.
+/tf_static	topic	/tf_static	tf2_msgs/msg/TFMessage	publisher includes phase2_map_to_odom_static_tf	topic_info__tf_static.txt; tf2_echo_map_odom.txt	PHASE2_ALLOWED	Identity map->odom observed.
+/tf	topic	/tf	tf2_msgs/msg/TFMessage	publisher includes phase2_fake_base	topic_info__tf.txt; tf2_echo_odom_base_footprint.txt	PHASE2_ALLOWED	odom->base_footprint observed at initial pose.
+/cmd_vel_phase2_mock	topic	/cmd_vel_phase2_mock	geometry_msgs/msg/Twist	4 Nav2 publishers; 1 fake-base subscriber	topic_info__cmd_vel_phase2_mock.txt; cmd_vel_observation.txt	PHASE2_ALLOWED	Publishers are controller_server and behavior_server endpoints; no messages observed during idle.
+/wheelchair_control_command	topic	/wheelchair_control_command	unknown	absent	topic_info__wheelchair_control_command.txt	EXCLUDED_ABSENT	No physical command topic.
+/wheelchair_control_command_raw	topic	/wheelchair_control_command_raw	unknown	absent	topic_info__wheelchair_control_command_raw.txt	EXCLUDED_ABSENT	No physical command topic.
+/vehicle_cmd_safe	topic	/vehicle_cmd_safe	unknown	absent	topic_info__vehicle_cmd_safe.txt	EXCLUDED_ABSENT	No selected future command safety topic.
+/cmd_vel_nav	topic	/cmd_vel_nav	unknown	absent	topic_info__cmd_vel_nav.txt	EXCLUDED_ABSENT	No legacy Nav2 command topic.
+/active_plan	topic	/active_plan	unknown	absent	topic_info__active_plan.txt	EXCLUDED_ABSENT	No legacy Pure Pursuit active route.
+/plan_nav	topic	/plan_nav	unknown	absent	topic_info__plan_nav.txt	EXCLUDED_ABSENT	No plan_nav route topic.
+/scan	topic	/scan	unknown	absent	topic_info__scan.txt	EXCLUDED_ABSENT	No YDLIDAR/LaserScan topic.
+/cloud_registered	topic	/cloud_registered	unknown	absent	topic_info__cloud_registered.txt	EXCLUDED_ABSENT	No FAST-LIO cloud topic.
+/livox/lidar	topic	/livox/lidar	unknown	absent	topic_info__livox_lidar.txt	EXCLUDED_ABSENT	No Livox topic.

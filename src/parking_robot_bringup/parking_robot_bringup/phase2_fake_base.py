@@ -11,6 +11,8 @@ import threading
 import time
 
 import rclpy
+from rclpy._rclpy_pybind11 import RCLError
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
 from geometry_msgs.msg import PoseWithCovarianceStamped, TransformStamped, Twist
@@ -66,6 +68,7 @@ class Phase2FakeBase(Node):
         self._active_twist: Twist2D | None = None
         self._last_command_steady: float | None = None
         self._last_integration_steady = time.monotonic()
+        self._shutting_down = False
 
         self._odom_pub = self.create_publisher(Odometry, self._odom_topic, 10)
         self._tf_broadcaster = TransformBroadcaster(self)
@@ -97,7 +100,20 @@ class Phase2FakeBase(Node):
             self._last_command_steady = None
             self._last_integration_steady = time.monotonic()
 
+    def _ros_context_is_valid(self) -> bool:
+        return self.context.ok()
+
+    def stop_publication(self) -> None:
+        """Stop future timer publication before node teardown."""
+        self._shutting_down = True
+        timer = getattr(self, "_timer", None)
+        if timer is not None:
+            timer.cancel()
+
     def _timer_cb(self) -> None:
+        if self._shutting_down or not self._ros_context_is_valid():
+            return
+
         now_steady = time.monotonic()
         with self._lock:
             dt = now_steady - self._last_integration_steady
@@ -141,20 +157,39 @@ class Phase2FakeBase(Node):
         tf.transform.rotation.z = qz
         tf.transform.rotation.w = qw
 
-        self._odom_pub.publish(odom)
-        self._tf_broadcaster.sendTransform(tf)
+        if self._shutting_down or not self._ros_context_is_valid():
+            return
+
+        try:
+            self._odom_pub.publish(odom)
+            self._tf_broadcaster.sendTransform(tf)
+        except RCLError:
+            if self._ros_context_is_valid():
+                raise
+
+
+def _shutdown_context_once() -> None:
+    if rclpy.ok():
+        rclpy.shutdown()
+
+
+def _spin_until_shutdown(node: Phase2FakeBase, spin_fn=rclpy.spin) -> None:
+    try:
+        spin_fn(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
 
 
 def main(args: list[str] | None = None) -> None:
     rclpy.init(args=args)
     node = Phase2FakeBase()
     try:
-        rclpy.spin(node)
+        _spin_until_shutdown(node)
     finally:
+        node.stop_publication()
         node.destroy_node()
-        rclpy.shutdown()
+        _shutdown_context_once()
 
 
 if __name__ == "__main__":
     main()
-

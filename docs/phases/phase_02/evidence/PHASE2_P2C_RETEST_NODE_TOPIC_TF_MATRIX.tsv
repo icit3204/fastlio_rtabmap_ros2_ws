@@ -1,0 +1,22 @@
+node_or_topic	kind	provider	scope	evidence
+/map_server	node	nav2_map_server/map_server	PHASE2_ALLOWED	Loads packaged static map
+/phase2_map_to_odom_static_tf	node	tf2_ros/static_transform_publisher	PHASE2_ALLOWED	Publishes static identity map->odom
+/phase2_fake_base	node	parking_robot_bringup/phase2_fake_base	PHASE2_ALLOWED	Publishes /Odometry and odom->base_footprint; subscribes only to /cmd_vel_phase2_mock and /initialpose
+/planner_server	node	nav2_planner/planner_server	PHASE2_ALLOWED	NavFn planner server active
+/controller_server	node	nav2_controller/controller_server	PHASE2_ALLOWED	MPPI controller active; /cmd_vel remapped to /cmd_vel_phase2_mock
+/behavior_server	node	nav2_behaviors/behavior_server	PHASE2_ALLOWED	Spin/backup/wait behaviors active; /cmd_vel remapped to /cmd_vel_phase2_mock
+/bt_navigator	node	nav2_bt_navigator/bt_navigator	PHASE2_ALLOWED	NavigateToPose and installed through-poses navigator loaded cleanly
+/lifecycle_manager_navigation	node	nav2_lifecycle_manager/lifecycle_manager	PHASE2_ALLOWED	Managed all lifecycle nodes to ACTIVE
+/global_costmap/global_costmap	node	controller/planner costmap child	PHASE2_ALLOWED_INTERNAL	Static/inflation layers only
+/local_costmap/local_costmap	node	controller costmap child	PHASE2_ALLOWED_INTERNAL	Static/inflation layers only
+/cmd_vel_phase2_mock	topic	controller_server + behavior_server -> phase2_fake_base	ISOLATED_MOCK_COMMAND	4 Nav2 publisher endpoints, 1 fake-base subscriber, 0 observed messages/nonzero commands
+/Odometry	topic	phase2_fake_base	PHASE2_FAKE_ODOMETRY	nav_msgs/msg/Odometry, odom/base_footprint, stable pose
+/tf_static	topic	phase2_map_to_odom_static_tf	UNIQUE_STATIC_TF	1 publisher, identity map->odom
+/tf	topic	phase2_fake_base	UNIQUE_DYNAMIC_TF	1 publisher, odom->base_footprint
+/navigate_to_pose	action	bt_navigator	DISCOVERY_ONLY	Server available; no goal sent
+/navigate_through_poses	action	bt_navigator	AVAILABLE_NOT_PHASE2_GOAL_PATH	Server available due Humble navigator contract; no goal sent
+/wheelchair_control_command	topic	none	ABSENT_EXCLUDED	Not present in topic list
+/vehicle_cmd_safe	topic	none	ABSENT_EXCLUDED	Not present in topic list
+/cmd_vel_nav	topic	none	ABSENT_EXCLUDED	Not present in topic list
+/plan_nav	topic	none	ABSENT_EXCLUDED	Not present in topic list
+/active_plan	topic	none	ABSENT_EXCLUDED	Not present in topic list
