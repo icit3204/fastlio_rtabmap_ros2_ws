@@ -219,9 +219,10 @@ in a single process.
 
 **Phase 1 native environment and single-ABI build verification are complete
 and frozen at tag `phase1_native_build_verified`.** Broader V3.1 Phase 1
-authority closure remains open for hard-coded path parameterization, static
-command-publisher auditing, the initial unified RViz profile, and explicit
-Collision Monitor Humble capability verification. Physical
+authority closure remains open for hard-coded path parameterization. Static
+command-authority reconciliation, the initial unified RViz profile, and
+Collision Monitor Humble capability/schema auditing are now recorded as
+complete Phase 1 closure items. Physical
 body-to-base_footprint z-offset validation remains deferred to the
 live-sensor phase as required by the authority.
 
@@ -250,10 +251,13 @@ authority requirement matrix and classification of every Phase 1 task.
 - static command-authority reconciliation complete;
 - Collision Monitor Humble capability/schema audit complete;
 - governance artifact discovery audit complete.
+- unified initial RViz profile complete:
+  `src/robot_bringup/config/phase1_authority_baseline.rviz` exists,
+  YAML/plugin validation passed, package installation validation passed, and
+  the profile contains no machine-specific path.
 
 ### Still open
 
-- unified initial RViz profile as a formal deliverable;
 - relevant hard-coded path parameterization.
 
 ### Deferred by authority

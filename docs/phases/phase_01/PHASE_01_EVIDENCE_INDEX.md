@@ -1,6 +1,6 @@
 # Phase 1 Evidence Index
 
-Date: 2026-07-31
+Date: 2026-08-01
 
 | # | Tracked Path | Original Report | Purpose | Size (bytes) | SHA256 |
 |---|-------------|-----------------|---------|-------------|--------|
@@ -19,5 +19,6 @@ Date: 2026-07-31
 | 12 | `evidence/PHASE1_MODULE_REGISTRY_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_MODULE_REGISTRY_ASSESSMENT.tsv` | Module registry assessment covering 43 modules with required fields | 8895 | `0dda98226b32375c3a19ec37f934dace6afe46f35c84707c232e265967648302` |
 | 13 | `evidence/PHASE1_CALIBRATION_MANIFEST_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_CALIBRATION_MANIFEST_ASSESSMENT.tsv` | Calibration manifest assessment covering 18 required fields | 3342 | `39fccca9b2b9f94771fcb9bbc2ba739233cfd382b035f4f38e7d129638a04c3f` |
 | 14 | `evidence/PHASE1_CLOCK_TIMESTAMP_POLICY_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_CLOCK_TIMESTAMP_POLICY_ASSESSMENT.tsv` | Clock/timestamp policy assessment covering 17 required items | 3152 | `ca07be02cc316a3ab8bc871b94a0db72e9b77fcf4d279e0a68a4eea1f352c87b` |
+| 15 | `evidence/PHASE1_UNIFIED_RVIZ_PROFILE_VALIDATION.md` | `/home/dog/phase1_reports/PHASE1_UNIFIED_RVIZ_PROFILE_VALIDATION.md` | Unified Phase 1 RViz baseline profile validation and installation evidence | 14326 | `abf99586f46156b0e334745424fbdfb9e6d24c08bd5d10fb2a7bf968a5bf5326` |
 
-**Total evidence files: 14**
+**Total evidence files: 15**
