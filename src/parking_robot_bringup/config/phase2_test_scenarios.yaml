@@ -1,0 +1,40 @@
+map_frame: map
+map_source_sha256: "69428c94a8032fd54939492afe848156ef1687faf7a8023609a3e26d9604beb0"
+selection_method: >
+  Parsed the copied PGM without ROS runtime, classified cells using map_server
+  trinary thresholds from phase2_clean_map.yaml, computed 8-connected free
+  components, and selected start/success goals from the only free-space
+  component with conservative distance-transform clearance from non-free cells.
+status: STATIC_SCENARIOS_SELECTED_NOT_RUNTIME_VALIDATED
+start:
+  pixel: {x: 890, y: 2054}
+  pose: {x: 5.425, y: -53.725, yaw: 0.0}
+  classification: free
+  connected_component: 1
+  clearance_m: 7.393
+goal_a:
+  pixel: {x: 1254, y: 2602}
+  pose: {x: 23.625, y: -81.125, yaw: 0.0}
+  classification: free
+  connected_component: 1
+  clearance_m: 5.430
+goal_b:
+  pixel: {x: 788, y: 2083}
+  pose: {x: 0.325, y: -55.175, yaw: 0.0}
+  classification: free
+  connected_component: 1
+  clearance_m: 5.437
+goal_c:
+  pixel: {x: 876, y: 2147}
+  pose: {x: 4.725, y: -58.375, yaw: 0.0}
+  classification: free
+  connected_component: 1
+  clearance_m: 5.423
+planner_failure_goal:
+  pixel: {x: 621, y: 1154}
+  pose: {x: -8.025, y: -8.725, yaw: 0.0}
+  classification: occupied
+  connected_component: 0
+  occupied_probability: 1.0
+  occupied_clearance_m: 0.160
+

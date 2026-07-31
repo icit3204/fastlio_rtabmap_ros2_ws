@@ -1,0 +1,23 @@
+Topic/TF Name	Message Type	Publisher	Subscriber	Phase 2 Role	Safety Classification
+/map	nav_msgs/OccupancyGrid	map_server (nav2)	global_costmap, local_costmap, RViz	Static map source	SAFE_DISPLAY_ONLY
+/map_updates	map_msgs/OccupancyGridUpdate	map_server	None in Phase 2	Not used	NOT_USED
+/Odometry	nav_msgs/Odometry	odom_from_cmd_vel.py (phase2_fake_base)	Nav2 bt_navigator, RViz	Fake odometry from cmd_vel	SAFE_SIMULATED_ONLY
+/tf (map→odom)	tf2_msgs/TFMessage	static_transform_publisher (launch)	TF buffer (all nodes)	Static identity transform	SAFE_STATIC_ONLY
+/tf (odom→base_footprint)	tf2_msgs/TFMessage	odom_from_cmd_vel.py (phase2_fake_base)	TF buffer (all nodes)	Dynamic from cmd_vel integration	SAFE_SIMULATED_ONLY
+/cmd_vel_phase2_mock	geometry_msgs/Twist	Nav2 MPPI (controller_server)	odom_from_cmd_vel.py	Mock command between Nav2 and fake base	SAFE_MOCK_NO_HARDWARE_PATH
+/plan	nav_msgs/Path	Nav2 planner_server	Nav2 controller_server, RViz	Global path	SAFE_DISPLAY_ONLY
+/local_plan	nav_msgs/Path	Nav2 controller_server	RViz	MPPI local trajectory	SAFE_DISPLAY_ONLY
+/initialpose	geometry_msgs/PoseWithCovarianceStamped	phase2_goal_test_runner.py	odom_from_cmd_vel.py, Nav2	Set fake robot initial pose	SAFE_SIMULATED_ONLY
+/navigate_to_pose/_action_*	nav2_msgs/NavigateToPose	phase2_goal_test_runner.py (client)	Nav2 bt_navigator (server)	Goal sending and monitoring	SAFE_ACTION_ONLY
+/global_costmap/costmap	nav_msgs/OccupancyGrid	Nav2 global_costmap	RViz	Global costmap visualization	SAFE_DISPLAY_ONLY
+/local_costmap/costmap	nav_msgs/OccupancyGrid	Nav2 local_costmap	RViz	Local costmap visualization	SAFE_DISPLAY_ONLY
+/robot_description	string	robot_state_publisher	None (TF only)	Robot model for RViz	SAFE_DISPLAY_ONLY
+/tf_static	tf2_msgs/TFMessage	robot_state_publisher	TF buffer	Static robot model frames	SAFE_STATIC_ONLY
+/wheelchair_control_command	Float32MultiArray	(NOT in Phase 2)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/wheelchair_control_command_raw	Float32MultiArray	(NOT in Phase 2)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/cmd_vel	Twist	(NOT in Phase 2 — only /cmd_vel_phase2_mock)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/cmd_vel_nav	Twist	(NOT in Phase 2)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/vehicle_cmd_safe	TwistStamped	(NOT_IMPLEMENTED)	(NOT_IMPLEMENTED)	NOT_IMPLEMENTED	NOT_PUBLISHED_OR_SUBSCRIBED
+/active_plan	Path	(NOT in Phase 2)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/plan_nav	Path	(NOT in Phase 2)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
+/scan	LaserScan	(NOT in Phase 2 — no YDLIDAR)	(NOT in Phase 2)	PHASE2_EXCLUDED	NOT_PUBLISHED_OR_SUBSCRIBED
