@@ -1,0 +1,44 @@
+Module	Authority Status	Authority Section	Discovered Path	Tracked	Classification	Owner	Evidence	Activation Gate	Acceptance Criterion	Gap	Blocks Phase 1	Recommended Action
+Mission source	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Route selection	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Mission execution	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Global planner (NavFn A*)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Local controller (MPPI)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Legacy fallback	LEGACY_BASELINE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Primary odometry (FAST-LIO)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Mapping/localization (RTAB-Map)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Basic localization-valid gate	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Advanced relocalization health	CORE_LATER_GATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Main obstacle input (semantic)	CORE_LATER_GATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Collision Monitor (final stop/slow)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Generic Command Safety Gate	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Wheelchair Command Adapter	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Current CAN driver (wheelchair)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Future chassis adapter	HARDWARE_FUTURE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Navigation constraints	CORE_LATER_GATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Stereo camera	OPTIONAL_EVALUATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Camera obstacle use	OPTIONAL_EVALUATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+YDLIDAR	OPTIONAL_EVALUATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Ultrasonic	HARDWARE_FUTURE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Charging functions	HARDWARE_FUTURE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Fleet deployment	PRODUCTIZATION_LATER	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Unified RViz/debug profiles	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Mission Manager state machine	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Blocked/HELP_REQUIRED outcomes	CORE_LATER_GATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Route identity contract	collaborator dependency	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Gazebo validation	OPTIONAL_EVALUATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Runtime supervision	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+System image recovery	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+3D navigation	scope boundary	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Typed mission contract (RouteMission)	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Vehicle feedback boundary (/vehicle_state)	CORE_LATER_GATE	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Clock/timestamp policy	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Calibration manifest	CORE_NOW	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Product security	PRODUCTIZATION_LATER	§21	Authority §21 table only	No (embedded)	PARTIAL_EXISTING_ARTIFACT	Missing	Missing	Missing	Missing	No owner, evidence, gate, or criterion fields	No	Add to tracked registry
+Livox driver (workspace)	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+FAST-LIO (workspace)	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+RTAB-Map (workspace)	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+plan_nav GUI	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+wheelchair_controller	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+ydlidar_ros2_driver	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry
+semantic_grid_tools	Not in §21	Not specified	Not found	No	NOT_FOUND	Missing	Missing	Missing	Missing	Not in comparison table	No	Add to tracked registry

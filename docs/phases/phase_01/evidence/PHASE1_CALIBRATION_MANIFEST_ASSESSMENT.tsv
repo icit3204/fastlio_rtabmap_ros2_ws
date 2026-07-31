@@ -1,0 +1,18 @@
+Required Field	Authority Location	Discovered Source	Value/Source	Classification	Evidence	Gap	Recommendation
+body -> base_footprint	§20C, line 1921	record_bag_infra.launch.py:151-152	z=-1.5, 0, 0, roll=pitch=yaw=0	PRESENT_BUT_UNVERIFIED (CONTRADICTORY)	Launch parameter, no measurement source	Contradicts fast_lio2.launch.py (z=0). No version/operator/date.	Resolve contradiction; measure physically in Phase 5
+body -> base_footprint	§20C, line 1921	fast_lio2.launch.py:133-134	x=0,y=0,z=0	PRESENT_BUT_UNVERIFIED (CONTRADICTORY)	Launch parameter, no measurement source	Contradicts record_bag_infra.launch.py (z=-1.5). No version/operator/date.	Resolve contradiction
+base_footprint/base_link -> livox_frame	§20C, line 1922	record_bag_infra.launch.py:159-160	base_footprint->base_link: z=1.5	PRESENT_SOURCE_DERIVED	Launch parameter	Only base_footprint->base_link, no livox_frame transform found. No measurement source.	Add livox_frame extrinsics; verify measurement
+camera intrinsics	§20C, line 1923	Not found	N/A	MISSING	No source	No camera calibration data in repository	Defer until camera validation phase
+camera extrinsics	§20C, line 1923	Not found	N/A	MISSING	No source	No camera-to-base or camera-to-LiDAR extrinsics	Defer until camera validation phase
+YDLIDAR extrinsics	§20C, line 1924	Not found	N/A	MISSING	No source	No YDLIDAR frame-to-base extrinsics recorded	Add from design documents or measure
+ultrasonic extrinsics	§20C, line 1924	Not found	N/A	MISSING	No source	No ultrasonic hardware present	Explicitly mark UNKNOWN (HARDWARE_FUTURE)
+robot footprint	§20C, line 1925	wheelchair_controller config	0.3m polygon points in Collision Monitor	PRESENT_SOURCE_DERIVED	Collision Monitor polygon parameters	Polygon for collision, not physical footprint. No separate footprint artifact.	Verify against physical wheelchair dimensions
+wheelbase/track	§20C, line 1926	wheelchair_controller_node.cpp:33,121	can_wheel_half_track_mm=300.0	PRESENT_BUT_UNVERIFIED	Default code parameter	No measurement verification. No track width for other chassis.	Measure physically in Phase 5
+kinematic constants	§20C, line 1926	wheelchair_controller_node.cpp:34-36	can_straight_radius_threshold_mm=10000.0, can_min_turn_radius_mm=1000.0, can_invert_radius=true	PRESENT_BUT_UNVERIFIED	Default code parameters	No measurement verification. No version/date.	Measure physically in Phase 5
+calibration method	§20C, line 1927	Not found	N/A	MISSING	No source	No method documented for any measurement	Define measurement procedure
+calibration date	§20C, line 1927	Not found	N/A	MISSING	No source	No date recorded	Record date of measurement
+calibration operator	§20C, line 1927	Not found	N/A	MISSING	No source	No operator recorded	Record operator
+source files	§20C, line 1928	Scattered launch files	See above	PRESENT_SOURCE_DERIVED	Launch files containing transforms	Scattered across multiple files, not consolidated	Reference in manifest with paths
+version	§20C, line 1928	Not found	N/A	MISSING	No source	No manifest version exists	Assign version 0.1.0-UNVERIFIED
+checksum	§20C, line 1928	Not found	N/A	MISSING	No source	No source file checksums recorded	Add SHA256 of referenced source files
+robot serial/model applicability	§20C, line 1929	Not found	N/A	MISSING	No source	No robot identity recorded	Add "Jetson 2 wheelchair chassis — serial UNKNOWN"

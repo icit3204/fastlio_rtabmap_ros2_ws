@@ -1,0 +1,18 @@
+Required Content	Authority Location	Discovered Source	Value	Classification	Evidence	Gap	Recommendation
+ROS time vs system time	§10A, line 838	Authority §10A only	Defined in authority, not implemented	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Create from §10A
+use_sim_time policy	§10A, line 839	All bringup launch files	use_sim_time=False (default in bringup.launch.py, bringup_2d.launch.py, fast_lio2.launch.py)	PARTIAL (scattered parameters)	Launch argument declarations	Scattered, not a unified policy document. Bag/sim rules not documented.	Consolidate into clock policy artifact
+MID-360 LiDAR timestamp source	§10A, line 840	Not found	N/A	MISSING	No source	Livox driver timestamp behavior not documented	Add to policy: Livox driver uses hardware timestamps from MID-360 packets
+MID-360 IMU timestamp source	§10A, line 840	Not found	N/A	MISSING	No source	IMU timestamp behavior not documented	Add to policy
+stereo-camera timestamp source	§10A, line 841	Not found	N/A	MISSING	No source	Camera not yet validated	Defer until camera validation phase
+Jetson system-clock source	§10A, line 842	Not found	N/A	MISSING	No source	Jetson clock discipline not documented (NTP? systemd-timesyncd?)	Add: check if chrony/systemd-timesyncd active
+camera-to-LiDAR offsets	§10A, line 843	Not found	N/A	MISSING	No source	No sensor-to-sensor offset measurements	Defer until sensor validation phase
+sensor-to-host offsets	§10A, line 843	Not found	N/A	MISSING	No source	No end-to-end latency measurements	Defer until sensor validation phase
+max acceptable timestamp skew	§10A, line 844	Not found	N/A	MISSING	No source	No skew limits defined per pipeline	Define from Livox/LiDAR and TF rates
+bag-playback /clock behavior	§10A, line 845	Not found	N/A	MISSING	No source	Bag replay clock policy not documented	Add to policy: use --clock with ros2 bag play
+steady/monotonic for watchdogs	§10A, line 846	Authority §10A only	Defined in authority, not implemented	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Add to policy
+live mode: real sensor stamps, disciplined host clock	§10A, line 851-852	Authority §10A only	Defined in authority	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Add to policy
+bag/simulation: use /clock consistently	§10A, line 854-855	Authority §10A only	Defined in authority	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Add to policy
+watchdogs: use steady/monotonic receipt time	§10A, line 857-858	Authority §10A only	Defined in authority	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Add to policy
+traceability/TF: use ROS message timestamps	§10A, line 860-861	Authority §10A only	Defined in authority	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	No tracked artifact	Add to policy
+future NTP/PTP for multi-computer	§10A, line 864	Authority §10A only	Reserved for future	REQUIREMENT_ONLY_NO_ARTIFACT	Authority text	Reserved field — not yet needed	Add reserved section to policy
+policy as tracked artifact	§56.13	Not found	N/A	MISSING	No source	No clock policy file exists	Create: docs/phases/phase_01/PHASE_01_CLOCK_TIMESTAMP_POLICY.md

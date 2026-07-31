@@ -1,0 +1,458 @@
+# Phase 1 Calibration Manifest
+# Date: 2026-07-31
+# Authority: V3.1 FINAL / PHASE-0 AUTHORITY
+# Authority SHA256: d9f9072bc6978fa9694927cab31101143e7397427f483f5586bc2dcbe61a199b
+# Status: PHASE_01_CALIBRATION_MANIFEST_CREATED_UNVERIFIED
+
+manifest:
+  schema_version: "0.1.0"
+  manifest_version: "0.1.0-UNVERIFIED"
+  status: "UNVERIFIED"
+  created_date: "2026-07-31"
+  authority_document: "FINAL_REVISED_ARCHITECTURE_AND_IMPLEMENTATION_STRATEGY_AFTER_DAY0_V3_1_FINAL_PHASE0_AUTHORITY.md"
+  authority_sha256: "d9f9072bc6978fa9694927cab31101143e7397427f483f5586bc2dcbe61a199b"
+  source_revision: "c27961dc0eb156f4811e0d55c6793df304fd7ce6"
+
+# ── Robot identity and applicability ──
+robot_profile:
+  robot_id: "Jetson_2_Wheelchair"
+  robot_model: "electric_wheelchair_unknown_model"
+  chassis_type: "differential_drive_wheelchair"
+  serial_number:
+    value: null
+    status: "UNKNOWN"
+  applicability: "Current Jetson 2 development wheelchair. Not a production charging-robot chassis."
+  notes: "This manifest applies to the current CAN-controlled electric wheelchair on Jetson 2. A separate manifest will be required for future charging-robot chassis."
+
+# ── Frame conventions ──
+frame_conventions:
+  map_frame: "map"
+  odom_frame: "odom"
+  body_frame: "body"
+  base_frame: "base_footprint"
+  base_link_frame: "base_link"
+  livox_frame: "livox_frame"
+  camera_frame:
+    value: null
+    status: "UNKNOWN"
+  ydlidar_frame:
+    value: null
+    status: "UNKNOWN"
+  notes: "map->odom and odom->body are dynamic transforms (RTAB-Map and FAST-LIO respectively). They are NOT calibration constants. Their ownership and validation contract are recorded below."
+
+# ── Transform inventory ──
+transforms:
+
+  - id: "TF01"
+    parent_frame: "map"
+    child_frame: "odom"
+    translation:
+      x: null
+      y: null
+      z: null
+    rotation:
+      roll: null
+      pitch: null
+      yaw: null
+    status: "DYNAMIC_NOT_CALIBRATION"
+    value_source: "RTAB-Map localization"
+    authoritative_publisher: "rtabmap node (rtabmap_slam)"
+    static_or_dynamic: "dynamic"
+    verification_method: "Compare RTAB-Map pose with ground-truth reference"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "Dynamic transform computed by RTAB-Map localization. Validation requires ground-truth comparison in Phase 5."
+
+  - id: "TF02"
+    parent_frame: "odom"
+    child_frame: "body"
+    translation:
+      x: null
+      y: null
+      z: null
+    rotation:
+      roll: null
+      pitch: null
+      yaw: null
+    status: "DYNAMIC_NOT_CALIBRATION"
+    value_source: "FAST-LIO odometry"
+    authoritative_publisher: "fast_lio node"
+    static_or_dynamic: "dynamic"
+    verification_method: "Compare FAST-LIO odom with external motion capture or ground truth"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "Dynamic transform computed by FAST-LIO. Validation requires ground-truth comparison in Phase 5."
+
+  - id: "TF03"
+    parent_frame: "body"
+    child_frame: "base_footprint"
+    translation:
+      x:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      y:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      z:
+        value: null
+        status: "CONFLICTING_SOURCE_VALUES"
+    rotation:
+      roll:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      pitch:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      yaw:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+    status: "CONFLICTING_SOURCE_VALUES"
+    value_source: "Two conflicting launch-file sources"
+    authoritative_publisher: "static_transform_publisher in bringup launch files"
+    static_or_dynamic: "static"
+    verification_method: "Physical measurement of body-frame origin to ground-contact plane"
+    last_verified_date: null
+    operator: null
+    evidence:
+      source_a:
+        file: "src/robot_bringup/launch/record_bag_infra.launch.py"
+        lines: "151-152"
+        value_z: -1.5
+        description: "Body below base_footprint by 1.5m"
+      source_b:
+        file: "src/robot_bringup/launch/fast_lio2.launch.py"
+        lines: "133-134"
+        value_z: 0.0
+        description: "Body coincident with base_footprint"
+    notes: "CRITICAL CONFLICT: Two launch files define different body->base_footprint z offsets. Physical measurement is required before live navigation (Phase 5 gate per authority). Do NOT select either value without physical verification."
+
+  - id: "TF04"
+    parent_frame: "base_footprint"
+    child_frame: "base_link"
+    translation:
+      x:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      y:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      z:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+    rotation:
+      roll:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      pitch:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+      yaw:
+        value: 0.0
+        status: "SOURCE_DERIVED_UNVERIFIED"
+    status: "SOURCE_DERIVED_UNVERIFIED"
+    value_source: "fast_lio2.launch.py line 133-134"
+    authoritative_publisher: "static_transform_publisher in fast_lio2.launch.py"
+    static_or_dynamic: "static"
+    verification_method: "Verify base_link is coincident with robot geometric center"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "All zeros (coincident frames). Verify base_link definition matches URDF or physical robot center."
+
+  - id: "TF05"
+    parent_frame: "base_link"
+    child_frame: "livox_frame"
+    translation:
+      x:
+        value: null
+        status: "UNKNOWN"
+      y:
+        value: null
+        status: "UNKNOWN"
+      z:
+        value: null
+        status: "UNKNOWN"
+    rotation:
+      roll:
+        value: null
+        status: "UNKNOWN"
+      pitch:
+        value: null
+        status: "UNKNOWN"
+      yaw:
+        value: null
+        status: "UNKNOWN"
+    status: "UNKNOWN"
+    value_source: null
+    authoritative_publisher: "URDF or static_transform_publisher (not found in workspace launch files)"
+    static_or_dynamic: "static"
+    verification_method: "Physical measurement of MID-360 mounting position relative to base_link"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "MID-360 mounting transform not found in workspace. May be in robot URDF (not inspected). Physical measurement required."
+
+  - id: "TF06"
+    parent_frame: "base_link"
+    child_frame: "camera_frame"
+    translation:
+      x:
+        value: null
+        status: "UNKNOWN"
+      y:
+        value: null
+        status: "UNKNOWN"
+      z:
+        value: null
+        status: "UNKNOWN"
+    rotation:
+      roll:
+        value: null
+        status: "UNKNOWN"
+      pitch:
+        value: null
+        status: "UNKNOWN"
+      yaw:
+        value: null
+        status: "UNKNOWN"
+    status: "UNKNOWN"
+    value_source: null
+    authoritative_publisher: "Not found in workspace"
+    static_or_dynamic: "static"
+    verification_method: "Camera calibration procedure (checkerboard or equivalent)"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "Stereo camera extrinsics not yet measured. Deferred to camera validation phase."
+
+  - id: "TF07"
+    parent_frame: "base_link"
+    child_frame: "ydlidar_frame"
+    translation:
+      x:
+        value: null
+        status: "UNKNOWN"
+      y:
+        value: null
+        status: "UNKNOWN"
+      z:
+        value: null
+        status: "UNKNOWN"
+    rotation:
+      roll:
+        value: null
+        status: "UNKNOWN"
+      pitch:
+        value: null
+        status: "UNKNOWN"
+      yaw:
+        value: null
+        status: "UNKNOWN"
+    status: "UNKNOWN"
+    value_source: null
+    authoritative_publisher: "Not found in workspace"
+    static_or_dynamic: "static"
+    verification_method: "Physical measurement of YDLIDAR mounting position"
+    last_verified_date: null
+    operator: null
+    evidence: null
+    notes: "YDLIDAR extrinsics not measured. Deferred if YDLIDAR retained for obstacle evaluation."
+
+# ── Robot geometry ──
+robot_geometry:
+  footprint:
+    shape: "polygon"
+    points:
+      - status: "SOURCE_DERIVED_UNVERIFIED"
+        value: [0.35, 0.30, 0.35, -0.30, -0.10, -0.30, -0.10, 0.30]
+        source: "Collision Monitor StopZone polygon in bringup.launch.py"
+        notes: "Collision Monitor polygon, NOT a measured physical footprint"
+    physical_length_m:
+      value: null
+      status: "UNKNOWN"
+    physical_width_m:
+      value: null
+      status: "UNKNOWN"
+    verification_method: "Physical measurement of wheelchair bounding box"
+    last_verified_date: null
+
+# ── Chassis kinematics ──
+chassis_kinematics:
+  drive_type: "differential"
+  wheel_half_track_mm:
+    value: 300.0
+    status: "SOURCE_DEFAULT_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:33 (can_wheel_half_track_mm default)"
+    notes: "Default parameter value. Not physically measured. Affects radius-to-wheel-speed conversion in CAN writer."
+  min_turn_radius_mm:
+    value: 1000.0
+    status: "SOURCE_DEFAULT_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:35 (can_min_turn_radius_mm default)"
+    notes: "Default parameter value. Physical wheelchair minimum turning radius not measured."
+  straight_radius_threshold_mm:
+    value: 10000.0
+    status: "SOURCE_DEFAULT_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:34 (can_straight_radius_threshold_mm default)"
+    notes: "Default parameter value. Threshold for treating large radius as straight-line motion."
+  invert_radius:
+    value: true
+    status: "SOURCE_DEFAULT_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:36 (can_invert_radius default)"
+    notes: "Default parameter value. CAN protocol radius sign convention."
+  can_velocity_limit:
+    value: 16380
+    status: "SOURCE_DEFAULT_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:32 (can_velocity_limit default)"
+    notes: "Maximum CAN velocity value. Hardware limit from lower controller."
+  can_frame_id:
+    value: 0x801400
+    status: "SOURCE_DERIVED_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:31 (can_frame_id default)"
+    notes: "CAN extended frame ID for wheelchair motion commands."
+  can_send_period_ms:
+    value: 20.0
+    status: "SOURCE_DERIVED_UNVERIFIED"
+    source: "wheelchair_controller_node.cpp:37 (can_send_period_ms default)"
+    notes: "CAN transmission period. Watchdog sends repeated-zero when no command."
+  verification_method: "Physical measurement of wheelchair dimensions and CAN protocol confirmation"
+  last_verified_date: null
+
+# ── MID-360 calibration ──
+mid360_calibration:
+  sensor_model: "Livox MID-360"
+  mounting_position:
+    status: "UNKNOWN"
+    notes: "See TF05: base_link -> livox_frame"
+  intrinsic_calibration:
+    status: "FACTORY_DEFAULT"
+    notes: "MID-360 factory calibration. No user-accessible intrinsic parameters."
+  timestamp_mode:
+    status: "UNKNOWN"
+    notes: "MID-360 timestamp source (device clock vs host arrival) not confirmed. Required for clock policy."
+
+# ── Stereo-camera calibration ──
+stereo_camera_calibration:
+  camera_model:
+    value: null
+    status: "UNKNOWN"
+  intrinsics:
+    left:
+      status: "UNKNOWN"
+    right:
+      status: "UNKNOWN"
+  extrinsics:
+    left_to_right:
+      status: "UNKNOWN"
+    camera_to_base:
+      status: "UNKNOWN"
+      notes: "See TF06"
+  timestamp_mode:
+    status: "UNKNOWN"
+    notes: "Camera timestamp source not confirmed. Required for clock policy."
+  verification_method: "Standard camera calibration procedure (checkerboard or equivalent)"
+  last_calibration_date: null
+  notes: "All camera calibration values deferred to camera validation phase."
+
+# ── YDLIDAR calibration ──
+ydlidar_calibration:
+  sensor_model:
+    value: null
+    status: "UNKNOWN"
+  mounting_position:
+    status: "UNKNOWN"
+    notes: "See TF07"
+  intrinsic_calibration:
+    status: "FACTORY_DEFAULT"
+    notes: "YDLIDAR factory calibration."
+  verification_method: "Physical measurement of YDLIDAR mounting; verify scan alignment with known geometry"
+  last_verified_date: null
+
+# ── Future range/ultrasonic calibration ──
+future_ultrasonic_calibration:
+  status: "NOT_APPLICABLE"
+  notes: "No ultrasonic hardware present. Reserved for future hardware integration."
+
+# ── Source evidence ──
+source_evidence:
+  - file: "src/wheelchair_controller/src/wheelchair_controller_node.cpp"
+    sha256: null
+    provides: "CAN parameters, chassis kinematics defaults"
+  - file: "src/robot_bringup/launch/record_bag_infra.launch.py"
+    sha256: null
+    provides: "body->base_footprint (z=-1.5), base_footprint->base_link"
+  - file: "src/robot_bringup/launch/fast_lio2.launch.py"
+    sha256: null
+    provides: "body->base_footprint (z=0), base_footprint->base_link"
+  - file: "src/robot_bringup/launch/bringup.launch.py"
+    sha256: null
+    provides: "Collision Monitor StopZone polygon (footprint proxy)"
+
+# ── Conflict register ──
+conflict_register:
+  - id: "CONFLICT-001"
+    field: "transforms.TF03.translation.z (body->base_footprint)"
+    source_a: "record_bag_infra.launch.py: z=-1.5"
+    source_b: "fast_lio2.launch.py: z=0"
+    impact: "Nav2 costmap, Collision Monitor, and robot footprint all depend on correct base_footprint frame height. Wrong value causes incorrect obstacle projection and false collision stops."
+    resolution_required_by: "Phase 5 (live sensor phase per authority)"
+    resolution_method: "Physical measurement of FAST-LIO body-frame origin height above ground plane. Select authoritative launch file and remove conflicting value."
+    resolved: false
+
+# ── Verification plan ──
+verification_plan:
+  - step: "V01"
+    description: "Physical measurement of body->base_footprint z offset"
+    phase: "Phase 5"
+    method: "Measure vertical distance from FAST-LIO body-frame origin to ground-contact plane. Compare with both source values."
+    pass_criterion: "Single measured value recorded; conflicting launch file value removed."
+
+  - step: "V02"
+    description: "TF source-authority check"
+    phase: "Phase 5"
+    method: "Verify only one authoritative static_transform_publisher exists per child frame in active bringup launch."
+    pass_criterion: "No duplicate TF publishers in active bringup; all static transforms have measured source."
+
+  - step: "V03"
+    description: "MID-360 mounting measurement"
+    phase: "Phase 5"
+    method: "Physically measure MID-360 position and orientation relative to base_link."
+    pass_criterion: "All 6 DOF recorded with measurement uncertainty; TF05 completed."
+
+  - step: "V04"
+    description: "Wheelchair footprint measurement"
+    phase: "Phase 5"
+    method: "Measure physical wheelchair bounding box. Compare with Collision Monitor polygon."
+    pass_criterion: "Footprint polygon verified against physical dimensions within ±5cm."
+
+  - step: "V05"
+    description: "Track and wheelbase measurement"
+    phase: "Phase 5"
+    method: "Physically measure wheel half-track and minimum turn radius."
+    pass_criterion: "Measured values replace SOURCE_DEFAULT_UNVERIFIED in kinematics."
+
+  - step: "V06"
+    description: "Camera intrinsic/extrinsic calibration"
+    phase: "Camera validation phase (later)"
+    method: "Standard camera calibration procedure."
+    pass_criterion: "Intrinsic matrix and distortion coefficients recorded; camera-to-base extrinsics measured."
+
+  - step: "V07"
+    description: "YDLIDAR extrinsic calibration"
+    phase: "If YDLIDAR retained (later)"
+    method: "Physical measurement of YDLIDAR mounting relative to base_link."
+    pass_criterion: "YDLIDAR TF recorded; verified against scan alignment with known geometry."
+
+  - step: "V08"
+    description: "Checksum and version update"
+    phase: "After any measurement"
+    method: "Update manifest version, record SHA256 of measured source evidence, update last_verified_date and operator."
+    pass_criterion: "Manifest version incremented; all changed fields have updated status and evidence."
+
+# ── Change-control policy ──
+change_control:
+  version_increment_rule: "Increment manifest_version minor on any status change from UNKNOWN/CONFLICTING to MEASURED. Increment major on robot-model or chassis change."
+  approval_required: "Physical measurement values must be verified by a second person or reference measurement."
+  review_phase: "After each physical measurement phase (Phase 5, camera phase, YDLIDAR phase)."
+  archival: "Previous manifest versions retained in Git history."

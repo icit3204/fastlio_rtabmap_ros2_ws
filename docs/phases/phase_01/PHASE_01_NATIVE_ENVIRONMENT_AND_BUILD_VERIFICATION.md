@@ -243,21 +243,24 @@ authority requirement matrix and classification of every Phase 1 task.
 - 21/21 packages installed and verified with single OpenCV ABI;
 - OpenCV 4.5.4d single ABI (no 4.8, no 4.10, no `.so.408`, no `.so.410`);
 - synthetic cv_bridge image flow (12/12 RGBDImage outputs verified);
-- no hardware or motion activity during build validation.
+- no hardware or motion activity during build validation;
+- module registry created (43 modules, all required fields);
+- calibration manifest created with unknown/conflicting values explicit;
+- clock/timestamp policy created (derived from V3.1 §10A);
+- static command-authority reconciliation complete;
+- Collision Monitor Humble capability/schema audit complete;
+- governance artifact discovery audit complete.
 
 ### Still open
 
-- parameterize identified hard-coded paths in launch files;
-- static command-publisher audit;
 - unified initial RViz profile as a formal deliverable;
-- Collision Monitor Humble schema/capability verification;
-- locate or complete the module registry, calibration manifest and
-  clock/timestamp policy where not already preserved.
+- relevant hard-coded path parameterization.
 
 ### Deferred by authority
 
 - physical `body → base_footprint` z-offset verification during the live
   sensor phase;
+- physical sensor timing/skew measurement;
 - physical camera validation;
 - optional Torch-enabled visual profile.
 

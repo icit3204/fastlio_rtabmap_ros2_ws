@@ -15,5 +15,9 @@ Date: 2026-07-31
 | 9 | `evidence/PHASE1_OPENCV45D_SYSROOT_RECOVERY_RESULT.md` | `/home/dog/phase1_reports/PHASE1_OPENCV45D_SYSROOT_RECOVERY_RESULT.md` | OpenCV 4.5.4d isolated sysroot recovery from 39 verified Ubuntu .deb packages | 3862 | `8c18e498d5b3958e34225bbeb0f3ae0df233b5874ba224fb9eb8f4816407be8b` |
 
 | 10 | `evidence/PHASE1_AUTHORITY_COMPLIANCE_AUDIT.md` | `/home/dog/phase1_reports/PHASE1_AUTHORITY_COMPLIANCE_AUDIT.md` | V3.1 authority-compliance audit comparing Phase 1 evidence against all authority requirements | 12764 | `528f3e5970238640b6d98e2f9771d66fbf80adbea475237d040520a648fc9b21` |
+| 11 | `evidence/PHASE1_GOVERNANCE_ARTIFACT_DISCOVERY_AND_GAP_AUDIT.md` | `/home/dog/phase1_reports/PHASE1_GOVERNANCE_ARTIFACT_DISCOVERY_AND_GAP_AUDIT.md` | Discovery audit for module registry, calibration manifest, and clock/timestamp policy | 10595 | `006928f3b5885cd4e3f036deb61eb4f82826bbfce0a4750d9c95f26056060c79` |
+| 12 | `evidence/PHASE1_MODULE_REGISTRY_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_MODULE_REGISTRY_ASSESSMENT.tsv` | Module registry assessment covering 43 modules with required fields | 8895 | `0dda98226b32375c3a19ec37f934dace6afe46f35c84707c232e265967648302` |
+| 13 | `evidence/PHASE1_CALIBRATION_MANIFEST_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_CALIBRATION_MANIFEST_ASSESSMENT.tsv` | Calibration manifest assessment covering 18 required fields | 3342 | `39fccca9b2b9f94771fcb9bbc2ba739233cfd382b035f4f38e7d129638a04c3f` |
+| 14 | `evidence/PHASE1_CLOCK_TIMESTAMP_POLICY_ASSESSMENT.tsv` | `/home/dog/phase1_reports/PHASE1_CLOCK_TIMESTAMP_POLICY_ASSESSMENT.tsv` | Clock/timestamp policy assessment covering 17 required items | 3152 | `ca07be02cc316a3ab8bc871b94a0db72e9b77fcf4d279e0a68a4eea1f352c87b` |
 
-**Total evidence files: 10**
+**Total evidence files: 14**
