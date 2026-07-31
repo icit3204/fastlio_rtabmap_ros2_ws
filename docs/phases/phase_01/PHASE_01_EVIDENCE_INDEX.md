@@ -14,4 +14,6 @@ Date: 2026-07-31
 | 8 | `evidence/PHASE1_OPENCV454D_STATIC_ABI_VERIFICATION.md` | `/home/dog/phase1_reports/PHASE1_OPENCV454D_STATIC_ABI_VERIFICATION.md` | Static ABI verification across all key binaries (readelf, ldd) | 769 | `5fb97fa121ca0ac2a0d6cbb36cbd4709866c0385b65d8786c9e73a36f17cbd37` |
 | 9 | `evidence/PHASE1_OPENCV45D_SYSROOT_RECOVERY_RESULT.md` | `/home/dog/phase1_reports/PHASE1_OPENCV45D_SYSROOT_RECOVERY_RESULT.md` | OpenCV 4.5.4d isolated sysroot recovery from 39 verified Ubuntu .deb packages | 3862 | `8c18e498d5b3958e34225bbeb0f3ae0df233b5874ba224fb9eb8f4816407be8b` |
 
-**Total evidence files: 9**
+| 10 | `evidence/PHASE1_AUTHORITY_COMPLIANCE_AUDIT.md` | `/home/dog/phase1_reports/PHASE1_AUTHORITY_COMPLIANCE_AUDIT.md` | V3.1 authority-compliance audit comparing Phase 1 evidence against all authority requirements | 12764 | `528f3e5970238640b6d98e2f9771d66fbf80adbea475237d040520a648fc9b21` |
+
+**Total evidence files: 10**

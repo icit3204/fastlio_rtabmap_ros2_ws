@@ -217,7 +217,13 @@ in a single process.
 
 ## 14. Phase 1 acceptance decision
 
-**Phase 1 is complete and frozen.**
+**Phase 1 native environment and single-ABI build verification are complete
+and frozen at tag `phase1_native_build_verified`.** Broader V3.1 Phase 1
+authority closure remains open for hard-coded path parameterization, static
+command-publisher auditing, the initial unified RViz profile, and explicit
+Collision Monitor Humble capability verification. Physical
+body-to-base_footprint z-offset validation remains deferred to the
+live-sensor phase as required by the authority.
 
 The authoritative source builds natively against a single OpenCV 4.5.4d ABI
 matching the ROS Humble system cv_bridge. All 21 packages compile and
@@ -225,7 +231,40 @@ install. The runtime probe confirms single-ABI operation in `/proc/<PID>/maps`.
 Synthetic image flow through cv_bridge preserves message dimensions,
 encoding, and content.
 
-## 15. Deferred work
+See: `evidence/PHASE1_AUTHORITY_COMPLIANCE_AUDIT.md` for the full V3.1
+authority requirement matrix and classification of every Phase 1 task.
+
+## 15. Phase 1 Authority Closure Status
+
+### Completed
+
+- clean native build (21/21 packages);
+- RTAB-Map 0.23.4 (Release, OpenCV 4.5.4d, no Torch, no Python);
+- 21/21 packages installed and verified with single OpenCV ABI;
+- OpenCV 4.5.4d single ABI (no 4.8, no 4.10, no `.so.408`, no `.so.410`);
+- synthetic cv_bridge image flow (12/12 RGBDImage outputs verified);
+- no hardware or motion activity during build validation.
+
+### Still open
+
+- parameterize identified hard-coded paths in launch files;
+- static command-publisher audit;
+- unified initial RViz profile as a formal deliverable;
+- Collision Monitor Humble schema/capability verification;
+- locate or complete the module registry, calibration manifest and
+  clock/timestamp policy where not already preserved.
+
+### Deferred by authority
+
+- physical `body → base_footprint` z-offset verification during the live
+  sensor phase;
+- physical camera validation;
+- optional Torch-enabled visual profile.
+
+**Phase 2 must not begin until the non-hardware Phase 1 authority-closure
+items are resolved or formally reclassified by an updated authority.**
+
+## 16. Deferred work
 
 - Update unsupported camera feature defaults in a later phase
 - Physical camera validation
