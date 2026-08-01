@@ -1,0 +1,3 @@
+run	metric	value	note
+sequential	runtime_resource_sampler	NOT_SAMPLED	No dedicated ps/thermal sampler was active during this P2-E run.
+cancel	runtime_resource_sampler	NOT_SAMPLED	No dedicated ps/thermal sampler was active during this P2-E run.

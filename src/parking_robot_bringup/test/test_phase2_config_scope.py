@@ -57,7 +57,8 @@ def test_no_excluded_scope_terms_in_launch_or_params():
 
 
 def test_only_mock_velocity_topic_is_used():
-    text = LAUNCH.read_text() + "\n" + PARAMS.read_text()
+    runner = PKG / "parking_robot_bringup" / "phase2_sequence_cancel_test_runner.py"
+    text = LAUNCH.read_text() + "\n" + PARAMS.read_text() + "\n" + runner.read_text()
     assert "/cmd_vel_phase2_mock" in text
     for forbidden in ["/wheelchair_control_command", "/vehicle_cmd_safe", "/cmd_vel_nav"]:
         assert forbidden not in text
@@ -149,6 +150,12 @@ def test_candidate_c_does_not_change_goal_or_progress_checker():
         "xy_goal_tolerance": 0.25,
         "yaw_goal_tolerance": 0.50,
     }
+
+
+def test_p2e_runner_console_entry_is_installed_once():
+    setup_text = (PKG / "setup.py").read_text()
+    entry = "phase2_sequence_cancel_test_runner = parking_robot_bringup.phase2_sequence_cancel_test_runner:main"
+    assert setup_text.count(entry) == 1
 
 
 def test_bt_navigator_has_required_humble_default_tree_plugins():

@@ -14,10 +14,10 @@ Completed scope:
 - P2-B static validation and package build/install validation: COMPLETE.
 - P2-C isolated no-goal runtime: COMPLETE after remediation.
 - P2-D bounded one-goal fake closed-loop NavigateToPose runtime: COMPLETE.
+- P2-E sequential goals and active-goal cancellation: COMPLETE.
 
 Remaining Phase 2 stages:
 
-- P2-E: NOT_STARTED.
 - P2-F: NOT_STARTED.
 - P2-G: NOT_STARTED.
 
@@ -64,6 +64,18 @@ Authoritative P2-D scenario:
 
 The scenario is tracked and covered by static map tests.
 
+Authoritative P2-E scenarios:
+
+- sequential scenario: `p2e_sequential_forward`
+- cancellation scenario: `p2e_cancel_forward`
+- start: `(5.425, -53.725, 0.0)`
+- sequential goals: `(6.425, -53.725, 0.0)`, `(7.425, -53.725, 0.0)`, `(8.425, -53.725, 0.0)`
+- cancellation goal: `(8.425, -53.725, 0.0)`
+- cancellation request timing: 3.0 seconds after goal acceptance
+- frame: `map`
+
+The P2-E scenarios use the same validated straight corridor as P2-D and are covered by static map tests.
+
 ## P2-C status
 
 The first P2-C no-goal runtime failed for two scoped reasons: BT Navigator default BT plugin coverage and fake-base shutdown handling. Remediation was completed, and the passing retest is the authoritative P2-C runtime evidence.
@@ -105,10 +117,43 @@ Result summary:
 
 P2-D status: `COMPLETE`.
 
+## Final authoritative P2-E result
+
+P2-E validated two bounded capabilities using the normal NavigateToPose pipeline and the unchanged Candidate C controller profile.
+
+Sequential run:
+
+- one initial pose was published;
+- exactly three NavigateToPose requests were sent;
+- goals completed strictly in order;
+- no fake-base odometry reset occurred between goals;
+- all three goals returned `SUCCEEDED`;
+- final XY errors were 0.24965727929978862 m, 0.247894889511765 m, and 0.2488566383313176 m;
+- command stop latency after every goal was 0.0 s;
+- no command-limit violation occurred;
+- no physical or legacy command path appeared;
+- stack shutdown was clean.
+
+Cancellation run:
+
+- exactly one NavigateToPose request was sent;
+- the goal was accepted and entered `GOAL_ACTIVE`;
+- exactly one cancellation request was sent 3.002859725005692 s after acceptance;
+- terminal action status was `5` (`CANCELED`);
+- the runner acceptance gate verified `/cmd_vel_phase2_mock` and fake-base velocity stopped within the configured 0.5 s limit;
+- translation after cancel request was 0.0 m;
+- one-second post-stop observed motion was 0.0 m;
+- no second goal was sent;
+- no physical or legacy command path appeared;
+- stack shutdown was clean.
+
+P2-E status: `COMPLETE`.
+
 ## Limitations retained
 
 - Mirrored curved fixed-path tracking remains unreliable.
 - Candidate C passed only the bounded simple straight scenario.
+- P2-E used one validated straight corridor; general curved sequential navigation remains unproven.
 - No obstacle-avoidance acceptance occurred.
 - No semantic perception integration occurred.
 - No physical robot motion occurred.

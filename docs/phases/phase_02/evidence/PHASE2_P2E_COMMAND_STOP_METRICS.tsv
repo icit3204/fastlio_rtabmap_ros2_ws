@@ -1,0 +1,5 @@
+run	goal_index	result_status	post_result_stop_latency_sec	command_zero_latency_after_cancel_sec	fake_base_velocity_zero_latency_after_cancel_sec	translation_after_cancel_m	post_stop_motion_m	internal_gate
+sequential	1	SUCCEEDED	0.0					PASS
+sequential	2	SUCCEEDED	0.0					PASS
+sequential	3	SUCCEEDED	0.0					PASS
+cancel	1	CANCELED	0.0	not_serialized_pass_gate	not_serialized_pass_gate	0.0	0.0	P2E_CANCELLATION_PASS

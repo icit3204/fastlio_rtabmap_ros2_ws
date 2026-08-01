@@ -44,4 +44,17 @@ Date: 2026-08-02
 | 38 | `evidence/PHASE2_P2D_TEST_RESULT.json` | `/home/dog/phase2_reports/PHASE2_P2D_TEST_RESULT.json` | Phase2 P2D Test Result | 6420 | `6599ce5dd7de407378d7e15e53f20c72d4406bff41cf146d623726e5875db539` | `FAILED_P2D_RETAINED_FOR_TRACEABILITY` |
 | 39 | `evidence/PHASE2_TOPIC_TF_AND_COMMAND_AUTHORITY_MATRIX.tsv` | `/home/dog/phase2_reports/PHASE2_TOPIC_TF_AND_COMMAND_AUTHORITY_MATRIX.tsv` | Phase2 Topic Tf And Command Authority Matrix | 2717 | `3d12f5da72497ecd6908365dc53ec2b6d81c1d9a7cc54dfeb35e5420da930b5e` | `P2_READINESS_AUTHORITATIVE` |
 
-**Total evidence files: 39**
+| 40 | `evidence/PHASE2_P2E_RESULT.md` | `/home/dog/phase2_reports/PHASE2_P2E_RESULT.md` | P2-E overall runtime result | 1457 | `9bc49b40bbda57ed9deffebc4d3737978453cc7fdb7f4ee25eb1acbd266134b0` | `P2E_FINAL_AUTHORITATIVE` |
+| 41 | `evidence/PHASE2_P2E_RESULT.json` | `/home/dog/phase2_reports/PHASE2_P2E_RESULT.json` | Machine-readable P2-E aggregate result | 1065 | `2cdf6e07dedb2f1b14218681c5a7435c772d094303d2b0896af20d9b8ecc81d1` | `P2E_FINAL_AUTHORITATIVE` |
+| 42 | `evidence/PHASE2_P2E_SEQUENTIAL_GOALS_RESULT.md` | `/home/dog/phase2_reports/PHASE2_P2E_SEQUENTIAL_GOALS_RESULT.md` | P2-E sequential-goal runtime result | 635 | `293b3dd92e4f8299c31403f8576fb9bbc2db03e44714e8409fd9952699b33a49` | `P2E_FINAL_AUTHORITATIVE` |
+| 43 | `evidence/PHASE2_P2E_SEQUENTIAL_GOALS.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_SEQUENTIAL_GOALS.tsv` | P2-E per-goal sequential metrics | 1762 | 79c506f9449e26d656641481ca07b7079e976a4d461778ec037d752d976cd446 | `P2E_FINAL_AUTHORITATIVE` |
+| 44 | `evidence/PHASE2_P2E_CANCELLATION_RESULT.md` | `/home/dog/phase2_reports/PHASE2_P2E_CANCELLATION_RESULT.md` | P2-E cancellation runtime result | 579 | `9205483a2e529dd34fcea4e4bef409196ff605945eaf71f845f1ba786440b301` | `P2E_FINAL_AUTHORITATIVE` |
+| 45 | `evidence/PHASE2_P2E_CANCELLATION_TIMELINE.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_CANCELLATION_TIMELINE.tsv` | P2-E cancellation action/stop timeline | 687 | `d836234ce52f0a924d13519a730f0f1a1cb2bb3a1dd5264ff117859504a96381` | `P2E_FINAL_AUTHORITATIVE` |
+| 46 | `evidence/PHASE2_P2E_PATH_HISTORY.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_PATH_HISTORY.tsv` | P2-E first/longest/final path history | 3972 | `040c1208d0351b30068b60518d5eff5314b01f690969aa2cc2d2eb26495868bc` | `P2E_FINAL_AUTHORITATIVE` |
+| 47 | `evidence/PHASE2_P2E_COMMAND_STOP_METRICS.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_COMMAND_STOP_METRICS.tsv` | P2-E command and fake-base stop metrics | 415 | `fb2145dc9f5adb862fb16e82894a3839d0a4f9a068f734502df4262526c210d7` | `P2E_FINAL_AUTHORITATIVE` |
+| 48 | `evidence/PHASE2_P2E_NODE_TOPIC_MATRIX.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_NODE_TOPIC_MATRIX.tsv` | P2-E node/topic/action isolation matrix | 6249 | `505bb14fe7617c1bab6f618309b6c6242f404933f3f95579d96a4d9e0cfd17b3` | `P2E_FINAL_AUTHORITATIVE` |
+| 49 | `evidence/PHASE2_P2E_RUNTIME_LOG.txt` | `/home/dog/phase2_reports/PHASE2_P2E_RUNTIME_LOG.txt` | P2-E combined sequential/cancellation runtime log | 51897 | 74c780ac9179ea8c40deb8a4615b6351a4dda9ba0abd24f66fcd82839064db3e | `P2E_FINAL_AUTHORITATIVE` |
+| 50 | `evidence/PHASE2_P2E_TEST_RESULT.md` | `/home/dog/phase2_reports/PHASE2_P2E_TEST_RESULT.md` | P2-E package build/test result | 258 | `d42e19a4f5e06fcc1f978b750b5335b9e306c635574e38d12309a5e2df76995b` | `P2E_FINAL_AUTHORITATIVE` |
+| 51 | `evidence/PHASE2_P2E_RESOURCE_METRICS.tsv` | `/home/dog/phase2_reports/PHASE2_P2E_RESOURCE_METRICS.tsv` | P2-E resource sampling status | 244 | `d57c3e1816d55cc449ffc57c2ed8c10486c362c07595cc5679578db912296593` | `P2E_SUPPORTING_EVIDENCE` |
+
+**Total evidence files: 51**

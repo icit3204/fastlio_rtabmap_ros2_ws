@@ -1,0 +1,10 @@
+event	elapsed_sec	detail
+goal_request	2.961761247002869	NavigateToPose request sent
+goal_response	2.9651764430018375	accepted=True goal_id=474c4b3b958a4fbfa2f12d532e60ede3
+first_nonzero_command		not serialized; runner acceptance required at least one before cancel
+cancel_request	5.968036168007529	elapsed_after_acceptance=3.002859725005692
+cancel_response	5.970085395005299	received=True
+terminal_result	5.979489896999439	status=5 CANCELED
+command_zero_after_cancel		not serialized; P2E_CANCELLATION_PASS requires <=0.5 sec
+fake_base_velocity_zero_after_cancel		not serialized; P2E_CANCELLATION_PASS requires <=0.5 sec
+post_stop_observation_end	7.489027030998841	post_stop_motion_m=0.0

@@ -59,6 +59,16 @@ def assert_world_pose_is_free(pose, meta, width, height, data):
     assert classify(pixel_value(data, width, px, py), meta) == "free"
 
 
+def assert_straight_segment_is_free(start, goal, meta, width, height, data, samples=31):
+    for i in range(samples):
+        t = i / (samples - 1)
+        pose = {
+            "x": float(start["x"]) + (float(goal["x"]) - float(start["x"])) * t,
+            "y": float(start["y"]) + (float(goal["y"]) - float(start["y"])) * t,
+        }
+        assert_world_pose_is_free(pose, meta, width, height, data)
+
+
 def test_map_yaml_resolves_to_packaged_pgm():
     meta = yaml.safe_load(MAP_YAML.read_text())
     assert meta["image"] == "phase2_clean_map.pgm"
@@ -111,11 +121,40 @@ def test_p2d_forward_goal_static_map_properties():
     assert float(start["yaw"]) == 0.0
     assert float(goal["yaw"]) == 0.0
 
-    sample_count = 31
-    for i in range(sample_count):
-        t = i / (sample_count - 1)
-        pose = {
-            "x": float(start["x"]) + (float(goal["x"]) - float(start["x"])) * t,
-            "y": float(start["y"]) + (float(goal["y"]) - float(start["y"])) * t,
-        }
-        assert_world_pose_is_free(pose, meta, width, height, data)
+    assert_straight_segment_is_free(start, goal, meta, width, height, data)
+
+
+def test_p2e_scenarios_static_map_properties():
+    meta = yaml.safe_load(MAP_YAML.read_text())
+    scenarios = yaml.safe_load(SCENARIOS.read_text())
+    width, height, _, data = read_pgm(MAP_PGM)
+
+    assert list(scenarios.keys()).count("p2e_sequential_forward") == 1
+    assert list(scenarios.keys()).count("p2e_cancel_forward") == 1
+
+    seq = scenarios["p2e_sequential_forward"]
+    cancel = scenarios["p2e_cancel_forward"]
+    seq_start = seq["initial_pose"]
+    cancel_start = cancel["initial_pose"]
+    assert seq_start == cancel_start == scenarios["p2d_forward_goal"]["initial_pose"]
+
+    previous = seq_start
+    for goal in seq["goals"]:
+        assert float(goal["yaw"]) == 0.0
+        assert_world_pose_is_free(previous, meta, width, height, data)
+        assert_world_pose_is_free(goal, meta, width, height, data)
+        distance = math.hypot(float(goal["x"]) - float(previous["x"]), float(goal["y"]) - float(previous["y"]))
+        assert abs(distance - 1.0) <= 1.0e-6
+        assert abs(float(goal["y"]) - float(seq_start["y"])) <= 1.0e-9
+        assert_straight_segment_is_free(previous, goal, meta, width, height, data)
+        previous = goal
+
+    assert seq["goals"][-1] == scenarios["p2d_forward_goal"]["goal"]
+    assert cancel["goal"] == scenarios["p2d_forward_goal"]["goal"]
+    assert float(cancel["cancel_after_acceptance_sec"]) == 3.0
+    cancel_distance = math.hypot(
+        float(cancel["goal"]["x"]) - float(cancel_start["x"]),
+        float(cancel["goal"]["y"]) - float(cancel_start["y"]),
+    )
+    assert abs(cancel_distance - 3.0) <= 1.0e-6
+    assert_straight_segment_is_free(cancel_start, cancel["goal"], meta, width, height, data)

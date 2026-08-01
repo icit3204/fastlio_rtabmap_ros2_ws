@@ -25,6 +25,7 @@ setup(
         "console_scripts": [
             "phase2_fake_base = parking_robot_bringup.phase2_fake_base:main",
             "phase2_goal_test_runner = parking_robot_bringup.phase2_goal_test_runner:main",
+            "phase2_sequence_cancel_test_runner = parking_robot_bringup.phase2_sequence_cancel_test_runner:main",
         ],
     },
 )

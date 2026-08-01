@@ -39,6 +39,31 @@ p2d_forward_goal:
     x: 8.425
     y: -53.725
     yaw: 0.0
+p2e_sequential_forward:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goals:
+    - x: 6.425
+      y: -53.725
+      yaw: 0.0
+    - x: 7.425
+      y: -53.725
+      yaw: 0.0
+    - x: 8.425
+      y: -53.725
+      yaw: 0.0
+p2e_cancel_forward:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goal:
+    x: 8.425
+    y: -53.725
+    yaw: 0.0
+  cancel_after_acceptance_sec: 3.0
 planner_failure_goal:
   pixel: {x: 621, y: 1154}
   pose: {x: -8.025, y: -8.725, yaw: 0.0}

@@ -1,0 +1,20 @@
+{
+  "cancel_request_count": 1,
+  "cancellation_decision": "P2E_CANCELLATION_PASS",
+  "cancellation_pass": true,
+  "cancellation_result_path": "/home/dog/phase2_runtime/p2e_cancel_20260802_010012/cancel_result.json",
+  "decision": "PHASE2_P2E_RUNTIME_PASS",
+  "evidence_gap_notes": [
+    "The P2-E runner internally evaluated command-zero and fake-base velocity-zero latency gates for cancellation and returned P2E_CANCELLATION_PASS, but exact first-zero timestamps were not serialized in this runner version.",
+    "No dedicated runtime resource sampler was run; resource TSV records NOT_SAMPLED rather than inferred values."
+  ],
+  "follow_path_action_count": 0,
+  "navigate_to_pose_request_count": 4,
+  "runtime_roots": {
+    "cancel": "/home/dog/phase2_runtime/p2e_cancel_20260802_010012",
+    "sequential": "/home/dog/phase2_runtime/p2e_sequential_20260802_010012"
+  },
+  "sequential_decision": "P2E_SEQUENTIAL_GOALS_PASS",
+  "sequential_pass": true,
+  "sequential_result_path": "/home/dog/phase2_runtime/p2e_sequential_20260802_010012/sequential_result.json"
+}
