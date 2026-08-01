@@ -1,0 +1,1031 @@
+===== launch.log: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/launch.log =====
+[INFO] [launch]: All log files can be found below /home/dog/.ros/log/2026-08-02-00-45-57-275971-dog-desktop-341988
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [map_server-1]: process started with pid [342002]
+[INFO] [static_transform_publisher-2]: process started with pid [342004]
+[INFO] [phase2_fake_base-3]: process started with pid [342006]
+[INFO] [planner_server-4]: process started with pid [342008]
+[INFO] [controller_server-5]: process started with pid [342010]
+[INFO] [behavior_server-6]: process started with pid [342022]
+[INFO] [bt_navigator-7]: process started with pid [342025]
+[INFO] [lifecycle_manager-8]: process started with pid [342053]
+[static_transform_publisher-2] [WARN] [1785602757.473865349] []: Old-style arguments are deprecated; see --help for new-style arguments
+[static_transform_publisher-2] [INFO] [1785602757.502829275] [phase2_map_to_odom_static_tf]: Spinning until stopped - publishing transform
+[static_transform_publisher-2] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-2] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-2] from 'map' to 'odom'
+[planner_server-4] [INFO] [1785602757.567463528] [planner_server]:
+[planner_server-4] 	planner_server lifecycle node launched.
+[planner_server-4] 	Waiting on external lifecycle transitions to activate
+[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-1] [INFO] [1785602757.570130627] [map_server]:
+[map_server-1] 	map_server lifecycle node launched.
+[map_server-1] 	Waiting on external lifecycle transitions to activate
+[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[map_server-1] [INFO] [1785602757.570502511] [map_server]: Creating
+[planner_server-4] [INFO] [1785602757.570642004] [planner_server]: Creating
+[controller_server-5] [INFO] [1785602757.576227729] [controller_server]:
+[controller_server-5] 	controller_server lifecycle node launched.
+[controller_server-5] 	Waiting on external lifecycle transitions to activate
+[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-5] [INFO] [1785602757.588024225] [controller_server]: Creating controller server
+[planner_server-4] [INFO] [1785602757.594683747] [global_costmap.global_costmap]:
+[planner_server-4] 	global_costmap lifecycle node launched.
+[planner_server-4] 	Waiting on external lifecycle transitions to activate
+[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-4] [INFO] [1785602757.595869035] [global_costmap.global_costmap]: Creating Costmap
+[bt_navigator-7] [INFO] [1785602757.614610374] [bt_navigator]:
+[bt_navigator-7] 	bt_navigator lifecycle node launched.
+[bt_navigator-7] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1785602757.615027956] [lifecycle_manager_navigation]: Creating
+[bt_navigator-7] [INFO] [1785602757.615156440] [bt_navigator]: Creating
+[lifecycle_manager-8] [INFO] [1785602757.621986816] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[behavior_server-6] [INFO] [1785602757.643181198] [behavior_server]:
+[behavior_server-6] 	behavior_server lifecycle node launched.
+[behavior_server-6] 	Waiting on external lifecycle transitions to activate
+[behavior_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-5] [INFO] [1785602757.651447494] [local_costmap.local_costmap]:
+[controller_server-5] 	local_costmap lifecycle node launched.
+[controller_server-5] 	Waiting on external lifecycle transitions to activate
+[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-5] [INFO] [1785602757.653051868] [local_costmap.local_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1785602779.308198188] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785602779.308545720] [lifecycle_manager_navigation]: [34m[1mConfiguring map_server[0m[0m
+[map_server-1] [INFO] [1785602779.309715392] [map_server]: Configuring
+[map_server-1] [INFO] [1785602779.309990793] [map_io]: Loading yaml file: /home/dog/phase2_builds/p2d_final_authoritative_20260802_004444/install/share/parking_robot_bringup/maps/phase2_clean_map.yaml
+[map_server-1] [INFO] [1785602779.310811461] [map_io]: resolution: 0.05
+[map_server-1] [INFO] [1785602779.310860326] [map_io]: origin[0]: -39.1
+[map_server-1] [INFO] [1785602779.310875911] [map_io]: origin[1]: -85.15
+[map_server-1] [INFO] [1785602779.310887655] [map_io]: origin[2]: 0
+[map_server-1] [INFO] [1785602779.310899912] [map_io]: free_thresh: 0.196
+[map_server-1] [INFO] [1785602779.310911112] [map_io]: occupied_thresh: 0.65
+[map_server-1] [INFO] [1785602779.310924488] [map_io]: mode: trinary
+[map_server-1] [INFO] [1785602779.310938633] [map_io]: negate: 0
+[map_server-1] [INFO] [1785602779.311443034] [map_io]: Loading image_file: /home/dog/phase2_builds/p2d_final_authoritative_20260802_004444/install/share/parking_robot_bringup/maps/phase2_clean_map.pgm
+[map_server-1] [INFO] [1785602780.171211521] [map_io]: Read map /home/dog/phase2_builds/p2d_final_authoritative_20260802_004444/install/share/parking_robot_bringup/maps/phase2_clean_map.pgm: 1744 X 2683 map @ 0.05 m/cell
+[lifecycle_manager-8] [INFO] [1785602780.187716655] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-4] [INFO] [1785602780.188576748] [planner_server]: Configuring
+[planner_server-4] [INFO] [1785602780.188765043] [global_costmap.global_costmap]: Configuring
+[planner_server-4] [INFO] [1785602780.200987792] [global_costmap.global_costmap]: Using plugin "static_layer"
+[planner_server-4] [INFO] [1785602780.207487116] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[planner_server-4] [INFO] [1785602780.210145990] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[planner_server-4] [INFO] [1785602780.210245353] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-4] [INFO] [1785602780.211910082] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-4] [INFO] [1785602780.227947328] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner
+[planner_server-4] [INFO] [1785602780.228063812] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785602780.229189578] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-8] [INFO] [1785602780.246365744] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-5] [INFO] [1785602780.246949539] [controller_server]: Configuring controller interface
+[controller_server-5] [INFO] [1785602780.247259726] [controller_server]: getting goal checker plugins..
+[controller_server-5] [INFO] [1785602780.247412851] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-5] [INFO] [1785602780.247490198] [local_costmap.local_costmap]: Configuring
+[controller_server-5] [INFO] [1785602780.258968314] [local_costmap.local_costmap]: Using plugin "static_layer"
+[controller_server-5] [INFO] [1785602780.266537722] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability
+[controller_server-5] [INFO] [1785602780.269242806] [local_costmap.local_costmap]: Initialized plugin "static_layer"
+[controller_server-5] [INFO] [1785602780.269343289] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-5] [INFO] [1785602780.270237623] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[controller_server-5] [INFO] [1785602780.288908367] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[controller_server-5] [INFO] [1785602780.290053430] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-5] [INFO] [1785602780.290420802] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[controller_server-5] [INFO] [1785602780.291866227] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController
+[controller_server-5] [INFO] [1785602780.293123102] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON
+[controller_server-5] [INFO] [1785602780.295159939] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.
+[controller_server-5] [INFO] [1785602780.295214725] [controller_server]: Critic loaded : mppi::critics::GoalCritic
+[controller_server-5] [INFO] [1785602780.295523599] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, and 0.500000 angular threshold.
+[controller_server-5] [INFO] [1785602780.295563024] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic
+[controller_server-5] [INFO] [1785602780.296058273] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 10.000000 weight
+[controller_server-5] [INFO] [1785602780.296098147] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic
+[controller_server-5] [INFO] [1785602780.296381036] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic
+[controller_server-5] [INFO] [1785602780.297156614] [controller_server]: ObstaclesCritic instantiated with 1 power and 20.000000 / 1.500000 weights. Critic will collision check based on circular cost.
+[controller_server-5] [INFO] [1785602780.297198440] [controller_server]: Critic loaded : mppi::critics::ObstaclesCritic
+[controller_server-5] [INFO] [1785602780.297675032] [controller_server]: PathAngleCritic instantiated with 1 power and 2.200000 weight. Reversing not allowed.
+[controller_server-5] [INFO] [1785602780.297708153] [controller_server]: Critic loaded : mppi::critics::PathAngleCritic
+[controller_server-5] [INFO] [1785602780.298577078] [controller_server]: Optimizer reset
+[controller_server-5] [INFO] [1785602780.303567263] [MPPIController]: Configured MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785602780.303646562] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-8] [INFO] [1785602780.318235184] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-6] [INFO] [1785602780.318867941] [behavior_server]: Configuring
+[behavior_server-6] [INFO] [1785602780.343198780] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-6] [INFO] [1785602780.344781042] [behavior_server]: Configuring spin
+[behavior_server-6] [INFO] [1785602780.360909492] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp
+[behavior_server-6] [INFO] [1785602780.362672879] [behavior_server]: Configuring backup
+[behavior_server-6] [INFO] [1785602780.371892743] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-6] [INFO] [1785602780.373371929] [behavior_server]: Configuring wait
+[lifecycle_manager-8] [INFO] [1785602780.380401479] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-7] [INFO] [1785602780.380975227] [bt_navigator]: Configuring
+[lifecycle_manager-8] [INFO] [1785602780.465862707] [lifecycle_manager_navigation]: [34m[1mActivating map_server[0m[0m
+[map_server-1] [INFO] [1785602780.466251200] [map_server]: Activating
+[map_server-1] [INFO] [1785602780.472467891] [map_server]: Creating bond (map_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785602780.502164032] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 1744 X 2683 at 0.050000 m/pix
+[controller_server-5] [INFO] [1785602780.511392696] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 1744 X 2683 at 0.050000 m/pix
+[lifecycle_manager-8] [INFO] [1785602780.587887220] [lifecycle_manager_navigation]: Server map_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785602780.588032089] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-4] [INFO] [1785602780.588615629] [planner_server]: Activating
+[planner_server-4] [INFO] [1785602780.588754994] [global_costmap.global_costmap]: Activating
+[planner_server-4] [INFO] [1785602780.588791315] [global_costmap.global_costmap]: Checking transform
+[planner_server-4] [INFO] [1785602780.589057340] [global_costmap.global_costmap]: start
+[planner_server-4] [INFO] [1785602780.689286076] [planner_server]: Activating plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785602780.691393347] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785602780.798634320] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785602780.798784917] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-5] [INFO] [1785602780.799354824] [controller_server]: Activating
+[controller_server-5] [INFO] [1785602780.799451435] [local_costmap.local_costmap]: Activating
+[controller_server-5] [INFO] [1785602780.799481484] [local_costmap.local_costmap]: Checking transform
+[controller_server-5] [INFO] [1785602780.799650834] [local_costmap.local_costmap]: start
+[controller_server-5] [WARN] [1785602781.049949224] [controller_server]: Parameter controller_server.verbose not found
+[controller_server-5] [INFO] [1785602781.050605502] [controller_server]: Optimizer reset
+[controller_server-5] [INFO] [1785602781.050933513] [MPPIController]: Activated MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785602781.050985675] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785602781.158997458] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785602781.159188536] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-6] [INFO] [1785602781.159942994] [behavior_server]: Activating
+[behavior_server-6] [INFO] [1785602781.160051157] [behavior_server]: Activating spin
+[behavior_server-6] [INFO] [1785602781.160090935] [behavior_server]: Activating backup
+[behavior_server-6] [INFO] [1785602781.160117592] [behavior_server]: Activating wait
+[behavior_server-6] [INFO] [1785602781.160151417] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785602781.272251722] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785602781.272397231] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-7] [INFO] [1785602781.273090886] [bt_navigator]: Activating
+[bt_navigator-7] [INFO] [1785602781.391744245] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785602781.501264559] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-8] [INFO] [1785602781.501396243] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1785602781.501425908] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[bt_navigator-7] [INFO] [1785602848.992701246] [bt_navigator]: Begin navigating from current location (5.42, -53.73) to (8.43, -53.73)
+[controller_server-5] [INFO] [1785602849.054623974] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-5] [WARN] [1785602849.054793292] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded general_goal_checker . This warning will appear once.
+[controller_server-5] [INFO] [1785602849.055478595] [controller_server]: Optimizer reset
+[controller_server-5] [INFO] [1785602850.104985609] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602851.154998526] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602852.204996241] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602853.254993283] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602854.304980275] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602855.355000258] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602856.404993646] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602857.455030971] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602858.505002947] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602859.554996299] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602860.606256348] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602861.654991254] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602862.705005401] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602863.754997114] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602864.804991546] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602865.854979832] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602866.904988757] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602867.954968976] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602869.004977353] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602870.054980609] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602871.104977944] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602872.154987597] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602873.205071619] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602874.254987249] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602875.305397583] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602876.355100116] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602877.405028926] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602878.455041738] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602879.505139319] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602880.555009563] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602881.608749344] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602882.655006247] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602883.705000714] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602884.755004652] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602885.805745926] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602886.855010476] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602887.904992233] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602888.955007077] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602890.005008096] [controller_server]: Passing new path to controller.
+[controller_server-5] [INFO] [1785602890.311725655] [controller_server]: Reached the goal!
+[bt_navigator-7] [INFO] [1785602890.343550406] [bt_navigator]: Goal succeeded
+[controller_server-5] [INFO] [1785602917.241872758] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-5] [INFO] [1785602917.242018491] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[behavior_server-6] [INFO] [1785602917.241869942] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-6] [INFO] [1785602917.242190753] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-6] [INFO] [1785602917.242374855] [behavior_server]: Deactivating
+[bt_navigator-7] [INFO] [1785602917.241881046] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-7] [INFO] [1785602917.242017563] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-7] [INFO] [1785602917.242187521] [bt_navigator]: Deactivating
+[bt_navigator-7] [INFO] [1785602917.242237218] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[static_transform_publisher-2] [INFO] [1785602917.241927256] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-1] [INFO] [1785602917.241956505] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[map_server-1] [INFO] [1785602917.242092925] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)
+[map_server-1] [INFO] [1785602917.242222306] [map_server]: Deactivating
+[map_server-1] [INFO] [1785602917.242254627] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785602917.241987354] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1785602917.242128895] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-8] [INFO] [1785602917.242231810] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m
+[controller_server-5] [INFO] [1785602917.242760756] [controller_server]: Deactivating
+[controller_server-5] [INFO] [1785602917.242847831] [MPPIController]: Deactivated MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785602917.242889336] [local_costmap.local_costmap]: Deactivating
+[behavior_server-6] [INFO] [1785602917.242443561] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785602917.242306085] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-4] [INFO] [1785602917.242421768] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-4] [INFO] [1785602917.242541132] [planner_server]: Deactivating
+[planner_server-4] [INFO] [1785602917.242613455] [global_costmap.global_costmap]: Deactivating
+[map_server-1] [INFO] [1785602917.252739683] [map_server]: Cleaning up
+[bt_navigator-7] [INFO] [1785602917.252910281] [bt_navigator]: Cleaning up
+[map_server-1] [INFO] [1785602917.253056846] [map_server]: Destroying bond (map_server) to lifecycle manager.
+[behavior_server-6] [INFO] [1785602917.254093905] [behavior_server]: Cleaning up
+[behavior_server-6] [INFO] [1785602917.257872848] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[map_server-1] [INFO] [1785602917.258234684] [map_server]: Destroying
+[behavior_server-6] [INFO] [1785602917.310671648] [behavior_server]: Destroying
+[lifecycle_manager-8] [INFO] [1785602917.339404134] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[bt_navigator-7] [INFO] [1785602917.374631527] [bt_navigator]: Completed Cleaning up
+[bt_navigator-7] [INFO] [1785602917.374791756] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[bt_navigator-7] [INFO] [1785602917.383776731] [bt_navigator]: Destroying
+[INFO] [map_server-1]: process has finished cleanly [pid 342002]
+[controller_server-5] [INFO] [1785602917.399998460] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[INFO] [static_transform_publisher-2]: process has finished cleanly [pid 342004]
+[controller_server-5] [INFO] [1785602917.410451484] [controller_server]: Cleaning up
+[controller_server-5] [INFO] [1785602917.411650276] [MPPIController]: Cleaned up MPPI Controller: FollowPath
+[controller_server-5] [INFO] [1785602917.411859627] [local_costmap.local_costmap]: Cleaning up
+[controller_server-5] [INFO] [1785602917.428377271] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-5] [INFO] [1785602917.434882033] [local_costmap.local_costmap]: Destroying
+[INFO] [behavior_server-6]: process has finished cleanly [pid 342022]
+[controller_server-5] [INFO] [1785602917.443388304] [controller_server]: Destroying
+[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 342053]
+[INFO] [bt_navigator-7]: process has finished cleanly [pid 342025]
+[INFO] [phase2_fake_base-3]: process has finished cleanly [pid 342006]
+[INFO] [controller_server-5]: process has finished cleanly [pid 342010]
+[planner_server-4] [INFO] [1785602917.589458176] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785602917.589601733] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785602917.600017412] [planner_server]: Cleaning up
+[planner_server-4] [INFO] [1785602917.609933521] [global_costmap.global_costmap]: Cleaning up
+[planner_server-4] [INFO] [1785602917.615742964] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785602917.615852344] [planner_server]: Destroying plugin GridBased of type NavfnPlanner
+[planner_server-4] [INFO] [1785602917.623949160] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-4] [INFO] [1785602917.633331876] [global_costmap.global_costmap]: Destroying
+[planner_server-4] [INFO] [1785602917.643787844] [planner_server]: Destroying
+[INFO] [planner_server-4]: process has finished cleanly [pid 342008]
+
+===== runner.log: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/runner.log =====
+[INFO] [1785602846.150857035] [phase2_goal_test_runner]: test state -> WAITING_FOR_NAV2
+[INFO] [1785602848.983564617] [phase2_goal_test_runner]: test state -> SETTING_START
+[INFO] [1785602848.985605102] [phase2_goal_test_runner]: test state -> VERIFYING_START
+[INFO] [1785602848.988987296] [phase2_goal_test_runner]: test state -> GOAL_REQUEST_SENT
+[INFO] [1785602848.995373272] [phase2_goal_test_runner]: test state -> GOAL_ACTIVE
+[INFO] [1785602895.366252398] [phase2_goal_test_runner]: test state -> SUCCEEDED
+[INFO] [1785602895.367798434] [phase2_goal_test_runner]: test state -> CLEANUP
+
+===== runner_result.json: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/runner_result.json =====
+{
+  "action_goal_accepted": true,
+  "action_result": "SUCCEEDED",
+  "action_result_status": 4,
+  "angular_nonzero_command_count": 826,
+  "angular_nonzero_command_sec": 41.25189420899551,
+  "cancel_goal_count": 0,
+  "cancel_requested": false,
+  "cancel_response_received": false,
+  "command_limit_violation_count": 0,
+  "command_message_count": 827,
+  "configured_command_limits": {
+    "max_abs_angular_z": 0.8,
+    "max_abs_linear_x": 0.25,
+    "tolerance": 1e-06
+  },
+  "elapsed_sec": 49.34955575999629,
+  "failure_reasons": [],
+  "feedback_sample_count": 4135,
+  "feedback_samples": [
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 2.9678091959940502
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 2.972970169998007
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 2.9836833629960893
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 2.9937154139915947
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 3.0026426589902258
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 3.0160853839915944
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 3.0353546142578125,
+      "elapsed_sec": 3.0246024079970084
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 3.0353546142578125,
+      "elapsed_sec": 3.032853149998118
+    },
+    {
+      "current_x": 5.425031629003107,
+      "current_y": -53.72499999857177,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.0427138980012387
+    },
+    {
+      "current_x": 5.425031629003107,
+      "current_y": -53.72499999857177,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.053167146994383
+    },
+    {
+      "current_x": 5.425064041527066,
+      "current_y": -53.72499999414468,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.06331856099132
+    },
+    {
+      "current_x": 5.425064041527066,
+      "current_y": -53.72499999414468,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.0734778799960623
+    },
+    {
+      "current_x": 5.425095928422911,
+      "current_y": -53.72499998686223,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.083116476991563
+    },
+    {
+      "current_x": 5.425095928422911,
+      "current_y": -53.72499998686223,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.0934115439886227
+    },
+    {
+      "current_x": 5.42522093553461,
+      "current_y": -53.724999951335654,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.1029011119971983
+    },
+    {
+      "current_x": 5.42522093553461,
+      "current_y": -53.724999951335654,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.11329435899097
+    },
+    {
+      "current_x": 5.425346680827365,
+      "current_y": -53.72499991300416,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.123083744998439
+    },
+    {
+      "current_x": 5.425346680827365,
+      "current_y": -53.72499991300416,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.13365798999439
+    },
+    {
+      "current_x": 5.425680246416229,
+      "current_y": -53.724999813576005,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.1430548509961227
+    },
+    {
+      "current_x": 5.425680246416229,
+      "current_y": -53.724999813576005,
+      "distance_remaining": 2.9853546619415283,
+      "elapsed_sec": 3.153320316996542
+    }
+  ],
+  "final_pose": {
+    "x": 8.185453032013545,
+    "y": -53.78843856683632,
+    "yaw": 0.003909699763943841
+  },
+  "final_position_error_m": 0.24780476515545505,
+  "first_nonzero_command_elapsed_sec": 3.031107714996324,
+  "first_odom_after_reset": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "frame_id": "map",
+  "global_path_length_m": 0.30606518986571024,
+  "global_path_metrics": {
+    "end": {
+      "x": 8.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    "endpoint_error_m": 0.0,
+    "finite": true,
+    "frame": "map",
+    "length_m": 0.30606518986571024,
+    "map_analysis": {
+      "map_yaml": "/home/dog/phase2_builds/p2d_final_authoritative_20260802_004444/install/share/parking_robot_bringup/maps/phase2_clean_map.yaml",
+      "occupied_hits": 0,
+      "out_of_bounds_hits": 0,
+      "samples": 29,
+      "unknown_hits": 0
+    },
+    "max_gap_m": 0.07071067917232597,
+    "message_type": "nav_msgs/msg/Path",
+    "pose_count": 10,
+    "received": true,
+    "start": {
+      "x": 8.150000704079865,
+      "y": -53.7999995328486,
+      "yaw": 0.0
+    },
+    "topic": "/plan"
+  },
+  "global_path_pose_count": 10,
+  "global_path_received": true,
+  "goal_accepted": true,
+  "goal_id": "7feffb85898042008b77bd8c3d4ba529",
+  "goal_pose": {
+    "x": 8.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "goal_request_elapsed_sec": 2.9577155119914096,
+  "goal_request_sent": true,
+  "goal_response_elapsed_sec": 2.9625964439910604,
+  "goal_response_exception": null,
+  "goal_response_received": true,
+  "goal_send_count": 1,
+  "initialpose_position_error_m": 0.0,
+  "initialpose_publication_stamp": {
+    "nanosec": 983811186,
+    "sec": 1785602848
+  },
+  "initialpose_settle_duration_sec": 0.0032746379874879494,
+  "initialpose_verified": true,
+  "initialpose_yaw_error_rad": 0.0,
+  "invalid_command_count": 0,
+  "last_nonzero_command_elapsed_sec": 44.28146222399664,
+  "linear_nonzero_command_count": 826,
+  "linear_nonzero_command_sec": 41.25189420899551,
+  "max_abs_angular_z": 0.04828613996505737,
+  "max_abs_linear_x": 0.08317729830741882,
+  "nonzero_command_count": 826,
+  "odom_buckets": [
+    {
+      "distance_from_start_m": 0.0,
+      "distance_to_goal_m": 3.000000000000001,
+      "elapsed_sec": 2.9501954180013854,
+      "total_translation_m": 0.0,
+      "x": 5.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    {
+      "distance_from_start_m": 0.10093431197297092,
+      "distance_to_goal_m": 2.899065860846609,
+      "elapsed_sec": 5.019769955993979,
+      "total_translation_m": 0.10093439191786217,
+      "x": 5.525934144967862,
+      "y": -53.72518361117502,
+      "yaw": 0.0003921645615601044
+    },
+    {
+      "distance_from_start_m": 0.44235072469837344,
+      "distance_to_goal_m": 2.557682613262181,
+      "elapsed_sec": 10.000330070994096,
+      "total_translation_m": 0.44236755909216036,
+      "x": 5.86732230224292,
+      "y": -53.73001443712682,
+      "yaw": -0.024607076408196704
+    },
+    {
+      "distance_from_start_m": 0.7816877100648197,
+      "distance_to_goal_m": 2.218479153528253,
+      "elapsed_sec": 15.019212307000998,
+      "total_translation_m": 0.7817266530876535,
+      "x": 6.206564320237825,
+      "y": -53.73888846275036,
+      "yaw": -0.027681386055141033
+    },
+    {
+      "distance_from_start_m": 1.1183741141292043,
+      "distance_to_goal_m": 1.8819336533039588,
+      "elapsed_sec": 20.019409171000007,
+      "total_translation_m": 1.1184203570970532,
+      "x": 6.543181063952717,
+      "y": -53.74577901277378,
+      "yaw": -0.017240588135611468
+    },
+    {
+      "distance_from_start_m": 1.4537633277986,
+      "distance_to_goal_m": 1.5468773480388647,
+      "elapsed_sec": 25.019521548994817,
+      "total_translation_m": 1.4538370448890692,
+      "x": 6.878433047229385,
+      "y": -53.755986940371116,
+      "yaw": -0.03295127281872512
+    },
+    {
+      "distance_from_start_m": 1.7889661267063302,
+      "distance_to_goal_m": 1.2122772732170946,
+      "elapsed_sec": 30.019486909994157,
+      "total_translation_m": 1.7890657334179791,
+      "x": 7.213463935890663,
+      "y": -53.7673857584706,
+      "yaw": -0.03845512084977898
+    },
+    {
+      "distance_from_start_m": 2.127362348385317,
+      "distance_to_goal_m": 0.8750807333464916,
+      "elapsed_sec": 35.01982815199881,
+      "total_translation_m": 2.1274908995847306,
+      "x": 7.551650711908876,
+      "y": -53.78002100385271,
+      "yaw": -0.028269218852625677
+    },
+    {
+      "distance_from_start_m": 2.464763553991812,
+      "distance_to_goal_m": 0.5398343059874466,
+      "elapsed_sec": 40.01953314599814,
+      "total_translation_m": 2.4649028522110465,
+      "x": 7.888939716527567,
+      "y": -53.78872166354076,
+      "yaw": -0.0058646385491183395
+    },
+    {
+      "distance_from_start_m": 2.761181883490296,
+      "distance_to_goal_m": 0.24780476515545505,
+      "elapsed_sec": 45.000354588992195,
+      "total_translation_m": 2.761417241533026,
+      "x": 8.185453032013545,
+      "y": -53.78843856683632,
+      "yaw": 0.003909699763943841
+    }
+  ],
+  "odom_metrics": {
+    "max_angular_velocity": 0.04828613996505737,
+    "max_linear_velocity": 0.08317729830741882,
+    "max_quaternion_norm": 1.0,
+    "min_quaternion_norm": 1.0,
+    "nonfinite_count": 0,
+    "sample_count": 2327,
+    "timestamp_nonmonotonic_count": 0,
+    "total_translation_m": 2.761417241533026
+  },
+  "pass": true,
+  "post_result_stop_latency_sec": 0.0,
+  "result_exception": null,
+  "result_request_elapsed_sec": 2.964170865001506,
+  "result_request_sent": true,
+  "result_response_elapsed_sec": 44.31350416698842,
+  "result_response_received": true,
+  "rotation_only_command_count": 0,
+  "rotation_only_command_sec": 0.0,
+  "settled_odom": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "source_revision": "985cda0f20859fb6144362248e17b1fa42efd5e4",
+  "start_pose": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "state_transitions": [
+    {
+      "elapsed_sec": 0.08053020399529487,
+      "state": "WAITING_FOR_NAV2"
+    },
+    {
+      "elapsed_sec": 2.950739659994724,
+      "state": "SETTING_START"
+    },
+    {
+      "elapsed_sec": 2.952990839999984,
+      "state": "VERIFYING_START"
+    },
+    {
+      "elapsed_sec": 2.9562647429993376,
+      "state": "GOAL_REQUEST_SENT"
+    },
+    {
+      "elapsed_sec": 2.9626890549989184,
+      "state": "GOAL_ACTIVE"
+    },
+    {
+      "elapsed_sec": 49.33312915900024,
+      "state": "SUCCEEDED"
+    },
+    {
+      "elapsed_sec": 49.33511437699781,
+      "state": "CLEANUP"
+    }
+  ],
+  "test_name": "p2d_final_authoritative_forward_goal",
+  "translation_command_count": 826,
+  "translation_command_sec": 41.25189420899551,
+  "unsupported_command_count": 0,
+  "validation_mode": "navigation"
+}
+===== node_list_before: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/node_list.txt =====
+/behavior_server
+/bt_navigator
+/bt_navigator_navigate_through_poses_rclcpp_node
+/bt_navigator_navigate_to_pose_rclcpp_node
+/controller_server
+/global_costmap/global_costmap
+/lifecycle_manager_navigation
+/local_costmap/local_costmap
+/map_server
+/phase2_fake_base
+/phase2_map_to_odom_static_tf
+/planner_server
+/transform_listener_impl_aaaadc791ca0
+/transform_listener_impl_aaaae4a6cbb0
+/transform_listener_impl_aaaaf36c2740
+
+===== topic_list_before: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/topic_list_t.txt =====
+/Odometry [nav_msgs/msg/Odometry]
+/behavior_server/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/behavior_tree_log [nav2_msgs/msg/BehaviorTreeLog]
+/bond [bond/msg/Status]
+/bt_navigator/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/cmd_vel_phase2_mock [geometry_msgs/msg/Twist]
+/controller_server/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/diagnostics [diagnostic_msgs/msg/DiagnosticArray]
+/global_costmap/costmap [nav_msgs/msg/OccupancyGrid]
+/global_costmap/costmap_raw [nav2_msgs/msg/Costmap]
+/global_costmap/costmap_updates [map_msgs/msg/OccupancyGridUpdate]
+/global_costmap/footprint [geometry_msgs/msg/Polygon]
+/global_costmap/global_costmap/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/global_costmap/published_footprint [geometry_msgs/msg/PolygonStamped]
+/goal_pose [geometry_msgs/msg/PoseStamped]
+/initialpose [geometry_msgs/msg/PoseWithCovarianceStamped]
+/local_costmap/costmap [nav_msgs/msg/OccupancyGrid]
+/local_costmap/costmap_raw [nav2_msgs/msg/Costmap]
+/local_costmap/costmap_updates [map_msgs/msg/OccupancyGridUpdate]
+/local_costmap/footprint [geometry_msgs/msg/Polygon]
+/local_costmap/local_costmap/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/local_costmap/published_footprint [geometry_msgs/msg/PolygonStamped]
+/map [nav_msgs/msg/OccupancyGrid]
+/map_server/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/parameter_events [rcl_interfaces/msg/ParameterEvent]
+/plan [nav_msgs/msg/Path]
+/planner_server/transition_event [lifecycle_msgs/msg/TransitionEvent]
+/rosout [rcl_interfaces/msg/Log]
+/speed_limit [nav2_msgs/msg/SpeedLimit]
+/tf [tf2_msgs/msg/TFMessage]
+/tf_static [tf2_msgs/msg/TFMessage]
+/trajectories [visualization_msgs/msg/MarkerArray]
+/transformed_global_plan [nav_msgs/msg/Path]
+
+===== action_info: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/navigate_to_pose_info.txt =====
+Action: /navigate_to_pose
+Action clients: 1
+    /bt_navigator
+Action servers: 1
+    /bt_navigator
+
+===== cmd_vel_info_before: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/cmd_vel_phase2_mock_info.txt =====
+Type: geometry_msgs/msg/Twist
+
+Publisher count: 4
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.2b.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.34.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.3d.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: controller_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.fa.37.ff.e8.00.00.00.00.00.00.4c.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 1
+
+Node name: phase2_fake_base
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.f6.37.fb.fa.00.00.00.00.00.00.13.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+
+===== cmd_vel_info_after: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/cmd_vel_phase2_mock_info_after.txt =====
+Type: geometry_msgs/msg/Twist
+
+Publisher count: 4
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.2b.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.34.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: behavior_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.3d.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: controller_server
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.fa.37.ff.e8.00.00.00.00.00.00.4c.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 1
+
+Node name: phase2_fake_base
+Node namespace: /
+Topic type: geometry_msgs/msg/Twist
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.f6.37.fb.fa.00.00.00.00.00.00.13.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+
+===== tf_info: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/tf_info.txt =====
+Type: tf2_msgs/msg/TFMessage
+
+Publisher count: 1
+
+Node name: _NODE_NAME_UNKNOWN_
+Node namespace: _NODE_NAMESPACE_UNKNOWN_
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.f6.37.fb.fa.00.00.00.00.00.00.12.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 2
+
+Node name: transform_listener_impl_aaaaf36c2740
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.1f.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: _NODE_NAME_UNKNOWN_
+Node namespace: _NODE_NAMESPACE_UNKNOWN_
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.09.38.c8.c5.00.00.00.00.00.00.1d.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+
+===== tf_static_info: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/tf_static_info.txt =====
+Type: tf2_msgs/msg/TFMessage
+
+Publisher count: 1
+
+Node name: phase2_map_to_odom_static_tf
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.f4.37.85.83.00.00.00.00.00.00.12.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: TRANSIENT_LOCAL
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 4
+
+Node name: transform_listener_impl_aaaaf36c2740
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.06.38.1d.7e.00.00.00.00.00.00.20.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: TRANSIENT_LOCAL
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: bt_navigator
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.09.38.c8.c5.00.00.00.00.00.00.1e.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: TRANSIENT_LOCAL
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: transform_listener_impl_aaaae4a6cbb0
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.f8.37.5c.49.00.00.00.00.00.00.3a.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: TRANSIENT_LOCAL
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: transform_listener_impl_aaaadc791ca0
+Node namespace: /
+Topic type: tf2_msgs/msg/TFMessage
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.fa.37.ff.e8.00.00.00.00.00.00.3a.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: TRANSIENT_LOCAL
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+
+===== odometry_info: /home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444/odometry_info.txt =====
+Type: nav_msgs/msg/Odometry
+
+Publisher count: 1
+
+Node name: phase2_fake_base
+Node namespace: /
+Topic type: nav_msgs/msg/Odometry
+Endpoint type: PUBLISHER
+GID: 01.0f.a5.70.f6.37.fb.fa.00.00.00.00.00.00.11.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 2
+
+Node name: bt_navigator
+Node namespace: /
+Topic type: nav_msgs/msg/Odometry
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.09.38.c8.c5.00.00.00.00.00.00.1f.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: controller_server
+Node namespace: /
+Topic type: nav_msgs/msg/Odometry
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a5.70.fa.37.ff.e8.00.00.00.00.00.00.4b.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite

@@ -1,0 +1,631 @@
+# Phase 2 P2-D extended horizon timing erratum
+
+The historical Candidate E retry result remains unchanged. This erratum corrects the command-frequency interpretation.
+
+## Corrected frequency calculations
+
+Metric C, `command_count / client total elapsed duration`, includes startup/settling/result-handling time outside the controller active publishing window. It must not be used alone as proof of compute overrun. Controller-server goal/terminal timestamps provide the authoritative action-window denominator.
+
+| Path | Command count | Controller goal received stamp | Controller terminal stamp | Action-window s | Action-window freq Hz | Approx active-stream freq Hz | Client-duration freq Hz |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| LEFT | 1720 | 1785579604.461825848 | 1785579690.412422419 | 85.951 | 20.011 | 20.008 | 19.335 |
+| RIGHT | 1697 | 1785579722.509593010 | 1785579807.310234070 | 84.801 | 20.012 | 20.006 | 19.323 |
+| STRAIGHT | 396 | 1785579838.850150347 | 1785579858.565102100 | 19.715 | 20.086 | 20.072 | 17.422 |
+
+The action-window frequencies are approximately 20 Hz for LEFT, RIGHT, and STRAIGHT. The straight-path `17.42 Hz` value was a client-duration artifact, not controller-rate evidence.
+
+The exact first/last command callback timestamps were not persisted in the historical Candidate E result artifact; approximate active-stream frequency is computed from odometry timeline samples. The controller action-window metric is the authoritative log-derived rate evidence.
+
+## Blocking timing/error search
+
+Blocking timing/error phrase hits from raw launch logs:
+
+- LEFT `inf`: `[INFO] [launch]: All log files can be found below /home/dog/.ros/log/2026-08-01-18-19-45-458644-dog-desktop-294872`
+- LEFT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- LEFT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- LEFT `inf`: `[INFO] [map_server-1]: process started with pid [294889]`
+- LEFT `inf`: `[INFO] [static_transform_publisher-2]: process started with pid [294891]`
+- LEFT `inf`: `[INFO] [phase2_fake_base-3]: process started with pid [294893]`
+- LEFT `inf`: `[INFO] [planner_server-4]: process started with pid [294895]`
+- LEFT `inf`: `[INFO] [controller_server-5]: process started with pid [294897]`
+- LEFT `inf`: `[INFO] [behavior_server-6]: process started with pid [294899]`
+- LEFT `inf`: `[INFO] [bt_navigator-7]: process started with pid [294941]`
+- LEFT `inf`: `[INFO] [lifecycle_manager-8]: process started with pid [294958]`
+- LEFT `inf`: `[static_transform_publisher-2] [INFO] [1785579585.656119074] [phase2_map_to_odom_static_tf]: Spinning until stopped - publishing transform`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579585.691359399] [controller_server]:`
+- LEFT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579585.706301918] [controller_server]: Creating controller server`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579585.722873463] [behavior_server]:`
+- LEFT `inf`: `[behavior_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579585.744530652] [local_costmap.local_costmap]:`
+- LEFT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579585.746640784] [local_costmap.local_costmap]: Creating Costmap`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579585.751542453] [map_server]:`
+- LEFT `inf`: `[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579585.756498780] [map_server]: Creating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579585.759374575] [planner_server]:`
+- LEFT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579585.784821675] [planner_server]: Creating`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579585.826688123] [bt_navigator]:`
+- LEFT `inf`: `[bt_navigator-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579585.829009208] [bt_navigator]: Creating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579585.858774881] [global_costmap.global_costmap]:`
+- LEFT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579585.862104071] [global_costmap.global_costmap]: Creating Costmap`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579585.869087903] [lifecycle_manager_navigation]: Creating`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579585.885330378] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579592.422604905] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579592.422803953] [lifecycle_manager_navigation]: [34m[1mConfiguring map_server[0m[0m`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.423760856] [map_server]: Configuring`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.423998145] [map_io]: Loading yaml file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.yaml`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424853763] [map_io]: resolution: 0.05`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424898341] [map_io]: origin[0]: -39.1`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424916998] [map_io]: origin[1]: -85.15`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424929927] [map_io]: origin[2]: 0`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424943015] [map_io]: free_thresh: 0.196`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424956264] [map_io]: occupied_thresh: 0.65`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424970568] [map_io]: mode: trinary`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.424985449] [map_io]: negate: 0`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579592.425506878] [map_io]: Loading image_file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579593.294145854] [map_io]: Read map /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm: 1744 X 2683 map @ 0.05 m/cell`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.310023321] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.310611889] [planner_server]: Configuring`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.310744406] [global_costmap.global_costmap]: Configuring`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.322189889] [global_costmap.global_costmap]: Using plugin "static_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.328606561] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.331155176] [global_costmap.global_costmap]: Initialized plugin "static_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.331319214] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.331319214] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.332229075] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.332229075] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.346763576] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.346881725] [planner_server]: Configuring plugin GridBased of type NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.347462260] [planner_server]: Planner Server has GridBased  planners available.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.360796234] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.361402499] [controller_server]: Configuring controller interface`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.361707663] [controller_server]: getting goal checker plugins..`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.361901879] [controller_server]: Controller frequency set to 20.0000Hz`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.361983642] [local_costmap.local_costmap]: Configuring`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.374161505] [local_costmap.local_costmap]: Using plugin "static_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.380909488] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.383508440] [local_costmap.local_costmap]: Initialized plugin "static_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.383591643] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.383591643] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.384447517] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.384447517] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.402615893] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.403703104] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.404185620] [controller_server]: Controller Server has general_goal_checker  goal checkers available.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.405884504] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.407413877] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.409799284] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.409881400] [controller_server]: Critic loaded : mppi::critics::GoalCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.410264135] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, and 0.500000 angular threshold.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.410312937] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.410872191] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 10.000000 weight`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.410916545] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.411256015] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.411855911] [controller_server]: ObstaclesCritic instantiated with 1 power and 20.000000 / 1.500000 weights. Critic will collision check based on circular cost.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.411903945] [controller_server]: Critic loaded : mppi::critics::ObstaclesCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.412351291] [controller_server]: PathAngleCritic instantiated with 1 power and 2.200000 weight. Reversing not allowed.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.412390204] [controller_server]: Critic loaded : mppi::critics::PathAngleCritic`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.413937786] [controller_server]: Optimizer reset`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.420866063] [MPPIController]: Configured MPPI Controller: FollowPath`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.420939250] [controller_server]: Controller Server has FollowPath  controllers available.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.433757684] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.434292265] [behavior_server]: Configuring`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.451828263] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.453460616] [behavior_server]: Configuring spin`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.465755509] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.467379766] [behavior_server]: Configuring backup`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.475699555] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579593.477433768] [behavior_server]: Configuring wait`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.486508084] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579593.487060554] [bt_navigator]: Configuring`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.583467870] [lifecycle_manager_navigation]: [34m[1mActivating map_server[0m[0m`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579593.584015988] [map_server]: Activating`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579593.589802715] [map_server]: Creating bond (map_server) to lifecycle manager.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579593.626063559] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 1744 X 2683 at 0.050000 m/pix`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.627190068] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 1744 X 2683 at 0.050000 m/pix`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.702718308] [lifecycle_manager_navigation]: Server map_server connected with bond.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579593.702854506] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.703493508] [planner_server]: Activating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.703624009] [global_costmap.global_costmap]: Activating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.703671179] [global_costmap.global_costmap]: Checking transform`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579593.704037913] [global_costmap.global_costmap]: start`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579594.804248134] [planner_server]: Activating plugin GridBased of type NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579594.806599268] [planner_server]: Creating bond (planner_server) to lifecycle manager.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579594.913740709] [lifecycle_manager_navigation]: Server planner_server connected with bond.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579594.913861290] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579594.914305851] [controller_server]: Activating`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579594.914408159] [local_costmap.local_costmap]: Activating`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579594.914441185] [local_costmap.local_costmap]: Checking transform`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579594.915074938] [local_costmap.local_costmap]: start`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579595.168485177] [controller_server]: Optimizer reset`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579595.169149267] [MPPIController]: Activated MPPI Controller: FollowPath`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579595.169229975] [controller_server]: Creating bond (controller_server) to lifecycle manager.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.281059570] [lifecycle_manager_navigation]: Server controller_server connected with bond.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.281220089] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579595.282044922] [behavior_server]: Activating`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579595.282153278] [behavior_server]: Activating spin`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579595.282201248] [behavior_server]: Activating backup`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579595.282237793] [behavior_server]: Activating wait`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579595.282278179] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.393213563] [lifecycle_manager_navigation]: Server behavior_server connected with bond.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.393355905] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579595.394396394] [bt_navigator]: Activating`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579595.495169259] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.604107187] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.604212856] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579595.604241849] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579604.461825935] [controller_server]: Received a goal, begin computing control effort.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579604.463099938] [controller_server]: Optimizer reset`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579695.970367147] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.970371403] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.970669463] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.970435150] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.970620469] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.970789468] [map_server]: Deactivating`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.970825149] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579695.970481904] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579695.970684728] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579695.970760379] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.970816893] [behavior_server]: Deactivating`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.970866303] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579695.970849054] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579695.970952162] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579695.971066183] [controller_server]: Deactivating`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579695.971123625] [MPPIController]: Deactivated MPPI Controller: FollowPath`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579695.971157994] [local_costmap.local_costmap]: Deactivating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579695.971049222] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579695.971204492] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579695.971318224] [planner_server]: Deactivating`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579695.971380563] [global_costmap.global_costmap]: Deactivating`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579695.971344785] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579695.971462134] [bt_navigator]: Deactivating`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579695.971503800] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- LEFT `inf`: `[static_transform_publisher-2] [INFO] [1785579695.971476055] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.981409309] [map_server]: Cleaning up`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.981703624] [behavior_server]: Cleaning up`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579695.982120601] [bt_navigator]: Cleaning up`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.991672688] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- LEFT `inf`: `[map_server-1] [INFO] [1785579695.993941897] [map_server]: Destroying`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579695.999866001] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- LEFT `inf`: `[behavior_server-6] [INFO] [1785579696.036168227] [behavior_server]: Destroying`
+- LEFT `inf`: `[lifecycle_manager-8] [INFO] [1785579696.066897497] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation`
+- LEFT `inf`: `[INFO] [static_transform_publisher-2]: process has finished cleanly [pid 294891]`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.115489997] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579696.118388030] [bt_navigator]: Completed Cleaning up`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579696.118552133] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.125911238] [controller_server]: Cleaning up`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.127853970] [MPPIController]: Cleaned up MPPI Controller: FollowPath`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.128320996] [local_costmap.local_costmap]: Cleaning up`
+- LEFT `inf`: `[bt_navigator-7] [INFO] [1785579696.137789368] [bt_navigator]: Destroying`
+- LEFT `inf`: `[INFO] [map_server-1]: process has finished cleanly [pid 294889]`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.149545766] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.154530665] [local_costmap.local_costmap]: Destroying`
+- LEFT `inf`: `[controller_server-5] [INFO] [1785579696.160193224] [controller_server]: Destroying`
+- LEFT `inf`: `[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 294958]`
+- LEFT `inf`: `[INFO] [behavior_server-6]: process has finished cleanly [pid 294899]`
+- LEFT `inf`: `[INFO] [bt_navigator-7]: process has finished cleanly [pid 294941]`
+- LEFT `inf`: `[INFO] [controller_server-5]: process has finished cleanly [pid 294897]`
+- LEFT `inf`: `[INFO] [phase2_fake_base-3]: process has finished cleanly [pid 294893]`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.704440702] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.704621925] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.715085760] [planner_server]: Cleaning up`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.723881273] [global_costmap.global_costmap]: Cleaning up`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.736579083] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.737063806] [planner_server]: Destroying plugin GridBased of type NavfnPlanner`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.746546931] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.751672316] [global_costmap.global_costmap]: Destroying`
+- LEFT `inf`: `[planner_server-4] [INFO] [1785579696.759680598] [planner_server]: Destroying`
+- LEFT `inf`: `[INFO] [planner_server-4]: process has finished cleanly [pid 294895]`
+- RIGHT `inf`: `[INFO] [launch]: All log files can be found below /home/dog/.ros/log/2026-08-01-18-21-45-463004-dog-desktop-297082`
+- RIGHT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- RIGHT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- RIGHT `inf`: `[INFO] [map_server-1]: process started with pid [297116]`
+- RIGHT `inf`: `[INFO] [static_transform_publisher-2]: process started with pid [297119]`
+- RIGHT `inf`: `[INFO] [phase2_fake_base-3]: process started with pid [297122]`
+- RIGHT `inf`: `[INFO] [planner_server-4]: process started with pid [297124]`
+- RIGHT `inf`: `[INFO] [controller_server-5]: process started with pid [297126]`
+- RIGHT `inf`: `[INFO] [behavior_server-6]: process started with pid [297128]`
+- RIGHT `inf`: `[INFO] [bt_navigator-7]: process started with pid [297140]`
+- RIGHT `inf`: `[INFO] [lifecycle_manager-8]: process started with pid [297151]`
+- RIGHT `inf`: `[static_transform_publisher-2] [INFO] [1785579705.678019999] [phase2_map_to_odom_static_tf]: Spinning until stopped - publishing transform`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579705.714638106] [planner_server]:`
+- RIGHT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579705.719947562] [planner_server]: Creating`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579705.738500705] [global_costmap.global_costmap]:`
+- RIGHT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579705.739654767] [global_costmap.global_costmap]: Creating Costmap`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579705.784631634] [lifecycle_manager_navigation]: Creating`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579705.797861272] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579705.834171687] [controller_server]:`
+- RIGHT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579705.846029944] [controller_server]: Creating controller server`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579705.878506961] [map_server]:`
+- RIGHT `inf`: `[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579705.881687918] [map_server]: Creating`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579705.886010423] [bt_navigator]:`
+- RIGHT `inf`: `[bt_navigator-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579705.886301475] [bt_navigator]: Creating`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579705.927869792] [local_costmap.local_costmap]:`
+- RIGHT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579705.929353882] [local_costmap.local_costmap]: Creating Costmap`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579705.935586319] [behavior_server]:`
+- RIGHT `inf`: `[behavior_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579710.169223041] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579710.169421257] [lifecycle_manager_navigation]: [34m[1mConfiguring map_server[0m[0m`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.170346701] [map_server]: Configuring`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.170535956] [map_io]: Loading yaml file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.yaml`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171196334] [map_io]: resolution: 0.05`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171228335] [map_io]: origin[0]: -39.1`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171240848] [map_io]: origin[1]: -85.15`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171250096] [map_io]: origin[2]: 0`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171259665] [map_io]: free_thresh: 0.196`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171268849] [map_io]: occupied_thresh: 0.65`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171328019] [map_io]: mode: trinary`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171342932] [map_io]: negate: 0`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579710.171788933] [map_io]: Loading image_file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579711.095943846] [map_io]: Read map /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm: 1744 X 2683 map @ 0.05 m/cell`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.111742097] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.112362601] [planner_server]: Configuring`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.112475533] [global_costmap.global_costmap]: Configuring`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.127011847] [global_costmap.global_costmap]: Using plugin "static_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.134100284] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.137204342] [global_costmap.global_costmap]: Initialized plugin "static_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.137300185] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.137300185] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.138288928] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.138288928] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.157531154] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.157626677] [planner_server]: Configuring plugin GridBased of type NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.158145706] [planner_server]: Planner Server has GridBased  planners available.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.175530610] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.176143978] [controller_server]: Configuring controller interface`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.176483320] [controller_server]: getting goal checker plugins..`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.176603132] [controller_server]: Controller frequency set to 20.0000Hz`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.176693728] [local_costmap.local_costmap]: Configuring`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.189314126] [local_costmap.local_costmap]: Using plugin "static_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.196030005] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.199252307] [local_costmap.local_costmap]: Initialized plugin "static_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.199466044] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.199466044] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.200452610] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.200452610] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.223523498] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.224709112] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.225090151] [controller_server]: Controller Server has general_goal_checker  goal checkers available.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.226619075] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.228076252] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.230304179] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.230376982] [controller_server]: Critic loaded : mppi::critics::GoalCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.230698339] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, and 0.500000 angular threshold.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.230741732] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.231376765] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 10.000000 weight`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.231430431] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.231939059] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.232783412] [controller_server]: ObstaclesCritic instantiated with 1 power and 20.000000 / 1.500000 weights. Critic will collision check based on circular cost.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.232846167] [controller_server]: Critic loaded : mppi::critics::ObstaclesCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.233348874] [controller_server]: PathAngleCritic instantiated with 1 power and 2.200000 weight. Reversing not allowed.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.233391372] [controller_server]: Critic loaded : mppi::critics::PathAngleCritic`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.235184818] [controller_server]: Optimizer reset`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.241895545] [MPPIController]: Configured MPPI Controller: FollowPath`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.241977084] [controller_server]: Controller Server has FollowPath  controllers available.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.256905477] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.257652034] [behavior_server]: Configuring`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.275436730] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.277114588] [behavior_server]: Configuring spin`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.285342398] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.286755638] [behavior_server]: Configuring backup`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.293089294] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579711.294462787] [behavior_server]: Configuring wait`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.302383642] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579711.303008114] [bt_navigator]: Configuring`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.396371898] [lifecycle_manager_navigation]: [34m[1mActivating map_server[0m[0m`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579711.396907439] [map_server]: Activating`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579711.402599534] [map_server]: Creating bond (map_server) to lifecycle manager.`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.417897957] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 1744 X 2683 at 0.050000 m/pix`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579711.448991494] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 1744 X 2683 at 0.050000 m/pix`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.512052300] [lifecycle_manager_navigation]: Server map_server connected with bond.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579711.512169008] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.512826154] [planner_server]: Activating`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.512974256] [global_costmap.global_costmap]: Activating`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.513025202] [global_costmap.global_costmap]: Checking transform`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579711.513363647] [global_costmap.global_costmap]: start`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579712.613623462] [planner_server]: Activating plugin GridBased of type NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579712.615788251] [planner_server]: Creating bond (planner_server) to lifecycle manager.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579712.724531964] [lifecycle_manager_navigation]: Server planner_server connected with bond.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579712.724705827] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.725400990] [controller_server]: Activating`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.725533635] [local_costmap.local_costmap]: Activating`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.725576229] [local_costmap.local_costmap]: Checking transform`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.725877713] [local_costmap.local_costmap]: start`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.777953288] [controller_server]: Optimizer reset`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.778446331] [MPPIController]: Activated MPPI Controller: FollowPath`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579712.778515134] [controller_server]: Creating bond (controller_server) to lifecycle manager.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579712.890467357] [lifecycle_manager_navigation]: Server controller_server connected with bond.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579712.890595970] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579712.891252059] [behavior_server]: Activating`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579712.891335871] [behavior_server]: Activating spin`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579712.891372000] [behavior_server]: Activating backup`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579712.891394241] [behavior_server]: Activating wait`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579712.891422114] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579713.001752545] [lifecycle_manager_navigation]: Server behavior_server connected with bond.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579713.001957161] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579713.002739048] [bt_navigator]: Activating`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579713.110623271] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579713.218355424] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579713.218488869] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579713.218525351] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579722.509593125] [controller_server]: Received a goal, begin computing control effort.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579722.511141441] [controller_server]: Optimizer reset`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.876171270] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.876373102] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579812.876173190] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579812.876390414] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579812.876171494] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579812.876391150] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579812.876564565] [planner_server]: Deactivating`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.876247721] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.876480882] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.876565397] [controller_server]: Deactivating`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.876641304] [MPPIController]: Deactivated MPPI Controller: FollowPath`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.876794078] [local_costmap.local_costmap]: Deactivating`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.876625271] [behavior_server]: Deactivating`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.876694394] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- RIGHT `inf`: `[static_transform_publisher-2] [INFO] [1785579812.876501523] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579812.876493458] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579812.876659769] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579812.876774333] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579812.876642168] [global_costmap.global_costmap]: Deactivating`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.876779965] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.876915331] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.877040071] [map_server]: Deactivating`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.877080201] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579812.879434116] [bt_navigator]: Deactivating`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579812.879514599] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.887255281] [behavior_server]: Cleaning up`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.887622207] [map_server]: Cleaning up`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579812.891022338] [bt_navigator]: Cleaning up`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.894784051] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- RIGHT `inf`: `[map_server-1] [INFO] [1785579812.899290241] [map_server]: Destroying`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.907318679] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.926270577] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- RIGHT `inf`: `[behavior_server-6] [INFO] [1785579812.935443027] [behavior_server]: Destroying`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.936965965] [controller_server]: Cleaning up`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.939484143] [MPPIController]: Cleaned up MPPI Controller: FollowPath`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.939880830] [local_costmap.local_costmap]: Cleaning up`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.967823059] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.978146657] [local_costmap.local_costmap]: Destroying`
+- RIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579812.987318754] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation`
+- RIGHT `inf`: `[controller_server-5] [INFO] [1785579812.993595860] [controller_server]: Destroying`
+- RIGHT `inf`: `[INFO] [static_transform_publisher-2]: process has finished cleanly [pid 297119]`
+- RIGHT `inf`: `[INFO] [map_server-1]: process has finished cleanly [pid 297116]`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579813.056510253] [bt_navigator]: Completed Cleaning up`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579813.056937566] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- RIGHT `inf`: `[bt_navigator-7] [INFO] [1785579813.064067153] [bt_navigator]: Destroying`
+- RIGHT `inf`: `[INFO] [behavior_server-6]: process has finished cleanly [pid 297128]`
+- RIGHT `inf`: `[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 297151]`
+- RIGHT `inf`: `[INFO] [controller_server-5]: process has finished cleanly [pid 297126]`
+- RIGHT `inf`: `[INFO] [bt_navigator-7]: process has finished cleanly [pid 297140]`
+- RIGHT `inf`: `[INFO] [phase2_fake_base-3]: process has finished cleanly [pid 297122]`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.513744132] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.513888106] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.524263354] [planner_server]: Cleaning up`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.532946089] [global_costmap.global_costmap]: Cleaning up`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.547452184] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.547577501] [planner_server]: Destroying plugin GridBased of type NavfnPlanner`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.555265253] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.559768050] [global_costmap.global_costmap]: Destroying`
+- RIGHT `inf`: `[planner_server-4] [INFO] [1785579813.568685898] [planner_server]: Destroying`
+- RIGHT `inf`: `[INFO] [planner_server-4]: process has finished cleanly [pid 297124]`
+- STRAIGHT `inf`: `[INFO] [launch]: All log files can be found below /home/dog/.ros/log/2026-08-01-18-23-42-163250-dog-desktop-299266`
+- STRAIGHT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- STRAIGHT `inf`: `[INFO] [launch]: Default logging verbosity is set to INFO`
+- STRAIGHT `inf`: `[INFO] [map_server-1]: process started with pid [299283]`
+- STRAIGHT `inf`: `[INFO] [static_transform_publisher-2]: process started with pid [299285]`
+- STRAIGHT `inf`: `[INFO] [phase2_fake_base-3]: process started with pid [299287]`
+- STRAIGHT `inf`: `[INFO] [planner_server-4]: process started with pid [299289]`
+- STRAIGHT `inf`: `[INFO] [controller_server-5]: process started with pid [299291]`
+- STRAIGHT `inf`: `[INFO] [behavior_server-6]: process started with pid [299293]`
+- STRAIGHT `inf`: `[INFO] [bt_navigator-7]: process started with pid [299309]`
+- STRAIGHT `inf`: `[INFO] [lifecycle_manager-8]: process started with pid [299327]`
+- STRAIGHT `inf`: `[static_transform_publisher-2] [INFO] [1785579822.368003429] [phase2_map_to_odom_static_tf]: Spinning until stopped - publishing transform`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579822.434890739] [behavior_server]:`
+- STRAIGHT `inf`: `[behavior_server-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579822.445995679] [planner_server]:`
+- STRAIGHT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579822.453881454] [planner_server]: Creating`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579822.475827707] [controller_server]:`
+- STRAIGHT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579822.484334947] [controller_server]: Creating controller server`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579822.508935958] [global_costmap.global_costmap]:`
+- STRAIGHT `inf`: `[planner_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579822.510837919] [global_costmap.global_costmap]: Creating Costmap`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579822.528372578] [lifecycle_manager_navigation]: Creating`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579822.535424113] [local_costmap.local_costmap]:`
+- STRAIGHT `inf`: `[controller_server-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579822.538324673] [local_costmap.local_costmap]: Creating Costmap`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579822.546848265] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579822.562127349] [bt_navigator]:`
+- STRAIGHT `inf`: `[bt_navigator-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579822.562463522] [bt_navigator]: Creating`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579822.575030278] [map_server]:`
+- STRAIGHT `inf`: `[map_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579822.575596188] [map_server]: Creating`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579829.166716159] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579829.166907206] [lifecycle_manager_navigation]: [34m[1mConfiguring map_server[0m[0m`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.168125493] [map_server]: Configuring`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.168363838] [map_io]: Loading yaml file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.yaml`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169241184] [map_io]: resolution: 0.05`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169290850] [map_io]: origin[0]: -39.1`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169310434] [map_io]: origin[1]: -85.15`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169324931] [map_io]: origin[2]: 0`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169339235] [map_io]: free_thresh: 0.196`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169353092] [map_io]: occupied_thresh: 0.65`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169368325] [map_io]: mode: trinary`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169384805] [map_io]: negate: 0`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579829.169915226] [map_io]: Loading image_file: /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579830.031584203] [map_io]: Read map /home/dog/phase2_builds/p2d_extended_horizon_20260801_180353/install/parking_robot_bringup/share/parking_robot_bringup/maps/phase2_clean_map.pgm: 1744 X 2683 map @ 0.05 m/cell`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.047584818] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.048102758] [planner_server]: Configuring`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.048194282] [global_costmap.global_costmap]: Configuring`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.056545739] [global_costmap.global_costmap]: Using plugin "static_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.062848669] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.065878194] [global_costmap.global_costmap]: Initialized plugin "static_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.065973461] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.065973461] [global_costmap.global_costmap]: Using plugin "inflation_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.067326185] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.067326185] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.082343115] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.082444207] [planner_server]: Configuring plugin GridBased of type NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.082938434] [planner_server]: Planner Server has GridBased  planners available.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.095842098] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.097007070] [controller_server]: Configuring controller interface`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.097276265] [controller_server]: getting goal checker plugins..`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.097422510] [controller_server]: Controller frequency set to 20.0000Hz`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.097493937] [local_costmap.local_costmap]: Configuring`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.105904437] [local_costmap.local_costmap]: Using plugin "static_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.113166316] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.115911957] [local_costmap.local_costmap]: Initialized plugin "static_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.116005721] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.116005721] [local_costmap.local_costmap]: Using plugin "inflation_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.117027040] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.117027040] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.133241072] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.134440574] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.134829517] [controller_server]: Controller Server has general_goal_checker  goal checkers available.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.136381513] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.137920004] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.140042741] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.140105688] [controller_server]: Critic loaded : mppi::critics::GoalCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.140440517] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, and 0.500000 angular threshold.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.140482086] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.141094654] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 10.000000 weight`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.141138175] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.141631186] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.142496852] [controller_server]: ObstaclesCritic instantiated with 1 power and 20.000000 / 1.500000 weights. Critic will collision check based on circular cost.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.142534869] [controller_server]: Critic loaded : mppi::critics::ObstaclesCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.143080330] [controller_server]: PathAngleCritic instantiated with 1 power and 2.200000 weight. Reversing not allowed.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.143114891] [controller_server]: Critic loaded : mppi::critics::PathAngleCritic`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.144813037] [controller_server]: Optimizer reset`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.150093304] [MPPIController]: Configured MPPI Controller: FollowPath`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.150169499] [controller_server]: Controller Server has FollowPath  controllers available.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.163129485] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.163670082] [behavior_server]: Configuring`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.184558021] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.186200836] [behavior_server]: Configuring spin`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.199375615] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.200915962] [behavior_server]: Configuring backup`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.209718252] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579830.211175620] [behavior_server]: Configuring wait`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.219713229] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579830.220286115] [bt_navigator]: Configuring`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.313727468] [lifecycle_manager_navigation]: [34m[1mActivating map_server[0m[0m`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579830.314165821] [map_server]: Activating`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579830.319008823] [map_server]: Creating bond (map_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.345225159] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 1744 X 2683 at 0.050000 m/pix`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579830.345509650] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 1744 X 2683 at 0.050000 m/pix`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.429053310] [lifecycle_manager_navigation]: Server map_server connected with bond.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579830.429204580] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.429885534] [planner_server]: Activating`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.430020611] [global_costmap.global_costmap]: Activating`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.430066117] [global_costmap.global_costmap]: Checking transform`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579830.430707934] [global_costmap.global_costmap]: start`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579831.531015584] [planner_server]: Activating plugin GridBased of type NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579831.533724616] [planner_server]: Creating bond (planner_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.643328190] [lifecycle_manager_navigation]: Server planner_server connected with bond.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.643516389] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.644336741] [controller_server]: Activating`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.644493931] [local_costmap.local_costmap]: Activating`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.644550701] [local_costmap.local_costmap]: Checking transform`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.644886618] [local_costmap.local_costmap]: start`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.697771563] [controller_server]: Optimizer reset`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.698353986] [MPPIController]: Activated MPPI Controller: FollowPath`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579831.698408708] [controller_server]: Creating bond (controller_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.808568847] [lifecycle_manager_navigation]: Server controller_server connected with bond.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.808728597] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579831.809555669] [behavior_server]: Activating`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579831.809642648] [behavior_server]: Activating spin`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579831.809675002] [behavior_server]: Activating backup`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579831.809699610] [behavior_server]: Activating wait`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579831.809727996] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.918613430] [lifecycle_manager_navigation]: Server behavior_server connected with bond.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579831.918760219] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579831.919496888] [bt_navigator]: Activating`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579832.025147446] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579832.133090411] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579832.133253585] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579832.133289395] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579838.850150279] [controller_server]: Received a goal, begin computing control effort.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579838.851569534] [controller_server]: Optimizer reset`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579858.565102087] [controller_server]: Reached the goal!`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579863.954286226] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.954280049] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.954561052] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579863.954278417] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579863.954499866] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579863.954289714] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579863.954501530] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579863.954527067] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579863.954608670] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579863.954402326] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579863.954527643] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579863.954655904] [controller_server]: Deactivating`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579863.954734915] [MPPIController]: Deactivated MPPI Controller: FollowPath`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579863.954788741] [local_costmap.local_costmap]: Deactivating`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579863.954660320] [bt_navigator]: Deactivating`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579863.954725154] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579863.954657568] [planner_server]: Deactivating`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579863.954745827] [global_costmap.global_costmap]: Deactivating`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.954680097] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.954801061] [map_server]: Running Nav2 LifecycleNode rcl preshutdown (map_server)`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.954922346] [map_server]: Deactivating`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.954956107] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.954702497] [behavior_server]: Deactivating`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.954767204] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[static_transform_publisher-2] [INFO] [1785579863.954712194] [rclcpp]: signal_handler(SIGINT/SIGTERM)`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579863.965388891] [bt_navigator]: Cleaning up`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.965458973] [map_server]: Cleaning up`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.965580802] [behavior_server]: Cleaning up`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.966272732] [map_server]: Destroying bond (map_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579863.971640842] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[map_server-1] [INFO] [1785579863.979292591] [map_server]: Destroying`
+- STRAIGHT `inf`: `[behavior_server-6] [INFO] [1785579864.003297766] [behavior_server]: Destroying`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.045275245] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.055833601] [controller_server]: Cleaning up`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.057762027] [MPPIController]: Cleaned up MPPI Controller: FollowPath`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.058222108] [local_costmap.local_costmap]: Cleaning up`
+- STRAIGHT `inf`: `[lifecycle_manager-8] [INFO] [1785579864.070326540] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.096069893] [controller_server]: Destroying bond (controller_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.105807962] [local_costmap.local_costmap]: Destroying`
+- STRAIGHT `inf`: `[INFO] [static_transform_publisher-2]: process has finished cleanly [pid 299285]`
+- STRAIGHT `inf`: `[controller_server-5] [INFO] [1785579864.118188340] [controller_server]: Destroying`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579864.134552358] [bt_navigator]: Completed Cleaning up`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579864.134718604] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.`
+- STRAIGHT `inf`: `[INFO] [map_server-1]: process has finished cleanly [pid 299283]`
+- STRAIGHT `inf`: `[bt_navigator-7] [INFO] [1785579864.143605921] [bt_navigator]: Destroying`
+- STRAIGHT `inf`: `[INFO] [behavior_server-6]: process has finished cleanly [pid 299293]`
+- STRAIGHT `inf`: `[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 299327]`
+- STRAIGHT `inf`: `[INFO] [controller_server-5]: process has finished cleanly [pid 299291]`
+- STRAIGHT `inf`: `[INFO] [bt_navigator-7]: process has finished cleanly [pid 299309]`
+- STRAIGHT `inf`: `[INFO] [phase2_fake_base-3]: process has finished cleanly [pid 299287]`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.431299333] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.431466988] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.441887867] [planner_server]: Cleaning up`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.452512369] [global_costmap.global_costmap]: Cleaning up`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.464047019] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.464180624] [planner_server]: Destroying plugin GridBased of type NavfnPlanner`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.473165736] [planner_server]: Destroying bond (planner_server) to lifecycle manager.`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.478764222] [global_costmap.global_costmap]: Destroying`
+- STRAIGHT `inf`: `[planner_server-4] [INFO] [1785579864.491326783] [planner_server]: Destroying`
+- STRAIGHT `inf`: `[INFO] [planner_server-4]: process has finished cleanly [pid 299289]`
+
+## Corrected Candidate E classification
+
+Primary Candidate E classification: `EXTENDED_HORIZON_NO_MATERIAL_EFFECT`
+
+Secondary evidence issue: `COMMAND_FREQUENCY_DENOMINATOR_ERROR`
+
+Candidate E is still not acceptable because LEFT and RIGHT failed the curved fixed-path tests outside tolerance. This erratum only removes the unsupported compute-overrun classification.

@@ -2,6 +2,7 @@ import threading
 
 import pytest
 from builtin_interfaces.msg import Time
+from rclpy._rclpy_pybind11 import RCLError
 
 from parking_robot_bringup.phase2_fake_base import (
     Phase2FakeBase,
@@ -136,3 +137,32 @@ def test_expected_spin_shutdown_exception_exits_cleanly():
         raise ExternalShutdownException()
 
     _spin_until_shutdown(object(), spin_fn=raise_expected)
+
+
+def test_context_invalid_spin_rclerror_exits_cleanly_when_context_not_ok():
+    class _Context:
+        def ok(self):
+            return False
+
+    class _Node:
+        context = _Context()
+
+    def raise_context_invalid(_node):
+        raise RCLError("failed to initialize wait set: the given context is not valid")
+
+    _spin_until_shutdown(_Node(), spin_fn=raise_context_invalid)
+
+
+def test_unrelated_spin_rclerror_is_not_hidden_when_context_ok():
+    class _Context:
+        def ok(self):
+            return True
+
+    class _Node:
+        context = _Context()
+
+    def raise_unrelated(_node):
+        raise RCLError("unexpected rcl error while context is valid")
+
+    with pytest.raises(RCLError):
+        _spin_until_shutdown(_Node(), spin_fn=raise_unrelated)

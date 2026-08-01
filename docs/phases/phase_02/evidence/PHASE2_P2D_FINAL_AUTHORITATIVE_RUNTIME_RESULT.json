@@ -1,0 +1,421 @@
+{
+  "build_root": "/home/dog/phase2_builds/p2d_final_authoritative_20260802_004444",
+  "current_pose_probe_goals_sent": 0,
+  "decision": "PHASE2_P2D_ONE_GOAL_RUNTIME_RETEST_PASS",
+  "direct_follow_path_actions_sent": 0,
+  "final_status_basis": "PASS",
+  "metrics": {
+    "action_result": "SUCCEEDED",
+    "active_command_stream_frequency_hz": 20.02407033422651,
+    "bt_goal_succeeded_log": true,
+    "command_count": 827,
+    "command_limit_violation_count": 0,
+    "controller_action_window_frequency_hz": 19.999560965866362,
+    "decision": "PHASE2_P2D_ONE_GOAL_RUNTIME_RETEST_PASS",
+    "failed_goal_response_warning": false,
+    "fake_base_clean_exit": true,
+    "final_x": 8.185453032013545,
+    "final_xy_error_m": 0.24780476515545505,
+    "final_y": -53.78843856683632,
+    "final_yaw": 0.003909699763943841,
+    "final_yaw_error_rad": 0.003909699763943841,
+    "goal_accepted": true,
+    "goal_id": "7feffb85898042008b77bd8c3d4ba529",
+    "goal_response_latency_sec": 0.004880931999650784,
+    "goal_response_received": true,
+    "goal_send_count": 1,
+    "invalid_command_count": 0,
+    "max_abs_angular_z": 0.04828613996505737,
+    "max_abs_linear_x": 0.08317729830741882,
+    "nonzero_command_count": 826,
+    "odom_sample_count": 2327,
+    "path_endpoint_error_m": 0.0,
+    "path_length_m": 0.30606518986571024,
+    "path_max_gap_m": 0.07071067917232597,
+    "path_occupied_hits": 0,
+    "path_oob_hits": 0,
+    "path_pose_count": 10,
+    "path_received": true,
+    "path_unknown_hits": 0,
+    "post_result_stop_latency_sec": 0.0,
+    "result_latency_from_request_sec": 41.34933330198692,
+    "result_response_received": true,
+    "runner_exit_code": "0",
+    "shutdown_traceback": false,
+    "total_translation_m": 2.761417241533026,
+    "unsupported_command_count": 0
+  },
+  "navigate_to_pose_requests_sent": 1,
+  "runner_result": {
+    "action_goal_accepted": true,
+    "action_result": "SUCCEEDED",
+    "action_result_status": 4,
+    "angular_nonzero_command_count": 826,
+    "angular_nonzero_command_sec": 41.25189420899551,
+    "cancel_goal_count": 0,
+    "cancel_requested": false,
+    "cancel_response_received": false,
+    "command_limit_violation_count": 0,
+    "command_message_count": 827,
+    "configured_command_limits": {
+      "max_abs_angular_z": 0.8,
+      "max_abs_linear_x": 0.25,
+      "tolerance": 1e-06
+    },
+    "elapsed_sec": 49.34955575999629,
+    "failure_reasons": [],
+    "feedback_sample_count": 4135,
+    "feedback_samples": [
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 2.9678091959940502
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 2.972970169998007
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 2.9836833629960893
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 2.9937154139915947
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 3.0026426589902258
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 0.0,
+        "elapsed_sec": 3.0160853839915944
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 3.0353546142578125,
+        "elapsed_sec": 3.0246024079970084
+      },
+      {
+        "current_x": 5.425,
+        "current_y": -53.725,
+        "distance_remaining": 3.0353546142578125,
+        "elapsed_sec": 3.032853149998118
+      },
+      {
+        "current_x": 5.425031629003107,
+        "current_y": -53.72499999857177,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.0427138980012387
+      },
+      {
+        "current_x": 5.425031629003107,
+        "current_y": -53.72499999857177,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.053167146994383
+      },
+      {
+        "current_x": 5.425064041527066,
+        "current_y": -53.72499999414468,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.06331856099132
+      },
+      {
+        "current_x": 5.425064041527066,
+        "current_y": -53.72499999414468,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.0734778799960623
+      },
+      {
+        "current_x": 5.425095928422911,
+        "current_y": -53.72499998686223,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.083116476991563
+      },
+      {
+        "current_x": 5.425095928422911,
+        "current_y": -53.72499998686223,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.0934115439886227
+      },
+      {
+        "current_x": 5.42522093553461,
+        "current_y": -53.724999951335654,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.1029011119971983
+      },
+      {
+        "current_x": 5.42522093553461,
+        "current_y": -53.724999951335654,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.11329435899097
+      },
+      {
+        "current_x": 5.425346680827365,
+        "current_y": -53.72499991300416,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.123083744998439
+      },
+      {
+        "current_x": 5.425346680827365,
+        "current_y": -53.72499991300416,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.13365798999439
+      },
+      {
+        "current_x": 5.425680246416229,
+        "current_y": -53.724999813576005,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.1430548509961227
+      },
+      {
+        "current_x": 5.425680246416229,
+        "current_y": -53.724999813576005,
+        "distance_remaining": 2.9853546619415283,
+        "elapsed_sec": 3.153320316996542
+      }
+    ],
+    "final_pose": {
+      "x": 8.185453032013545,
+      "y": -53.78843856683632,
+      "yaw": 0.003909699763943841
+    },
+    "final_position_error_m": 0.24780476515545505,
+    "first_nonzero_command_elapsed_sec": 3.031107714996324,
+    "first_odom_after_reset": {
+      "x": 5.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    "frame_id": "map",
+    "global_path_length_m": 0.30606518986571024,
+    "global_path_metrics": {
+      "end": {
+        "x": 8.425,
+        "y": -53.725,
+        "yaw": 0.0
+      },
+      "endpoint_error_m": 0.0,
+      "finite": true,
+      "frame": "map",
+      "length_m": 0.30606518986571024,
+      "map_analysis": {
+        "map_yaml": "/home/dog/phase2_builds/p2d_final_authoritative_20260802_004444/install/share/parking_robot_bringup/maps/phase2_clean_map.yaml",
+        "occupied_hits": 0,
+        "out_of_bounds_hits": 0,
+        "samples": 29,
+        "unknown_hits": 0
+      },
+      "max_gap_m": 0.07071067917232597,
+      "message_type": "nav_msgs/msg/Path",
+      "pose_count": 10,
+      "received": true,
+      "start": {
+        "x": 8.150000704079865,
+        "y": -53.7999995328486,
+        "yaw": 0.0
+      },
+      "topic": "/plan"
+    },
+    "global_path_pose_count": 10,
+    "global_path_received": true,
+    "goal_accepted": true,
+    "goal_id": "7feffb85898042008b77bd8c3d4ba529",
+    "goal_pose": {
+      "x": 8.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    "goal_request_elapsed_sec": 2.9577155119914096,
+    "goal_request_sent": true,
+    "goal_response_elapsed_sec": 2.9625964439910604,
+    "goal_response_exception": null,
+    "goal_response_received": true,
+    "goal_send_count": 1,
+    "initialpose_position_error_m": 0.0,
+    "initialpose_publication_stamp": {
+      "nanosec": 983811186,
+      "sec": 1785602848
+    },
+    "initialpose_settle_duration_sec": 0.0032746379874879494,
+    "initialpose_verified": true,
+    "initialpose_yaw_error_rad": 0.0,
+    "invalid_command_count": 0,
+    "last_nonzero_command_elapsed_sec": 44.28146222399664,
+    "linear_nonzero_command_count": 826,
+    "linear_nonzero_command_sec": 41.25189420899551,
+    "max_abs_angular_z": 0.04828613996505737,
+    "max_abs_linear_x": 0.08317729830741882,
+    "nonzero_command_count": 826,
+    "odom_buckets": [
+      {
+        "distance_from_start_m": 0.0,
+        "distance_to_goal_m": 3.000000000000001,
+        "elapsed_sec": 2.9501954180013854,
+        "total_translation_m": 0.0,
+        "x": 5.425,
+        "y": -53.725,
+        "yaw": 0.0
+      },
+      {
+        "distance_from_start_m": 0.10093431197297092,
+        "distance_to_goal_m": 2.899065860846609,
+        "elapsed_sec": 5.019769955993979,
+        "total_translation_m": 0.10093439191786217,
+        "x": 5.525934144967862,
+        "y": -53.72518361117502,
+        "yaw": 0.0003921645615601044
+      },
+      {
+        "distance_from_start_m": 0.44235072469837344,
+        "distance_to_goal_m": 2.557682613262181,
+        "elapsed_sec": 10.000330070994096,
+        "total_translation_m": 0.44236755909216036,
+        "x": 5.86732230224292,
+        "y": -53.73001443712682,
+        "yaw": -0.024607076408196704
+      },
+      {
+        "distance_from_start_m": 0.7816877100648197,
+        "distance_to_goal_m": 2.218479153528253,
+        "elapsed_sec": 15.019212307000998,
+        "total_translation_m": 0.7817266530876535,
+        "x": 6.206564320237825,
+        "y": -53.73888846275036,
+        "yaw": -0.027681386055141033
+      },
+      {
+        "distance_from_start_m": 1.1183741141292043,
+        "distance_to_goal_m": 1.8819336533039588,
+        "elapsed_sec": 20.019409171000007,
+        "total_translation_m": 1.1184203570970532,
+        "x": 6.543181063952717,
+        "y": -53.74577901277378,
+        "yaw": -0.017240588135611468
+      },
+      {
+        "distance_from_start_m": 1.4537633277986,
+        "distance_to_goal_m": 1.5468773480388647,
+        "elapsed_sec": 25.019521548994817,
+        "total_translation_m": 1.4538370448890692,
+        "x": 6.878433047229385,
+        "y": -53.755986940371116,
+        "yaw": -0.03295127281872512
+      },
+      {
+        "distance_from_start_m": 1.7889661267063302,
+        "distance_to_goal_m": 1.2122772732170946,
+        "elapsed_sec": 30.019486909994157,
+        "total_translation_m": 1.7890657334179791,
+        "x": 7.213463935890663,
+        "y": -53.7673857584706,
+        "yaw": -0.03845512084977898
+      },
+      {
+        "distance_from_start_m": 2.127362348385317,
+        "distance_to_goal_m": 0.8750807333464916,
+        "elapsed_sec": 35.01982815199881,
+        "total_translation_m": 2.1274908995847306,
+        "x": 7.551650711908876,
+        "y": -53.78002100385271,
+        "yaw": -0.028269218852625677
+      },
+      {
+        "distance_from_start_m": 2.464763553991812,
+        "distance_to_goal_m": 0.5398343059874466,
+        "elapsed_sec": 40.01953314599814,
+        "total_translation_m": 2.4649028522110465,
+        "x": 7.888939716527567,
+        "y": -53.78872166354076,
+        "yaw": -0.0058646385491183395
+      },
+      {
+        "distance_from_start_m": 2.761181883490296,
+        "distance_to_goal_m": 0.24780476515545505,
+        "elapsed_sec": 45.000354588992195,
+        "total_translation_m": 2.761417241533026,
+        "x": 8.185453032013545,
+        "y": -53.78843856683632,
+        "yaw": 0.003909699763943841
+      }
+    ],
+    "odom_metrics": {
+      "max_angular_velocity": 0.04828613996505737,
+      "max_linear_velocity": 0.08317729830741882,
+      "max_quaternion_norm": 1.0,
+      "min_quaternion_norm": 1.0,
+      "nonfinite_count": 0,
+      "sample_count": 2327,
+      "timestamp_nonmonotonic_count": 0,
+      "total_translation_m": 2.761417241533026
+    },
+    "pass": true,
+    "post_result_stop_latency_sec": 0.0,
+    "result_exception": null,
+    "result_request_elapsed_sec": 2.964170865001506,
+    "result_request_sent": true,
+    "result_response_elapsed_sec": 44.31350416698842,
+    "result_response_received": true,
+    "rotation_only_command_count": 0,
+    "rotation_only_command_sec": 0.0,
+    "settled_odom": {
+      "x": 5.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    "source_revision": "985cda0f20859fb6144362248e17b1fa42efd5e4",
+    "start_pose": {
+      "x": 5.425,
+      "y": -53.725,
+      "yaw": 0.0
+    },
+    "state_transitions": [
+      {
+        "elapsed_sec": 0.08053020399529487,
+        "state": "WAITING_FOR_NAV2"
+      },
+      {
+        "elapsed_sec": 2.950739659994724,
+        "state": "SETTING_START"
+      },
+      {
+        "elapsed_sec": 2.952990839999984,
+        "state": "VERIFYING_START"
+      },
+      {
+        "elapsed_sec": 2.9562647429993376,
+        "state": "GOAL_REQUEST_SENT"
+      },
+      {
+        "elapsed_sec": 2.9626890549989184,
+        "state": "GOAL_ACTIVE"
+      },
+      {
+        "elapsed_sec": 49.33312915900024,
+        "state": "SUCCEEDED"
+      },
+      {
+        "elapsed_sec": 49.33511437699781,
+        "state": "CLEANUP"
+      }
+    ],
+    "test_name": "p2d_final_authoritative_forward_goal",
+    "translation_command_count": 826,
+    "translation_command_sec": 41.25189420899551,
+    "unsupported_command_count": 0,
+    "validation_mode": "navigation"
+  },
+  "runtime_root": "/home/dog/phase2_runtime/p2d_final_authoritative_20260802_004444"
+}

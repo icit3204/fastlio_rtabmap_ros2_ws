@@ -1,0 +1,5 @@
+case	command_linear_x	command_angular_z	expected_x	expected_y	expected_yaw	command_end_x	command_end_y	command_end_yaw	error_x	error_y	error_yaw	settled_vx	settled_wz	tf_odom_translation_error	tf_odom_yaw_error	pass
+A_straight_positive_x	0.1	0.0	0.2	0.0	0.0	0.200003107899829	0.0	0.0	3.1078998289912896e-06	0.0	0.0	0.0	0.0	0.0	0.0	True
+B_positive_rotation	0.0	0.2	0.0	0.0	0.4	0.0	0.0	0.40001017000031386	0.0	0.0	1.0170000313891592e-05	0.0	0.0	0.0	0.0	True
+C_negative_rotation	0.0	-0.2	0.0	0.0	-0.4	0.0	0.0	-0.3999948530006794	0.0	0.0	5.146999320526646e-06	0.0	0.0	0.0	0.0	True
+D_positive_curve	0.1	0.2	0.1947	0.0395	0.4	0.19472830243601083	0.039477592043134724	0.4000415421993227	2.830243601081861e-05	-2.240795686527658e-05	4.154219932273051e-05	0.0	0.0	0.0	0.0	True

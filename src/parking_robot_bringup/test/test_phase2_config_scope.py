@@ -104,6 +104,53 @@ def test_plugin_identifiers_are_expected_phase2_set():
         assert plugin not in dumped
 
 
+def test_candidate_c_mppi_profile_is_tracked_exactly():
+    params = yaml.safe_load(PARAMS.read_text())
+    follow_path = params["controller_server"]["ros__parameters"]["FollowPath"]
+
+    critics = follow_path["critics"]
+    assert critics.count("PathAngleCritic") == 1
+    assert "PreferForwardCritic" not in critics
+    assert "ConstraintCritic" not in critics
+
+    assert follow_path["regenerate_noises"] is True
+    assert follow_path["time_steps"] == 40
+    assert follow_path["model_dt"] == 0.05
+    assert follow_path["batch_size"] == 500
+    assert follow_path["iteration_count"] == 1
+    assert follow_path["vx_std"] == 0.10
+    assert follow_path["vy_std"] == 0.0
+    assert follow_path["wz_std"] == 0.20
+    assert follow_path["temperature"] == 0.40
+    assert follow_path["gamma"] == 0.02
+
+    assert "GoalAngleCritic" not in follow_path
+    assert follow_path["PathAngleCritic"] == {
+        "cost_power": 1,
+        "cost_weight": 2.2,
+        "threshold_to_consider": 0.5,
+        "offset_from_furthest": 4,
+        "max_angle_to_furthest": 1.0,
+        "forward_preference": True,
+    }
+
+
+def test_candidate_c_does_not_change_goal_or_progress_checker():
+    params = yaml.safe_load(PARAMS.read_text())
+    controller = params["controller_server"]["ros__parameters"]
+    assert controller["progress_checker"] == {
+        "plugin": "nav2_controller::SimpleProgressChecker",
+        "required_movement_radius": 0.10,
+        "movement_time_allowance": 20.0,
+    }
+    assert controller["general_goal_checker"] == {
+        "plugin": "nav2_controller::SimpleGoalChecker",
+        "stateful": True,
+        "xy_goal_tolerance": 0.25,
+        "yaw_goal_tolerance": 0.50,
+    }
+
+
 def test_bt_navigator_has_required_humble_default_tree_plugins():
     params = yaml.safe_load(PARAMS.read_text())
     bt_params = params["bt_navigator"]["ros__parameters"]

@@ -30,6 +30,15 @@ goal_c:
   classification: free
   connected_component: 1
   clearance_m: 5.423
+p2d_forward_goal:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goal:
+    x: 8.425
+    y: -53.725
+    yaw: 0.0
 planner_failure_goal:
   pixel: {x: 621, y: 1154}
   pose: {x: -8.025, y: -8.725, yaw: 0.0}
@@ -37,4 +46,3 @@ planner_failure_goal:
   connected_component: 0
   occupied_probability: 1.0
   occupied_clearance_m: 0.160
-

@@ -178,6 +178,9 @@ def _spin_until_shutdown(node: Phase2FakeBase, spin_fn=rclpy.spin) -> None:
         spin_fn(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except RCLError:
+        if node.context.ok():
+            raise
 
 
 def main(args: list[str] | None = None) -> None:

@@ -1,0 +1,249 @@
+{
+  "action_goal_accepted": true,
+  "action_result": null,
+  "action_result_status": null,
+  "command_limit_violation_count": 0,
+  "command_message_count": 3405,
+  "configured_command_limits": {
+    "max_abs_angular_z": 0.8,
+    "max_abs_linear_x": 0.25,
+    "tolerance": 1e-06
+  },
+  "elapsed_sec": 181.08709147000627,
+  "failure_reasons": [
+    "NavigateToPose result timed out"
+  ],
+  "feedback_sample_count": 17999,
+  "feedback_samples": [
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.0701205340010347
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.078810909006279
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.0891762850005762
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.0995663339999737
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.109240966005018
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 0.0,
+      "elapsed_sec": 1.1189271830007783
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1301318200057722
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1390040250043967
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.14884330300265
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1593234990068595
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1692782050013193
+    },
+    {
+      "current_x": 5.425,
+      "current_y": -53.725,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1789882950033643
+    },
+    {
+      "current_x": 5.4249998352895945,
+      "current_y": -53.72499999999785,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1892387230036547
+    },
+    {
+      "current_x": 5.4249998352895945,
+      "current_y": -53.72499999999785,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.1991061940061627
+    },
+    {
+      "current_x": 5.424999448177867,
+      "current_y": -53.724999999983304,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.2101123920001555
+    },
+    {
+      "current_x": 5.424999448177867,
+      "current_y": -53.724999999983304,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.2193721940057003
+    },
+    {
+      "current_x": 5.424999069036713,
+      "current_y": -53.724999999960474,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.229024810003466
+    },
+    {
+      "current_x": 5.424999069036713,
+      "current_y": -53.724999999960474,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.2424320179998176
+    },
+    {
+      "current_x": 5.424998625939452,
+      "current_y": -53.724999999923035,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.250443938006356
+    },
+    {
+      "current_x": 5.424998625939452,
+      "current_y": -53.724999999923035,
+      "distance_remaining": 5.2852983474731445,
+      "elapsed_sec": 1.259378929004015
+    }
+  ],
+  "final_pose": null,
+  "final_position_error_m": null,
+  "first_nonzero_command_elapsed_sec": 1.1632455840008333,
+  "first_odom_after_reset": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "frame_id": "map",
+  "global_path_length_m": 5.031111085448034,
+  "global_path_metrics": {
+    "end": {
+      "x": 0.325,
+      "y": -55.175,
+      "yaw": 0.0
+    },
+    "endpoint_error_m": 0.0,
+    "finite": true,
+    "frame": "map",
+    "length_m": 5.031111085448034,
+    "map_analysis": {
+      "map_yaml": "/home/dog/phase2_builds/p2d_one_goal_validation_20260801_042200/install/share/parking_robot_bringup/maps/phase2_clean_map.yaml",
+      "occupied_hits": 0,
+      "out_of_bounds_hits": 0,
+      "samples": 497,
+      "unknown_hits": 0
+    },
+    "max_gap_m": 0.04575428989299877,
+    "message_type": "nav_msgs/msg/Path",
+    "pose_count": 201,
+    "received": true,
+    "start": {
+      "x": 5.150000659376381,
+      "y": -53.7999995328486,
+      "yaw": 0.0
+    },
+    "topic": "/plan"
+  },
+  "global_path_pose_count": 201,
+  "global_path_received": true,
+  "goal_pose": {
+    "x": 0.325,
+    "y": -55.175,
+    "yaw": 0.0
+  },
+  "goal_send_count": 1,
+  "initialpose_position_error_m": 0.0,
+  "initialpose_publication_stamp": {
+    "nanosec": 828416083,
+    "sec": 1785528565
+  },
+  "initialpose_settle_duration_sec": 0.00235291200078791,
+  "initialpose_verified": true,
+  "initialpose_yaw_error_rad": 0.0,
+  "invalid_command_count": 0,
+  "last_nonzero_command_elapsed_sec": 181.0382276330056,
+  "max_abs_angular_z": 0.8,
+  "max_abs_linear_x": 0.05000000074505806,
+  "nonzero_command_count": 3395,
+  "odom_metrics": {
+    "max_angular_velocity": 0.8,
+    "max_linear_velocity": 0.05000000074505806,
+    "max_quaternion_norm": 1.0,
+    "min_quaternion_norm": 1.0,
+    "nonfinite_count": 0,
+    "sample_count": 9007,
+    "timestamp_nonmonotonic_count": 0,
+    "total_translation_m": 0.39563587622402063
+  },
+  "pass": false,
+  "post_result_stop_latency_sec": null,
+  "settled_odom": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "source_revision": "985cda0f20859fb6144362248e17b1fa42efd5e4",
+  "start_pose": {
+    "x": 5.425,
+    "y": -53.725,
+    "yaw": 0.0
+  },
+  "state_transitions": [
+    {
+      "elapsed_sec": 0.15754035800637212,
+      "state": "WAITING_FOR_NAV2"
+    },
+    {
+      "elapsed_sec": 1.0588947130017914,
+      "state": "SETTING_START"
+    },
+    {
+      "elapsed_sec": 1.0605412010045256,
+      "state": "VERIFYING_START"
+    },
+    {
+      "elapsed_sec": 1.0628938880036003,
+      "state": "GOAL_ACTIVE"
+    },
+    {
+      "elapsed_sec": 181.07116977700207,
+      "state": "TIMEOUT"
+    },
+    {
+      "elapsed_sec": 181.0723531130061,
+      "state": "CLEANUP"
+    }
+  ],
+  "test_name": "p2d_one_goal",
+  "unsupported_command_count": 0
+}
