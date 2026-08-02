@@ -6,6 +6,7 @@ P2-B inspection. It must not be used in this task to start runtime nodes.
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -22,6 +23,7 @@ def generate_launch_description() -> LaunchDescription:
     initial_x = LaunchConfiguration("initial_x")
     initial_y = LaunchConfiguration("initial_y")
     initial_yaw = LaunchConfiguration("initial_yaw")
+    start_fake_base = LaunchConfiguration("start_fake_base")
 
     declare_args = [
         DeclareLaunchArgument(
@@ -41,6 +43,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("initial_x", default_value="5.425"),
         DeclareLaunchArgument("initial_y", default_value="-53.725"),
         DeclareLaunchArgument("initial_yaw", default_value="0.0"),
+        DeclareLaunchArgument("start_fake_base", default_value="true"),
     ]
 
     map_server = Node(
@@ -64,6 +67,7 @@ def generate_launch_description() -> LaunchDescription:
         executable="phase2_fake_base",
         name="phase2_fake_base",
         output="screen",
+        condition=IfCondition(start_fake_base),
         parameters=[
             {
                 "cmd_vel_topic": cmd_vel_topic,
@@ -149,4 +153,3 @@ def generate_launch_description() -> LaunchDescription:
     ):
         ld.add_action(node)
     return ld
-

@@ -158,3 +158,31 @@ def test_p2e_scenarios_static_map_properties():
     )
     assert abs(cancel_distance - 3.0) <= 1.0e-6
     assert_straight_segment_is_free(cancel_start, cancel["goal"], meta, width, height, data)
+
+
+def test_p2f_scenarios_static_map_properties():
+    meta = yaml.safe_load(MAP_YAML.read_text())
+    scenarios = yaml.safe_load(SCENARIOS.read_text())
+    width, height, _, data = read_pgm(MAP_PGM)
+
+    for name in ("p2f_planner_occupied", "p2f_controller_no_progress", "p2f_tf_loss"):
+        assert list(scenarios.keys()).count(name) == 1
+        assert scenarios[name]["initial_pose"] == scenarios["p2d_forward_goal"]["initial_pose"]
+        assert_world_pose_is_free(scenarios[name]["initial_pose"], meta, width, height, data)
+
+    planner_goal = scenarios["p2f_planner_occupied"]["goal"]
+    px, py = world_to_pixel(float(planner_goal["x"]), float(planner_goal["y"]), meta, height)
+    assert 0 <= px < width
+    assert 0 <= py < height
+    assert classify(pixel_value(data, width, px, py), meta) == "occupied"
+    assert planner_goal == scenarios["planner_failure_goal"]["pose"]
+
+    for name in ("p2f_controller_no_progress", "p2f_tf_loss"):
+        goal = scenarios[name]["goal"]
+        assert goal == scenarios["p2d_forward_goal"]["goal"]
+        assert_world_pose_is_free(goal, meta, width, height, data)
+        assert_straight_segment_is_free(scenarios[name]["initial_pose"], goal, meta, width, height, data)
+        assert float(goal["yaw"]) == 0.0
+
+    assert float(scenarios["p2f_controller_no_progress"]["pose_clamp_rate_hz"]) == 10.0
+    assert float(scenarios["p2f_tf_loss"]["transform_stale_wait_sec"]) == 2.0

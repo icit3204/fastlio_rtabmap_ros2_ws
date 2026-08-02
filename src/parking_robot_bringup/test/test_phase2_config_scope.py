@@ -84,6 +84,7 @@ def test_use_sim_time_defaults_false_and_package_share_defaults():
     assert 'DeclareLaunchArgument("use_sim_time", default_value="false")' in launch_text
     assert 'FindPackageShare("parking_robot_bringup")' in launch_text
     assert "PathJoinSubstitution" in launch_text
+    assert 'DeclareLaunchArgument("start_fake_base", default_value="true")' in launch_text
 
 
 def test_plugin_identifiers_are_expected_phase2_set():
@@ -158,6 +159,12 @@ def test_p2e_runner_console_entry_is_installed_once():
     assert setup_text.count(entry) == 1
 
 
+def test_p2f_runner_console_entry_is_installed_once():
+    setup_text = (PKG / "setup.py").read_text()
+    entry = "phase2_failure_test_runner = parking_robot_bringup.phase2_failure_test_runner:main"
+    assert setup_text.count(entry) == 1
+
+
 def test_bt_navigator_has_required_humble_default_tree_plugins():
     params = yaml.safe_load(PARAMS.read_text())
     bt_params = params["bt_navigator"]["ros__parameters"]
@@ -205,3 +212,15 @@ def test_launch_node_packages_are_explicit_phase2_set():
         "nav2_bt_navigator",
         "nav2_lifecycle_manager",
     }
+
+
+def test_start_fake_base_false_omits_only_fake_base():
+    text = LAUNCH.read_text()
+    assert "IfCondition(start_fake_base)" in text
+    assert text.count("phase2_fake_base") == 2
+    assert text.count("condition=IfCondition(start_fake_base)") == 1
+    assert '"odom_topic": "/Odometry"' in text
+    assert '"odom_frame": "odom"' in text
+    assert '"base_frame": "base_footprint"' in text
+    assert 'name="phase2_map_to_odom_static_tf"' in text
+    assert 'arguments=["0", "0", "0", "0", "0", "0", "map", "odom"]' in text

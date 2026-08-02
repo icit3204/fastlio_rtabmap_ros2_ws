@@ -64,6 +64,35 @@ p2e_cancel_forward:
     y: -53.725
     yaw: 0.0
   cancel_after_acceptance_sec: 3.0
+p2f_planner_occupied:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goal:
+    x: -8.025
+    y: -8.725
+    yaw: 0.0
+p2f_controller_no_progress:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goal:
+    x: 8.425
+    y: -53.725
+    yaw: 0.0
+  pose_clamp_rate_hz: 10.0
+p2f_tf_loss:
+  initial_pose:
+    x: 5.425
+    y: -53.725
+    yaw: 0.0
+  goal:
+    x: 8.425
+    y: -53.725
+    yaw: 0.0
+  transform_stale_wait_sec: 2.0
 planner_failure_goal:
   pixel: {x: 621, y: 1154}
   pose: {x: -8.025, y: -8.725, yaw: 0.0}
