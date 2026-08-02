@@ -1,4 +1,4 @@
-"""Mission sequencing core with no ROS transport dependency."""
+"""Authority-aligned Mission Manager sequencing core with no ROS dependency."""
 
 from __future__ import annotations
 
@@ -12,36 +12,53 @@ from .route_contract import NormalizedRouteMission, ValidationResult, validate_r
 
 class MissionStateCode(IntEnum):
     IDLE = 0
-    VALIDATING = 1
-    READY = 2
-    RUNNING = 3
-    PAUSED = 4
-    CANCELING = 5
-    SUCCEEDED = 6
-    FAILED = 7
-    BLOCKED = 8
-    REJECTED = 9
+    RECEIVED = 1
+    VALIDATING = 2
+    PLANNING = 3
+    NAVIGATING = 4
+    PAUSED = 5
+    CANCELLING = 6
+    CANCELLED = 7
+    SUCCEEDED = 8
+    TEMPORARILY_BLOCKED = 9
+    BLOCKED = 10
+    FAILED = 11
+    HELP_REQUIRED = 12
 
 
 TERMINAL_STATES = {
     MissionStateCode.IDLE,
+    MissionStateCode.CANCELLED,
     MissionStateCode.SUCCEEDED,
+    MissionStateCode.BLOCKED,
     MissionStateCode.FAILED,
-    MissionStateCode.REJECTED,
+    MissionStateCode.HELP_REQUIRED,
 }
 
 
 VALID_TRANSITIONS = {
-    MissionStateCode.IDLE: {MissionStateCode.VALIDATING},
-    MissionStateCode.VALIDATING: {MissionStateCode.READY, MissionStateCode.REJECTED, MissionStateCode.FAILED},
-    MissionStateCode.READY: {MissionStateCode.RUNNING, MissionStateCode.CANCELING, MissionStateCode.SUCCEEDED, MissionStateCode.FAILED},
-    MissionStateCode.RUNNING: {MissionStateCode.RUNNING, MissionStateCode.PAUSED, MissionStateCode.CANCELING, MissionStateCode.SUCCEEDED, MissionStateCode.FAILED},
-    MissionStateCode.PAUSED: {MissionStateCode.RUNNING, MissionStateCode.CANCELING},
-    MissionStateCode.CANCELING: {MissionStateCode.IDLE, MissionStateCode.FAILED},
-    MissionStateCode.SUCCEEDED: {MissionStateCode.IDLE},
-    MissionStateCode.FAILED: {MissionStateCode.IDLE},
-    MissionStateCode.BLOCKED: {MissionStateCode.CANCELING, MissionStateCode.FAILED},
-    MissionStateCode.REJECTED: {MissionStateCode.IDLE},
+    MissionStateCode.IDLE: {MissionStateCode.RECEIVED},
+    MissionStateCode.RECEIVED: {MissionStateCode.VALIDATING, MissionStateCode.FAILED},
+    MissionStateCode.VALIDATING: {MissionStateCode.PLANNING, MissionStateCode.FAILED},
+    MissionStateCode.PLANNING: {MissionStateCode.NAVIGATING, MissionStateCode.SUCCEEDED, MissionStateCode.FAILED},
+    MissionStateCode.NAVIGATING: {
+        MissionStateCode.PLANNING,
+        MissionStateCode.PAUSED,
+        MissionStateCode.CANCELLING,
+        MissionStateCode.SUCCEEDED,
+        MissionStateCode.TEMPORARILY_BLOCKED,
+        MissionStateCode.BLOCKED,
+        MissionStateCode.FAILED,
+        MissionStateCode.HELP_REQUIRED,
+    },
+    MissionStateCode.PAUSED: {MissionStateCode.PLANNING, MissionStateCode.CANCELLING},
+    MissionStateCode.CANCELLING: {MissionStateCode.CANCELLED, MissionStateCode.FAILED},
+    MissionStateCode.CANCELLED: {MissionStateCode.IDLE, MissionStateCode.RECEIVED},
+    MissionStateCode.SUCCEEDED: {MissionStateCode.IDLE, MissionStateCode.RECEIVED},
+    MissionStateCode.TEMPORARILY_BLOCKED: {MissionStateCode.PLANNING, MissionStateCode.CANCELLING, MissionStateCode.BLOCKED, MissionStateCode.FAILED},
+    MissionStateCode.BLOCKED: {MissionStateCode.IDLE, MissionStateCode.RECEIVED},
+    MissionStateCode.FAILED: {MissionStateCode.IDLE, MissionStateCode.RECEIVED},
+    MissionStateCode.HELP_REQUIRED: {MissionStateCode.IDLE, MissionStateCode.RECEIVED},
 }
 
 
@@ -75,9 +92,7 @@ class MissionSnapshot:
 
 
 class MissionGoalExecutor:
-    """Interface implemented by real and fake NavigateToPose executors."""
-
-    def send_goal(self, waypoint, result_callback: Callable[[GoalResultCode, str], None]) -> GoalOutcome:
+    def send_goal(self, pose, result_callback: Callable[[GoalResultCode, str], None]) -> GoalOutcome:
         raise NotImplementedError
 
     def cancel_goal(self, goal_uuid: str, timeout_sec: float) -> bool:
@@ -92,15 +107,22 @@ class MissionStateMachine:
         self,
         executor: MissionGoalExecutor,
         *,
+        expected_topology_version: str,
         state_callback: Optional[Callable[[MissionSnapshot], None]] = None,
-        min_waypoint_separation_m: float = 0.05,
+        goal_xy_tolerance_m: float = 0.25,
+        waypoint_separation_margin_m: float = 0.05,
+        min_waypoint_separation_m: float = 0.55,
         cancel_timeout_sec: float = 2.0,
     ) -> None:
         self.executor = executor
+        self.expected_topology_version = expected_topology_version
         self._state_callback = state_callback
+        self.goal_xy_tolerance_m = goal_xy_tolerance_m
+        self.waypoint_separation_margin_m = waypoint_separation_margin_m
         self.min_waypoint_separation_m = min_waypoint_separation_m
         self.cancel_timeout_sec = cancel_timeout_sec
         self.state = MissionStateCode.IDLE
+        self.raw_mission = None
         self.mission: Optional[NormalizedRouteMission] = None
         self.current_waypoint_index = 0
         self.completed_waypoint_count = 0
@@ -109,13 +131,15 @@ class MissionStateMachine:
         self.detail = ""
         self.transition_errors: List[str] = []
         self.snapshots: List[MissionSnapshot] = []
-        self._canceling = False
-        self._terminal_written = False
         self._publish()
 
     @property
     def total_waypoint_count(self) -> int:
-        return len(self.mission.waypoints) if self.mission is not None else 0
+        if self.mission is not None:
+            return len(self.mission.poses)
+        if self.raw_mission is not None:
+            return len(getattr(self.raw_mission, "poses", []))
+        return 0
 
     def _progress(self) -> float:
         total = self.total_waypoint_count
@@ -124,10 +148,18 @@ class MissionStateMachine:
         return min(1.0, self.completed_waypoint_count / total)
 
     def snapshot(self) -> MissionSnapshot:
+        mission_id = ""
+        route_id = ""
+        if self.mission is not None:
+            mission_id = self.mission.mission_id
+            route_id = self.mission.route_id
+        elif self.raw_mission is not None:
+            mission_id = str(getattr(self.raw_mission, "mission_id", ""))
+            route_id = str(getattr(self.raw_mission, "route_id", ""))
         return MissionSnapshot(
             state=self.state,
-            mission_id=self.mission.mission_id if self.mission else "",
-            route_id=self.mission.route_id if self.mission else "",
+            mission_id=mission_id,
+            route_id=route_id,
             current_waypoint_index=self.current_waypoint_index,
             completed_waypoint_count=self.completed_waypoint_count,
             total_waypoint_count=self.total_waypoint_count,
@@ -161,37 +193,50 @@ class MissionStateMachine:
         self._publish()
         return True
 
-    def submit_mission(self, msg) -> ValidationResult:
+    def receive_mission(self, msg) -> ValidationResult:
         if self.state not in TERMINAL_STATES:
-            self._publish_rejected("MISSION_ALREADY_ACTIVE", "only one mission may be active")
-            return ValidationResult(False, "MISSION_ALREADY_ACTIVE", "only one mission may be active")
+            self.reason_code = "MISSION_ALREADY_ACTIVE"
+            self.detail = "only one mission may be stored or active"
+            self._publish()
+            return ValidationResult(False, self.reason_code, self.detail)
         if self.state != MissionStateCode.IDLE:
             self._transition(MissionStateCode.IDLE)
+        self.raw_mission = msg
         self.mission = None
         self.current_waypoint_index = 0
         self.completed_waypoint_count = 0
         self.active_goal_uuid = ""
+        self._transition(MissionStateCode.RECEIVED, "MISSION_RECEIVED", "mission stored; awaiting start")
+        return ValidationResult(True, "RECEIVED", "mission received")
+
+    def start(self) -> ValidationResult:
+        if self.state == MissionStateCode.NAVIGATING:
+            return ValidationResult(False, "MISSION_ALREADY_NAVIGATING", "mission is already navigating")
+        if self.state != MissionStateCode.RECEIVED:
+            return ValidationResult(False, "NO_RECEIVED_MISSION", "start requires a received mission")
         self._transition(MissionStateCode.VALIDATING)
-        result = validate_route_mission(msg, min_waypoint_separation_m=self.min_waypoint_separation_m)
+        try:
+            result = validate_route_mission(
+                self.raw_mission,
+                expected_topology_version=self.expected_topology_version,
+                goal_xy_tolerance_m=self.goal_xy_tolerance_m,
+                waypoint_separation_margin_m=self.waypoint_separation_margin_m,
+                min_waypoint_separation_m=self.min_waypoint_separation_m,
+            )
+        except Exception as exc:
+            self._transition(MissionStateCode.FAILED, "VALIDATION_EXCEPTION", f"{type(exc).__name__}: {exc}")
+            return ValidationResult(False, "VALIDATION_EXCEPTION", str(exc))
         if not result.valid:
-            self._transition(MissionStateCode.REJECTED, result.reason_code, result.detail)
+            self._transition(MissionStateCode.FAILED, result.reason_code, result.detail)
             return result
         self.mission = result.mission
-        self._transition(MissionStateCode.READY)
+        self._transition(MissionStateCode.PLANNING)
         self._dispatch_current_waypoint()
         return result
 
-    def _publish_rejected(self, reason_code: str, detail: str) -> None:
-        old_state = self.state
-        self.state = MissionStateCode.REJECTED
-        self.reason_code = reason_code
-        self.detail = detail
-        self._publish()
-        self.state = old_state
-
     def _dispatch_current_waypoint(self) -> None:
         if self.mission is None:
-            self._transition(MissionStateCode.FAILED, "NO_ACTIVE_MISSION", "cannot dispatch without a mission")
+            self._transition(MissionStateCode.FAILED, "NO_ACTIVE_MISSION", "cannot dispatch without a validated mission")
             return
         if self.completed_waypoint_count > self.total_waypoint_count:
             self._transition(MissionStateCode.FAILED, "COMPLETED_COUNT_OVERFLOW", "completed waypoint count exceeded total")
@@ -200,15 +245,15 @@ class MissionStateMachine:
             self.active_goal_uuid = ""
             self._transition(MissionStateCode.SUCCEEDED, "MISSION_SUCCEEDED", "all waypoints completed")
             return
-        if self.state == MissionStateCode.READY:
-            if not self._transition(MissionStateCode.RUNNING):
+        if self.state == MissionStateCode.PLANNING:
+            if not self._transition(MissionStateCode.NAVIGATING):
                 return
-        elif self.state != MissionStateCode.RUNNING:
+        elif self.state != MissionStateCode.NAVIGATING:
             self._transition(MissionStateCode.FAILED, "DISPATCH_FROM_INVALID_STATE", self.state.name)
             return
         try:
-            waypoint = self.mission.waypoints[self.current_waypoint_index]
-            outcome = self.executor.send_goal(waypoint, self.on_goal_result)
+            pose = self.mission.poses[self.current_waypoint_index]
+            outcome = self.executor.send_goal(pose, self.on_goal_result)
         except Exception as exc:
             self._transition(
                 MissionStateCode.FAILED,
@@ -225,43 +270,52 @@ class MissionStateMachine:
             self.on_goal_result(outcome.terminal_status, outcome.detail)
 
     def on_goal_result(self, status: GoalResultCode, detail: str = "") -> None:
-        if self.state != MissionStateCode.RUNNING:
+        if self.state != MissionStateCode.NAVIGATING:
             return
         if status == GoalResultCode.SUCCEEDED:
             self.completed_waypoint_count += 1
             self.current_waypoint_index += 1
             self.active_goal_uuid = ""
             self._publish()
+            self._transition(MissionStateCode.PLANNING, "WAYPOINT_SUCCEEDED", detail or "waypoint succeeded")
             self._dispatch_current_waypoint()
             return
         self._transition(MissionStateCode.FAILED, f"GOAL_{status.name}", detail or status.name)
 
     def cancel(self) -> bool:
-        if self.state == MissionStateCode.IDLE:
+        if self.state == MissionStateCode.CANCELLED:
             return True
-        if self.state not in {MissionStateCode.READY, MissionStateCode.RUNNING, MissionStateCode.PAUSED}:
+        if self.state not in {MissionStateCode.RECEIVED, MissionStateCode.PLANNING, MissionStateCode.NAVIGATING, MissionStateCode.PAUSED}:
             return False
-        self._transition(MissionStateCode.CANCELING, "MISSION_CANCEL_REQUESTED", "cancel requested")
+        self._transition(MissionStateCode.CANCELLING, "MISSION_CANCEL_REQUESTED", "cancel requested")
         if self.active_goal_uuid:
-            self.executor.cancel_goal(self.active_goal_uuid, self.cancel_timeout_sec)
+            acknowledged = self.executor.cancel_goal(self.active_goal_uuid, self.cancel_timeout_sec)
+            if not acknowledged:
+                self._transition(MissionStateCode.FAILED, "CANCEL_ACK_TIMEOUT", "active goal cancellation was not acknowledged")
+                return False
         self.active_goal_uuid = ""
-        self._transition(MissionStateCode.IDLE, "MISSION_CANCELED", "mission canceled")
+        self._transition(MissionStateCode.CANCELLED, "MISSION_CANCELLED", "mission cancelled")
         return True
 
     def pause(self) -> bool:
         if self.state == MissionStateCode.PAUSED:
             return True
-        if self.state != MissionStateCode.RUNNING:
+        if self.state != MissionStateCode.NAVIGATING:
             return False
         if self.active_goal_uuid:
-            self.executor.cancel_goal(self.active_goal_uuid, self.cancel_timeout_sec)
+            acknowledged = self.executor.cancel_goal(self.active_goal_uuid, self.cancel_timeout_sec)
+            if not acknowledged:
+                self._transition(MissionStateCode.FAILED, "PAUSE_CANCEL_ACK_TIMEOUT", "active goal cancellation was not acknowledged")
+                return False
         self.active_goal_uuid = ""
-        return self._transition(MissionStateCode.PAUSED, "MISSION_PAUSED", "active goal canceled; waypoint retained")
+        return self._transition(MissionStateCode.PAUSED, "MISSION_PAUSED", "active goal cancelled; waypoint retained")
 
     def resume(self) -> bool:
+        if self.state == MissionStateCode.NAVIGATING:
+            return True
         if self.state != MissionStateCode.PAUSED:
-            return self.state == MissionStateCode.RUNNING
-        if not self._transition(MissionStateCode.RUNNING, "MISSION_RESUMED", "current waypoint will be re-sent"):
+            return False
+        if not self._transition(MissionStateCode.PLANNING, "MISSION_RESUMED", "current waypoint will be re-sent"):
             return False
         self._dispatch_current_waypoint()
         return True

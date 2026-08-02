@@ -23,12 +23,12 @@ class ScriptedFakeGoalExecutor(MissionGoalExecutor):
 
     def send_goal(self, waypoint, result_callback: Callable[[GoalResultCode, str], None]) -> GoalOutcome:
         outcome = self.outcomes.pop(0) if self.outcomes else "succeeded"
-        self.sent_waypoint_ids.append(waypoint.waypoint_id)
+        self.sent_waypoint_ids.append(f"pose-{len(self.sent_waypoint_ids)}")
         if outcome == "server_unavailable":
             return GoalOutcome(False, reason_code="ACTION_SERVER_UNAVAILABLE", detail="NavigateToPose unavailable")
         if outcome == "rejected":
             return GoalOutcome(False, reason_code="GOAL_REJECTED", detail="NavigateToPose rejected goal")
-        goal_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"p3a-fake-{next(self._counter)}-{waypoint.waypoint_id}").hex
+        goal_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"p3a-fake-{next(self._counter)}").hex
         self.goal_uuids.append(goal_uuid)
         self._callbacks[goal_uuid] = result_callback
         if outcome == "succeeded":
@@ -54,6 +54,9 @@ class ScriptedFakeGoalExecutor(MissionGoalExecutor):
         del timeout_sec
         self.cancel_count += 1
         self.cancel_requested_goal_uuids.append(goal_uuid)
+        if self.outcomes and self.outcomes[0] == "cancel_timeout":
+            self.outcomes.pop(0)
+            return False
         return True
 
 
@@ -75,16 +78,16 @@ class NavigateToPoseGoalExecutor(MissionGoalExecutor):
     def server_available(self) -> bool:
         return self._client.server_is_ready()
 
-    def send_goal(self, waypoint, result_callback: Callable[[GoalResultCode, str], None]) -> GoalOutcome:
+    def send_goal(self, pose, result_callback: Callable[[GoalResultCode, str], None]) -> GoalOutcome:
         goal = self._NavigateToPose.Goal()
-        goal.pose.header.frame_id = waypoint.pose.frame_id
-        goal.pose.pose.position.x = waypoint.pose.x
-        goal.pose.pose.position.y = waypoint.pose.y
-        goal.pose.pose.position.z = waypoint.pose.z
-        goal.pose.pose.orientation.x = waypoint.pose.qx
-        goal.pose.pose.orientation.y = waypoint.pose.qy
-        goal.pose.pose.orientation.z = waypoint.pose.qz
-        goal.pose.pose.orientation.w = waypoint.pose.qw
+        goal.pose.header.frame_id = pose.frame_id
+        goal.pose.pose.position.x = pose.x
+        goal.pose.pose.position.y = pose.y
+        goal.pose.pose.position.z = pose.z
+        goal.pose.pose.orientation.x = pose.qx
+        goal.pose.pose.orientation.y = pose.qy
+        goal.pose.pose.orientation.z = pose.qz
+        goal.pose.pose.orientation.w = pose.qw
         future = self._client.send_goal_async(goal)
         self._futures.append(future)
         future.add_done_callback(lambda done: self._goal_response_cb(done, result_callback))

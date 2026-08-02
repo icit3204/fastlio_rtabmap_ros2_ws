@@ -1,2 +1,0 @@
-string waypoint_id
-geometry_msgs/PoseStamped pose

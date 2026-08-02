@@ -8,21 +8,26 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT.parent
 
 
-def test_mission_state_constants_are_unique_and_typed():
+def test_mission_state_constants_are_unique_and_authority_aligned():
     constants = [
         MissionState.IDLE,
+        MissionState.RECEIVED,
         MissionState.VALIDATING,
-        MissionState.READY,
-        MissionState.RUNNING,
+        MissionState.PLANNING,
+        MissionState.NAVIGATING,
         MissionState.PAUSED,
-        MissionState.CANCELING,
+        MissionState.CANCELLING,
+        MissionState.CANCELLED,
         MissionState.SUCCEEDED,
-        MissionState.FAILED,
+        MissionState.TEMPORARILY_BLOCKED,
         MissionState.BLOCKED,
-        MissionState.REJECTED,
+        MissionState.FAILED,
+        MissionState.HELP_REQUIRED,
     ]
     assert len(constants) == len(set(constants))
     assert all(isinstance(value, int) for value in constants)
+    for removed in ("READY", "RUNNING", "REJECTED"):
+        assert not hasattr(MissionState, removed)
 
 
 def test_interface_dependencies_do_not_include_command_or_physical_control():
@@ -50,13 +55,54 @@ def test_mission_manager_has_no_velocity_or_physical_publishers():
     assert not re.search(r"create_publisher\s*\([^)]*(Twist|Float32MultiArray)", source)
 
 
-def test_message_files_define_required_fields_and_zero_based_index_comment():
+def test_message_files_define_required_authority_fields():
     msg_dir = SRC / "parking_robot_interfaces" / "msg"
-    assert "geometry_msgs/PoseStamped pose" in (msg_dir / "RouteWaypoint.msg").read_text()
+    assert not (msg_dir / "RouteWaypoint.msg").exists()
     route = (msg_dir / "RouteMission.msg").read_text()
-    for field in ("mission_id", "route_id", "route_version", "direction_id", "RouteWaypoint[] waypoints"):
+    for field in (
+        "std_msgs/Header header",
+        "string mission_id",
+        "string route_id",
+        "string topology_version",
+        "string[] node_ids",
+        "string[] edge_ids",
+        "int8[] edge_directions",
+        "geometry_msgs/PoseStamped[] poses",
+    ):
         assert field in route
+    for removed in ("route_version", "direction_id", "RouteWaypoint[]"):
+        assert removed not in route
     state = (msg_dir / "MissionState.msg").read_text()
     assert "zero-based" in state
-    for constant in ("IDLE", "VALIDATING", "READY", "RUNNING", "PAUSED", "CANCELING", "SUCCEEDED", "FAILED", "BLOCKED", "REJECTED"):
+    for constant in (
+        "IDLE",
+        "RECEIVED",
+        "VALIDATING",
+        "PLANNING",
+        "NAVIGATING",
+        "PAUSED",
+        "CANCELLING",
+        "CANCELLED",
+        "SUCCEEDED",
+        "TEMPORARILY_BLOCKED",
+        "BLOCKED",
+        "FAILED",
+        "HELP_REQUIRED",
+    ):
         assert constant in state
+
+
+def test_authoritative_ros_api_names_and_no_legacy_aliases():
+    source = (SRC / "parking_robot_mission_manager" / "parking_robot_mission_manager" / "mission_manager_node.py").read_text()
+    for topic in ("/mission/route", "/mission/state", "/mission/start", "/mission/cancel", "/mission/pause", "/mission/status", "/mission/block_reason"):
+        assert topic in source
+    for legacy in (
+        "/mission_manager/route_mission",
+        "/mission_manager/state",
+        "/mission_manager/pause",
+        "/mission_manager/resume",
+        "/mission_manager/cancel",
+    ):
+        assert legacy not in source
+    assert "SetBool" in source
+    assert "Trigger" in source

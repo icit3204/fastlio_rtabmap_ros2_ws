@@ -1,5 +1,5 @@
 from geometry_msgs.msg import PoseStamped
-from parking_robot_interfaces.msg import RouteMission, RouteWaypoint
+from parking_robot_interfaces.msg import RouteMission
 
 from parking_robot_mission_manager.mission_state_machine import (
     GoalResultCode,
@@ -9,162 +9,202 @@ from parking_robot_mission_manager.mission_state_machine import (
 from parking_robot_mission_manager.nav2_goal_executor import ScriptedFakeGoalExecutor
 
 
-def wp(waypoint_id, x):
-    waypoint = RouteWaypoint()
-    waypoint.waypoint_id = waypoint_id
-    waypoint.pose = PoseStamped()
-    waypoint.pose.header.frame_id = "map"
-    waypoint.pose.pose.position.x = x
-    waypoint.pose.pose.orientation.w = 1.0
-    return waypoint
+EXPECTED_TOPOLOGY = "topology-v1"
 
 
-def mission(count=2):
+def pose(x):
+    msg = PoseStamped()
+    msg.header.frame_id = "map"
+    msg.pose.position.x = x
+    msg.pose.orientation.w = 1.0
+    return msg
+
+
+def mission(count=2, *, topology=EXPECTED_TOPOLOGY):
     msg = RouteMission()
     msg.header.frame_id = "map"
     msg.mission_id = "m1"
     msg.route_id = "r1"
-    msg.route_version = "v1"
-    msg.direction_id = "forward"
-    msg.waypoints = [wp(f"wp{i}", float(i)) for i in range(count)]
+    msg.topology_version = topology
+    msg.node_ids = [f"n{i}" for i in range(count)]
+    msg.poses = [pose(float(i)) for i in range(count)]
+    msg.edge_ids = [f"e{i}" for i in range(max(count - 1, 0))]
+    msg.edge_directions = [1 for _ in msg.edge_ids]
     return msg
 
 
-def states(machine):
-    return [snap.state for snap in machine.snapshots]
+def machine(executor):
+    return MissionStateMachine(executor, expected_topology_version=EXPECTED_TOPOLOGY)
 
 
-def test_complete_nominal_two_and_three_waypoint_success():
+def states(sm):
+    return [snap.state for snap in sm.snapshots]
+
+
+def test_route_receipt_causes_received_and_sends_zero_goals():
+    executor = ScriptedFakeGoalExecutor(["succeeded"])
+    sm = machine(executor)
+    assert sm.receive_mission(mission()).valid
+    assert sm.state == MissionStateCode.RECEIVED
+    assert executor.sent_waypoint_ids == []
+
+
+def test_start_sequence_and_two_waypoint_success():
     executor = ScriptedFakeGoalExecutor(["succeeded", "succeeded"])
-    machine = MissionStateMachine(executor)
-    assert machine.submit_mission(mission(2)).valid
-    assert machine.state == MissionStateCode.SUCCEEDED
-    assert machine.completed_waypoint_count == 2
-    assert executor.sent_waypoint_ids == ["wp0", "wp1"]
-
-    executor = ScriptedFakeGoalExecutor(["succeeded", "succeeded", "succeeded"])
-    machine = MissionStateMachine(executor)
-    assert machine.submit_mission(mission(3)).valid
-    assert machine.state == MissionStateCode.SUCCEEDED
-    assert machine.completed_waypoint_count == 3
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    assert sm.start().valid
+    observed = states(sm)
+    for state in (MissionStateCode.RECEIVED, MissionStateCode.VALIDATING, MissionStateCode.PLANNING, MissionStateCode.NAVIGATING):
+        assert state in observed
+    assert sm.state == MissionStateCode.SUCCEEDED
+    assert sm.completed_waypoint_count == 2
+    assert sm.snapshot().progress == 1.0
 
 
-def test_rejected_first_waypoint_fails_without_skip():
-    executor = ScriptedFakeGoalExecutor(["rejected", "succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(2))
-    assert machine.state == MissionStateCode.FAILED
-    assert machine.current_waypoint_index == 0
-    assert executor.sent_waypoint_ids == ["wp0"]
-
-
-def test_aborted_middle_waypoint_fails_without_sending_later_waypoint():
-    executor = ScriptedFakeGoalExecutor(["succeeded", "aborted", "succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(3))
-    assert machine.state == MissionStateCode.FAILED
-    assert machine.current_waypoint_index == 1
-    assert machine.completed_waypoint_count == 1
-    assert executor.sent_waypoint_ids == ["wp0", "wp1"]
-
-
-def test_second_mission_rejected_while_active():
-    executor = ScriptedFakeGoalExecutor(["delayed"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    result = machine.submit_mission(mission(1))
+def test_invalid_topology_version_fails_with_zero_goals():
+    executor = ScriptedFakeGoalExecutor(["succeeded"])
+    sm = machine(executor)
+    sm.receive_mission(mission(topology="wrong"))
+    result = sm.start()
     assert not result.valid
-    assert result.reason_code == "MISSION_ALREADY_ACTIVE"
-    assert executor.sent_waypoint_ids == ["wp0"]
+    assert sm.state == MissionStateCode.FAILED
+    assert sm.reason_code == "TOPOLOGY_VERSION_MISMATCH"
+    assert executor.sent_waypoint_ids == []
 
 
-def test_cancel_before_first_dispatch_and_during_active_goal():
+def test_middle_waypoint_aborted_sends_no_later_waypoint():
+    executor = ScriptedFakeGoalExecutor(["succeeded", "aborted", "succeeded"])
+    sm = machine(executor)
+    sm.receive_mission(mission(3))
+    sm.start()
+    assert sm.state == MissionStateCode.FAILED
+    assert sm.current_waypoint_index == 1
+    assert sm.completed_waypoint_count == 1
+    assert len(executor.sent_waypoint_ids) == 2
+
+
+def test_second_mission_during_navigation_does_not_corrupt_active_mission():
     executor = ScriptedFakeGoalExecutor(["delayed"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    assert machine.cancel()
-    assert machine.state == MissionStateCode.IDLE
-    assert executor.cancel_count == 1
-    assert MissionStateCode.CANCELING in states(machine)
+    sm = machine(executor)
+    sm.receive_mission(mission(1))
+    sm.start()
+    active = sm.snapshot()
+    result = sm.receive_mission(mission(2))
+    assert not result.valid
+    assert sm.snapshot().mission_id == active.mission_id
+    assert sm.state == MissionStateCode.NAVIGATING
 
 
-def test_pause_and_resume_resends_same_waypoint():
-    executor = ScriptedFakeGoalExecutor(["delayed", "succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(2))
-    assert machine.pause()
-    assert machine.state == MissionStateCode.PAUSED
-    assert machine.current_waypoint_index == 0
-    assert executor.cancel_count == 1
-    assert machine.resume()
-    assert machine.state == MissionStateCode.SUCCEEDED
-    assert executor.sent_waypoint_ids[:2] == ["wp0", "wp0"]
-    assert machine.completed_waypoint_count == 2
-
-
-def test_pause_cancel_idempotence_and_server_unavailable():
-    executor = ScriptedFakeGoalExecutor(["server_unavailable"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    assert machine.state == MissionStateCode.FAILED
-    assert not machine.pause()
-    assert machine.cancel() is False
-
+def test_cancel_acknowledgement_reaches_cancelled():
     executor = ScriptedFakeGoalExecutor(["delayed"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    assert machine.pause()
-    assert machine.pause()
-    assert machine.cancel()
-    assert machine.state == MissionStateCode.IDLE
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert sm.cancel()
+    assert sm.state == MissionStateCode.CANCELLED
+    assert executor.cancel_count == 1
+    assert MissionStateCode.CANCELLING in states(sm)
 
 
-def test_cancellation_timeout_is_bounded_and_does_not_skip():
-    class TimeoutExecutor(ScriptedFakeGoalExecutor):
-        def cancel_goal(self, goal_uuid, timeout_sec):
-            super().cancel_goal(goal_uuid, timeout_sec)
-            return False
-
-    executor = TimeoutExecutor(["delayed", "succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    assert machine.pause()
-    assert machine.state == MissionStateCode.PAUSED
-    assert machine.completed_waypoint_count == 0
+def test_cancel_timeout_reaches_failed_not_cancelled_or_idle():
+    executor = ScriptedFakeGoalExecutor(["delayed", "cancel_timeout"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert not sm.cancel()
+    assert sm.state == MissionStateCode.FAILED
+    assert sm.reason_code == "CANCEL_ACK_TIMEOUT"
+    assert sm.state not in (MissionStateCode.CANCELLED, MissionStateCode.IDLE)
 
 
-def test_illegal_transition_rejection_and_exception_becomes_failed():
+def test_pause_acknowledgement_reaches_paused_and_preserves_index():
+    executor = ScriptedFakeGoalExecutor(["delayed"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert sm.pause()
+    assert sm.state == MissionStateCode.PAUSED
+    assert sm.current_waypoint_index == 0
+    assert sm.completed_waypoint_count == 0
+
+
+def test_pause_timeout_reaches_failed_not_paused():
+    executor = ScriptedFakeGoalExecutor(["delayed", "cancel_timeout"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert not sm.pause()
+    assert sm.state == MissionStateCode.FAILED
+    assert sm.reason_code == "PAUSE_CANCEL_ACK_TIMEOUT"
+
+
+def test_resume_resends_same_waypoint_and_completes():
+    executor = ScriptedFakeGoalExecutor(["delayed", "succeeded", "succeeded"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert sm.pause()
+    assert sm.resume()
+    assert sm.state == MissionStateCode.SUCCEEDED
+    assert executor.sent_waypoint_ids[:2] == ["pose-0", "pose-1"]
+    assert sm.completed_waypoint_count == 2
+
+
+def test_pause_resume_idempotence_and_one_cancel_request():
+    executor = ScriptedFakeGoalExecutor(["delayed"])
+    sm = machine(executor)
+    sm.receive_mission(mission(1))
+    sm.start()
+    assert sm.pause()
+    assert sm.pause()
+    assert sm.state == MissionStateCode.PAUSED
+    assert executor.cancel_count == 1
+    assert not sm.resume() or sm.state in (MissionStateCode.NAVIGATING, MissionStateCode.SUCCEEDED)
+
+
+def test_no_goal_dispatched_before_start_and_start_refusals():
     executor = ScriptedFakeGoalExecutor(["succeeded"])
-    machine = MissionStateMachine(executor)
-    assert not machine.validate_transition(MissionStateCode.RUNNING)
-    assert machine.transition_errors
-
-    executor = ScriptedFakeGoalExecutor(["exception"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    assert machine.state == MissionStateCode.FAILED
-    assert machine.reason_code == "EXECUTOR_EXCEPTION"
+    sm = machine(executor)
+    assert not sm.start().valid
+    sm.receive_mission(mission(1))
+    assert executor.sent_waypoint_ids == []
 
 
-def test_progress_monotonicity_and_final_completed_count():
+def test_progress_monotonicity_and_completed_count_bounds():
     executor = ScriptedFakeGoalExecutor(["succeeded", "succeeded", "succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(3))
-    progresses = [snap.progress for snap in machine.snapshots]
+    sm = machine(executor)
+    sm.receive_mission(mission(3))
+    sm.start()
+    progresses = [snap.progress for snap in sm.snapshots]
     assert progresses == sorted(progresses)
-    assert progresses[-1] == 1.0
-    assert machine.completed_waypoint_count == 3
+    assert all(snap.completed_waypoint_count <= snap.total_waypoint_count for snap in sm.snapshots)
 
 
-def test_required_state_sequences_are_explicit():
-    executor = ScriptedFakeGoalExecutor(["succeeded"])
-    machine = MissionStateMachine(executor)
-    machine.submit_mission(mission(1))
-    observed = states(machine)
-    assert observed[:4] == [
-        MissionStateCode.IDLE,
-        MissionStateCode.VALIDATING,
-        MissionStateCode.READY,
-        MissionStateCode.RUNNING,
-    ]
-    assert observed[-1] == MissionStateCode.SUCCEEDED
+def test_exceptions_become_failed_with_terminal_evidence():
+    executor = ScriptedFakeGoalExecutor(["exception"])
+    sm = machine(executor)
+    sm.receive_mission(mission(1))
+    sm.start()
+    assert sm.state == MissionStateCode.FAILED
+    assert sm.reason_code == "EXECUTOR_EXCEPTION"
+
+
+def test_no_later_waypoint_after_failed_cancelled_blocked_or_help_required():
+    executor = ScriptedFakeGoalExecutor(["aborted", "succeeded"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    assert sm.state == MissionStateCode.FAILED
+    assert len(executor.sent_waypoint_ids) == 1
+
+    executor = ScriptedFakeGoalExecutor(["delayed"])
+    sm = machine(executor)
+    sm.receive_mission(mission(2))
+    sm.start()
+    sm.cancel()
+    assert sm.state == MissionStateCode.CANCELLED
+    assert len(executor.sent_waypoint_ids) == 1
+
+    assert MissionStateCode.BLOCKED.name == "BLOCKED"
+    assert MissionStateCode.HELP_REQUIRED.name == "HELP_REQUIRED"

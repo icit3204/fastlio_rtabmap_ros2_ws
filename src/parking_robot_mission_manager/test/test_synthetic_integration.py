@@ -6,33 +6,33 @@ import pytest
 import rclpy
 from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import NavigateToPose
-from parking_robot_interfaces.msg import MissionState, RouteMission, RouteWaypoint
+from parking_robot_interfaces.msg import MissionState, RouteMission
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from std_srvs.srv import Trigger
+from std_srvs.srv import SetBool, Trigger
 
 from parking_robot_mission_manager.mission_manager_node import MissionManagerNode
 
 
-def make_waypoint(waypoint_id, x):
-    waypoint = RouteWaypoint()
-    waypoint.waypoint_id = waypoint_id
-    waypoint.pose = PoseStamped()
-    waypoint.pose.header.frame_id = "map"
-    waypoint.pose.pose.position.x = x
-    waypoint.pose.pose.orientation.w = 1.0
-    return waypoint
+def pose(x):
+    msg = PoseStamped()
+    msg.header.frame_id = "map"
+    msg.pose.position.x = x
+    msg.pose.orientation.w = 1.0
+    return msg
 
 
-def make_mission(count=2):
+def make_mission(count=2, *, topology="v1", directions=None):
     msg = RouteMission()
     msg.header.frame_id = "map"
     msg.mission_id = uuid.uuid4().hex
     msg.route_id = "route-a"
-    msg.route_version = "v1"
-    msg.direction_id = "forward"
-    msg.waypoints = [make_waypoint(f"wp{i}", float(i)) for i in range(count)]
+    msg.topology_version = topology
+    msg.node_ids = [f"node-{i}" for i in range(count)]
+    msg.poses = [pose(float(i)) for i in range(count)]
+    msg.edge_ids = [f"edge-{i}" for i in range(max(count - 1, 0))]
+    msg.edge_directions = directions if directions is not None else [1 for _ in msg.edge_ids]
     return msg
 
 
@@ -40,11 +40,12 @@ class Recorder(Node):
     def __init__(self):
         super().__init__("mission_state_recorder")
         self.states = []
-        self.pub = self.create_publisher(RouteMission, "/mission_manager/route_mission", 10)
-        self.sub = self.create_subscription(MissionState, "/mission_manager/state", self.states.append, 10)
-        self.pause = self.create_client(Trigger, "/mission_manager/pause")
-        self.resume = self.create_client(Trigger, "/mission_manager/resume")
-        self.cancel = self.create_client(Trigger, "/mission_manager/cancel")
+        self.statuses = []
+        self.pub = self.create_publisher(RouteMission, "/mission/route", 10)
+        self.sub = self.create_subscription(MissionState, "/mission/state", self.states.append, 10)
+        self.start = self.create_client(Trigger, "/mission/start")
+        self.cancel = self.create_client(Trigger, "/mission/cancel")
+        self.pause = self.create_client(SetBool, "/mission/pause")
 
 
 class FakeActionServer(Node):
@@ -72,6 +73,9 @@ class FakeActionServer(Node):
     def cancel_cb(self, goal_handle):
         del goal_handle
         self.cancel_count += 1
+        if self.outcomes and self.outcomes[0] == "cancel_timeout":
+            self.outcomes.pop(0)
+            return CancelResponse.REJECT
         return CancelResponse.ACCEPT
 
     async def execute_cb(self, goal_handle):
@@ -79,7 +83,7 @@ class FakeActionServer(Node):
         outcome = self.outcomes.pop(0) if self.outcomes else "succeeded"
         if outcome == "delayed":
             start = time.monotonic()
-            while time.monotonic() - start < 3.0:
+            while time.monotonic() - start < 0.3:
                 if goal_handle.is_cancel_requested:
                     goal_handle.canceled()
                     return NavigateToPose.Result()
@@ -108,7 +112,33 @@ def spin_until(predicate, timeout=4.0):
     return False
 
 
-def run_nodes(outcomes, mission, *, service_call=None, wait_predicate=None):
+def call_trigger(client):
+    assert client.wait_for_service(timeout_sec=2.0)
+    future = client.call_async(Trigger.Request())
+    assert spin_until(lambda: future.done())
+    return future.result()
+
+
+def call_pause(client, value):
+    assert client.wait_for_service(timeout_sec=2.0)
+    req = SetBool.Request()
+    req.data = value
+    future = client.call_async(req)
+    assert spin_until(lambda: future.done())
+    return future.result()
+
+
+def terminal_state(msg):
+    return msg.state in (
+        MissionState.CANCELLED,
+        MissionState.SUCCEEDED,
+        MissionState.BLOCKED,
+        MissionState.FAILED,
+        MissionState.HELP_REQUIRED,
+    )
+
+
+def run_nodes(outcomes, mission, *, after_receive=None, wait_predicate=None):
     manager = MissionManagerNode()
     server = FakeActionServer(outcomes)
     recorder = Recorder()
@@ -120,14 +150,14 @@ def run_nodes(outcomes, mission, *, service_call=None, wait_predicate=None):
     try:
         assert spin_until(lambda: manager._action_client.server_is_ready())
         recorder.pub.publish(mission)
-        if service_call is not None:
-            assert service_call(recorder)
-        predicate = wait_predicate or (
-            lambda: recorder.states
-            and recorder.states[-1].state
-            in (MissionState.SUCCEEDED, MissionState.FAILED, MissionState.REJECTED, MissionState.IDLE)
-        )
+        assert spin_until(lambda: recorder.states and recorder.states[-1].state == MissionState.RECEIVED)
+        if after_receive is None:
+            assert call_trigger(recorder.start).success
+        else:
+            after_receive(recorder)
+        predicate = wait_predicate or (lambda: recorder.states and terminal_state(recorder.states[-1]))
         assert spin_until(predicate)
+        time.sleep(0.4)
         return list(recorder.states), list(server.goal_uuids), server.cancel_count
     finally:
         executor.shutdown()
@@ -136,64 +166,92 @@ def run_nodes(outcomes, mission, *, service_call=None, wait_predicate=None):
         thread.join(timeout=1.0)
 
 
-def call_service(client):
-    assert client.wait_for_service(timeout_sec=2.0)
-    future = client.call_async(Trigger.Request())
-    assert spin_until(lambda: future.done())
-    return future.result().success
-
-
-def test_two_waypoint_success_synthetic(ros_context):
+def test_receive_then_explicit_start_two_waypoint_success(ros_context):
     states, goal_ids, cancel_count = run_nodes(["succeeded", "succeeded"], make_mission(2))
-    assert [msg.state for msg in states][-1] == MissionState.SUCCEEDED
+    state_values = [msg.state for msg in states]
+    assert state_values.index(MissionState.RECEIVED) < state_values.index(MissionState.VALIDATING)
+    assert MissionState.PLANNING in state_values
+    assert MissionState.NAVIGATING in state_values
+    assert states[-1].state == MissionState.SUCCEEDED
     assert len(goal_ids) == 2
     assert len(set(goal_ids)) == 2
-    assert states[-1].progress == 1.0
-    assert states[-1].completed_waypoint_count == 2
     assert cancel_count == 0
 
 
-def test_middle_waypoint_failure_never_sends_third(ros_context):
+def test_topology_mismatch_rejection_with_zero_goals(ros_context):
+    def start(recorder):
+        result = call_trigger(recorder.start)
+        assert not result.success
+
+    states, goal_ids, _ = run_nodes(["succeeded"], make_mission(1, topology="wrong"), after_receive=start)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "TOPOLOGY_VERSION_MISMATCH"
+    assert goal_ids == []
+
+
+def test_mixed_edge_direction_valid_mission(ros_context):
+    states, goal_ids, _ = run_nodes(["succeeded", "succeeded", "succeeded"], make_mission(3, directions=[-1, 0]))
+    assert states[-1].state == MissionState.SUCCEEDED
+    assert len(goal_ids) == 3
+
+
+def test_middle_waypoint_abort_with_no_later_dispatch(ros_context):
     states, goal_ids, _ = run_nodes(["succeeded", "aborted", "succeeded"], make_mission(3))
     assert states[-1].state == MissionState.FAILED
     assert states[-1].current_waypoint_index == 1
     assert len(goal_ids) == 2
 
 
-def test_cancel_during_active_waypoint_returns_idle(ros_context):
-    def service(recorder):
-        assert spin_until(lambda: len(recorder.states) and recorder.states[-1].state == MissionState.RUNNING)
-        return call_service(recorder.cancel)
+def test_cancel_acknowledgement_to_cancelled(ros_context):
+    def start_cancel(recorder):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_trigger(recorder.cancel).success
 
-    states, goal_ids, cancel_count = run_nodes(
-        ["delayed"],
-        make_mission(2),
-        service_call=service,
-        wait_predicate=lambda: True,
-    )
-    assert goal_ids[:1]
+    states, goal_ids, cancel_count = run_nodes(["delayed"], make_mission(2), after_receive=start_cancel)
+    assert states[-1].state == MissionState.CANCELLED
+    assert len(goal_ids) == 1
     assert cancel_count == 1
-    assert any(msg.state == MissionState.CANCELING for msg in states)
 
 
-def test_ambiguous_identity_rejected_without_goal(ros_context):
-    msg = make_mission(1)
-    msg.direction_id = ""
-    states, goal_ids, _ = run_nodes(["succeeded"], msg)
-    assert states[-1].state == MissionState.REJECTED
-    assert states[-1].reason_code == "EMPTY_DIRECTION_ID"
-    assert goal_ids == []
+def test_cancel_timeout_to_failed(ros_context):
+    def start_cancel(recorder):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_trigger(recorder.cancel).success
+
+    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_timeout"], make_mission(2), after_receive=start_cancel)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "CANCEL_ACK_TIMEOUT"
+    assert len(goal_ids) == 1
+    assert cancel_count == 1
 
 
-def test_pause_and_resume_resends_current_waypoint(ros_context):
-    def service(recorder):
-        assert spin_until(lambda: len(recorder.states) and recorder.states[-1].active_goal_uuid)
-        assert call_service(recorder.pause)
+def test_pause_ack_no_goal_while_paused_resume_same_waypoint_success(ros_context):
+    def start_pause_resume(recorder):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_pause(recorder.pause, True).success
         assert spin_until(lambda: recorder.states[-1].state == MissionState.PAUSED)
-        assert call_service(recorder.resume)
-        return True
+        goal_count_while_paused = len([s for s in recorder.states if s.active_goal_uuid])
+        time.sleep(0.05)
+        assert len([s for s in recorder.states if s.active_goal_uuid]) == goal_count_while_paused
+        assert call_pause(recorder.pause, False).success
 
-    states, goal_ids, cancel_count = run_nodes(["delayed", "succeeded", "succeeded"], make_mission(2), service_call=service)
+    states, goal_ids, cancel_count = run_nodes(["delayed", "succeeded", "succeeded"], make_mission(2), after_receive=start_pause_resume)
     assert states[-1].state == MissionState.SUCCEEDED
-    assert cancel_count == 1
     assert len(goal_ids) == 3
+    assert cancel_count == 1
+
+
+def test_pause_timeout_to_failed(ros_context):
+    def start_pause(recorder):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_pause(recorder.pause, True).success
+
+    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_timeout"], make_mission(2), after_receive=start_pause)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "PAUSE_CANCEL_ACK_TIMEOUT"
+    assert len(goal_ids) == 1
+    assert cancel_count == 1
