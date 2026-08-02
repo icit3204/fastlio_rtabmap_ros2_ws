@@ -8,7 +8,19 @@
 
 import math
 import os
+from pathlib import Path
 from urllib.parse import quote, unquote
+
+from core.topology_identity import (
+    EdgeRecord,
+    allocate_edge_id,
+    build_manifest,
+    next_edge_id,
+    parse_edges,
+    parse_nodes,
+    write_edges_atomic,
+    write_manifest_atomic,
+)
 
 MERGE_RADIUS = 0.25           # 空间合并半径 (m)
 MERGE_MAX_TIME_DELTA = 10.0   # [IMPL] F-15.2 合并时间戳差上限 (s)，超过此值不合并
@@ -34,6 +46,7 @@ class TopologyManager:
         """
         n = self._load_nodes()
         e = self._load_edges()
+        self.refresh_topology_manifest()
         return n, e
 
     def reset_all(self):
@@ -56,6 +69,8 @@ class TopologyManager:
         path = os.path.join(self.work_dir, 'nodes.txt')
         if not os.path.exists(path):
             return 0
+        # Keep the historical in-memory dict shape used by the GUI while
+        # accepting the same node formats as the identity migration tools.
         with open(path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
@@ -111,27 +126,42 @@ class TopologyManager:
         return len(self.waypoints)
 
     def _load_edges(self) -> int:
-        """从 edges.txt 恢复拓扑边，兼容旧 4 列格式 (F-15.9 traj_file)"""
+        """从 edges.txt 恢复拓扑边，兼容旧格式和 v2 edge_id 格式"""
         path = os.path.join(self.work_dir, 'edges.txt')
         if not os.path.exists(path):
             return 0
         with open(path, 'r', encoding='utf-8') as f:
+            record_index = 0
             for line in f:
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
+                record_index += 1
                 parts = [p.strip() for p in line.split(',')]
-                if len(parts) < 4:
+                if len(parts) >= 6 and parts[0].startswith('edge-'):
+                    # v2: edge_id, from_id, to_id, length_m, direction, traj_file
+                    edge = {
+                        'edge_id': parts[0],
+                        'from_id': int(parts[1]),
+                        'to_id': int(parts[2]),
+                        'length': float(parts[3]),
+                        'direction': parts[4],
+                        'traj_file': parts[5],
+                    }
+                elif len(parts) >= 4:
+                    # Legacy: from_id, to_id, length_m, direction[, traj_file].
+                    # Runtime loading can read it, but migration tooling is the
+                    # only path allowed to persist edge IDs into old assets.
+                    edge = {
+                        'edge_id': f'edge-{record_index:06d}',
+                        'from_id': int(parts[0]),
+                        'to_id': int(parts[1]),
+                        'length': float(parts[2]),
+                        'direction': parts[3],
+                        'traj_file': parts[4] if len(parts) >= 5 else '',
+                    }
+                else:
                     continue
-                # 格式: from_id, to_id, length_m, direction[, traj_file]
-                edge = {
-                    'from_id': int(parts[0]),
-                    'to_id': int(parts[1]),
-                    'length': float(parts[2]),
-                    'direction': parts[3],
-                    'traj_file': parts[4] if len(parts) >= 5 else '',
-                    # [IMPL] F-15.11 旧格式（4 列）traj_file 为空串，后续由补建逻辑处理
-                }
                 self.edges.append(edge)
         return len(self.edges)
 
@@ -288,6 +318,7 @@ class TopologyManager:
         """
         length = self._calc_length(from_id, to_id)
         edge = {
+            'edge_id': allocate_edge_id(Path(self.work_dir), self.edges),
             'from_id': from_id,
             'to_id': to_id,
             'length': round(length, 3),
@@ -311,6 +342,7 @@ class TopologyManager:
             {'type': 'add_edge', 'from_id': from_id, 'to_id': to_id}
         )
         self.save_edges()
+        self.refresh_topology_manifest()
         return edge
 
     def remove_waypoint(self, node_id: int) -> str | None:
@@ -343,6 +375,7 @@ class TopologyManager:
         self._action_history.clear()
         self.save_nodes()
         self.save_edges()
+        self.refresh_topology_manifest()
         return label
 
     def remove_edge(self, from_id: int, to_id: int):
@@ -352,6 +385,7 @@ class TopologyManager:
             if not (e['from_id'] == from_id and e['to_id'] == to_id)
         ]
         self.save_edges()
+        self.refresh_topology_manifest()
 
     def remove_edge_bidirectional(self, from_id: int, to_id: int) -> int:
         """
@@ -377,6 +411,7 @@ class TopologyManager:
             count += 1
         if count > 0:
             self.save_edges()
+            self.refresh_topology_manifest()
         return count
 
     def toggle_direction(self, from_id: int, to_id: int):
@@ -385,6 +420,7 @@ class TopologyManager:
             if e['from_id'] == from_id and e['to_id'] == to_id:
                 e['direction'] = 'bi' if e['direction'] == 'uni' else 'uni'
                 self.save_edges()
+                self.refresh_topology_manifest()
                 return
 
     def _calc_length(self, from_id: int, to_id: int) -> float:
@@ -394,16 +430,41 @@ class TopologyManager:
         return math.hypot(a['x'] - b['x'], a['y'] - b['y'])
 
     def save_edges(self):
-        """[IMPL] F-15.9 持久化边到 edges.txt，含第 5 列 traj_file"""
-        path = os.path.join(self.work_dir, 'edges.txt')
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write('# from_id, to_id, length_m, direction, traj_file\n')
-            for e in self.edges:
-                traj = e.get('traj_file', '') or ''
-                f.write(
-                    f"{e['from_id']}, {e['to_id']}, "
-                    f"{e['length']}, {e['direction']}, {traj}\n"
-                )
+        """[IMPL] P3-B.1 持久化 v2 边格式，保留稳定 edge_id"""
+        records = []
+        used = set()
+        for e in self.edges:
+            edge_id = e.get('edge_id') or allocate_edge_id(Path(self.work_dir), records)
+            while edge_id in used:
+                edge_id = next_edge_id(records)
+            e['edge_id'] = edge_id
+            used.add(edge_id)
+            records.append(EdgeRecord(
+                edge_id=edge_id,
+                from_id=int(e['from_id']),
+                to_id=int(e['to_id']),
+                length_m=float(e['length']),
+                direction=str(e['direction']),
+                traj_file=str(e.get('traj_file', '') or ''),
+            ))
+        write_edges_atomic(Path(self.work_dir), records)
+
+    def refresh_topology_manifest(self):
+        """Refresh content-derived topology_version after navigation edits."""
+        try:
+            work_dir = Path(self.work_dir)
+            if not (work_dir / 'nodes.txt').exists() or not (work_dir / 'edges.txt').exists():
+                return
+            nodes = parse_nodes(work_dir / 'nodes.txt')
+            edges, legacy = parse_edges(work_dir / 'edges.txt')
+            if legacy:
+                return
+            manifest = build_manifest(work_dir, nodes, edges)
+            write_manifest_atomic(work_dir, manifest)
+        except Exception:
+            # GUI save paths should not hide the original edge/node write error.
+            # Manifest repair can be rerun by the explicit migration tool.
+            return
 
     # ═══════════════════════════════════════════════════════
     # [IMPL] F-15.3 ~ F-15.10 轨迹边提取与持久化
