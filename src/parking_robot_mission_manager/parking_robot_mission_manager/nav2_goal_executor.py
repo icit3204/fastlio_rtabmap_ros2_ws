@@ -18,6 +18,7 @@ class ScriptedFakeGoalExecutor(MissionGoalExecutor):
         self.goal_uuids: List[str] = []
         self.cancel_count = 0
         self.cancel_requested_goal_uuids: List[str] = []
+        self.cancel_response_accept_count = 0
         self._callbacks = {}
         self._counter = itertools.count(1)
 
@@ -54,10 +55,16 @@ class ScriptedFakeGoalExecutor(MissionGoalExecutor):
         del timeout_sec
         self.cancel_count += 1
         self.cancel_requested_goal_uuids.append(goal_uuid)
-        if self.outcomes and self.outcomes[0] == "cancel_timeout":
+        if self.outcomes and self.outcomes[0] == "cancel_reject":
             self.outcomes.pop(0)
             return False
         return True
+
+    def accept_cancel(self) -> None:
+        self.cancel_response_accept_count += 1
+
+    def complete_cancel(self) -> None:
+        self.complete_active(GoalResultCode.CANCELED)
 
 
 class NavigateToPoseGoalExecutor(MissionGoalExecutor):

@@ -12,6 +12,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from std_srvs.srv import SetBool, Trigger
 
+from parking_robot_mission_manager.mission_state_machine import GoalOutcome, GoalResultCode, MissionGoalExecutor
 from parking_robot_mission_manager.mission_manager_node import MissionManagerNode
 
 
@@ -73,7 +74,7 @@ class FakeActionServer(Node):
     def cancel_cb(self, goal_handle):
         del goal_handle
         self.cancel_count += 1
-        if self.outcomes and self.outcomes[0] == "cancel_timeout":
+        if self.outcomes and self.outcomes[0] == "cancel_reject":
             self.outcomes.pop(0)
             return CancelResponse.REJECT
         return CancelResponse.ACCEPT
@@ -151,6 +152,7 @@ def run_nodes(outcomes, mission, *, after_receive=None, wait_predicate=None):
         assert spin_until(lambda: manager._action_client.server_is_ready())
         recorder.pub.publish(mission)
         assert spin_until(lambda: recorder.states and recorder.states[-1].state == MissionState.RECEIVED)
+        assert spin_until(lambda: manager._action_client.server_is_ready())
         if after_receive is None:
             assert call_trigger(recorder.start).success
         else:
@@ -162,6 +164,69 @@ def run_nodes(outcomes, mission, *, after_receive=None, wait_predicate=None):
     finally:
         executor.shutdown()
         for node in (manager, server, recorder):
+            node.destroy_node()
+        thread.join(timeout=1.0)
+
+
+class FakeClock:
+    def __init__(self):
+        self.now = 100.0
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, seconds):
+        self.now += seconds
+
+
+class PendingCancelExecutor(MissionGoalExecutor):
+    def __init__(self):
+        self.goal_uuids = []
+        self.cancel_count = 0
+        self.result_callback = None
+
+    def server_available(self):
+        return True
+
+    def send_goal(self, pose, result_callback):
+        del pose
+        self.result_callback = result_callback
+        goal_uuid = uuid.uuid4().hex
+        self.goal_uuids.append(goal_uuid)
+        return GoalOutcome(True, goal_uuid=goal_uuid, terminal_status=None)
+
+    def cancel_goal(self, goal_uuid, timeout_sec):
+        del goal_uuid, timeout_sec
+        self.cancel_count += 1
+        return True
+
+
+class UnavailableExecutor(PendingCancelExecutor):
+    def server_available(self):
+        return False
+
+
+def run_nodes_with_executor(goal_executor, mission, *, clock=None, after_receive=None, wait_predicate=None):
+    manager = MissionManagerNode(goal_executor=goal_executor, steady_clock=clock or time.monotonic)
+    recorder = Recorder()
+    executor = MultiThreadedExecutor(num_threads=3)
+    for node in (manager, recorder):
+        executor.add_node(node)
+    thread = threading.Thread(target=executor.spin, daemon=True)
+    thread.start()
+    try:
+        recorder.pub.publish(mission)
+        assert spin_until(lambda: recorder.states and recorder.states[-1].state == MissionState.RECEIVED)
+        if after_receive is None:
+            assert call_trigger(recorder.start).success
+        else:
+            after_receive(recorder, manager)
+        predicate = wait_predicate or (lambda: recorder.states and terminal_state(recorder.states[-1]))
+        assert spin_until(predicate)
+        return list(recorder.states), list(goal_executor.goal_uuids), goal_executor.cancel_count, manager
+    finally:
+        executor.shutdown()
+        for node in (manager, recorder):
             node.destroy_node()
         thread.join(timeout=1.0)
 
@@ -214,16 +279,52 @@ def test_cancel_acknowledgement_to_cancelled(ros_context):
     assert cancel_count == 1
 
 
-def test_cancel_timeout_to_failed(ros_context):
+def test_cancel_response_rejected_to_failed(ros_context):
     def start_cancel(recorder):
         assert call_trigger(recorder.start).success
         assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
         assert call_trigger(recorder.cancel).success
 
-    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_timeout"], make_mission(2), after_receive=start_cancel)
+    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_reject"], make_mission(2), after_receive=start_cancel)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "CANCEL_ACK_REJECTED"
+    assert len(goal_ids) == 1
+    assert cancel_count == 1
+
+
+def test_cancel_response_never_completes_to_failed(ros_context):
+    clock = FakeClock()
+    fake = PendingCancelExecutor()
+
+    def start_cancel(recorder, manager):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_trigger(recorder.cancel).success
+        clock.advance(2.0)
+        manager.apply_core_event(lambda core: core.tick(clock()))
+
+    states, goal_ids, cancel_count, _ = run_nodes_with_executor(fake, make_mission(2), clock=clock, after_receive=start_cancel)
     assert states[-1].state == MissionState.FAILED
     assert states[-1].reason_code == "CANCEL_ACK_TIMEOUT"
     assert len(goal_ids) == 1
+    assert cancel_count == 1
+
+
+def test_cancel_result_never_arrives_to_failed(ros_context):
+    clock = FakeClock()
+    fake = PendingCancelExecutor()
+
+    def start_cancel(recorder, manager):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_trigger(recorder.cancel).success
+        manager.apply_core_event(lambda core: core.on_cancel_response_accepted())
+        clock.advance(5.0)
+        manager.apply_core_event(lambda core: core.tick(clock()))
+
+    states, _, cancel_count, _ = run_nodes_with_executor(fake, make_mission(2), clock=clock, after_receive=start_cancel)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "CANCEL_RESULT_TIMEOUT"
     assert cancel_count == 1
 
 
@@ -244,14 +345,65 @@ def test_pause_ack_no_goal_while_paused_resume_same_waypoint_success(ros_context
     assert cancel_count == 1
 
 
-def test_pause_timeout_to_failed(ros_context):
+def test_pause_response_rejected_to_failed(ros_context):
     def start_pause(recorder):
         assert call_trigger(recorder.start).success
         assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
         assert call_pause(recorder.pause, True).success
 
-    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_timeout"], make_mission(2), after_receive=start_pause)
+    states, goal_ids, cancel_count = run_nodes(["delayed", "cancel_reject"], make_mission(2), after_receive=start_pause)
     assert states[-1].state == MissionState.FAILED
-    assert states[-1].reason_code == "PAUSE_CANCEL_ACK_TIMEOUT"
+    assert states[-1].reason_code == "PAUSE_CANCEL_ACK_REJECTED"
     assert len(goal_ids) == 1
     assert cancel_count == 1
+
+
+def test_pause_response_never_completes_to_failed(ros_context):
+    clock = FakeClock()
+    fake = PendingCancelExecutor()
+
+    def start_pause(recorder, manager):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_pause(recorder.pause, True).success
+        clock.advance(2.0)
+        manager.apply_core_event(lambda core: core.tick(clock()))
+
+    states, _, cancel_count, _ = run_nodes_with_executor(fake, make_mission(2), clock=clock, after_receive=start_pause)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "PAUSE_CANCEL_ACK_TIMEOUT"
+    assert cancel_count == 1
+
+
+def test_pause_result_never_arrives_to_failed(ros_context):
+    clock = FakeClock()
+    fake = PendingCancelExecutor()
+
+    def start_pause(recorder, manager):
+        assert call_trigger(recorder.start).success
+        assert spin_until(lambda: recorder.states[-1].active_goal_uuid)
+        assert call_pause(recorder.pause, True).success
+        manager.apply_core_event(lambda core: core.on_cancel_response_accepted())
+        clock.advance(5.0)
+        manager.apply_core_event(lambda core: core.tick(clock()))
+
+    states, _, cancel_count, _ = run_nodes_with_executor(fake, make_mission(2), clock=clock, after_receive=start_pause)
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "PAUSE_CANCEL_RESULT_TIMEOUT"
+    assert cancel_count == 1
+
+
+def test_start_reports_false_when_server_synchronously_unavailable(ros_context):
+    def start(recorder, manager):
+        del manager
+        result = call_trigger(recorder.start)
+        assert not result.success
+
+    states, goal_ids, _, _ = run_nodes_with_executor(
+        UnavailableExecutor(),
+        make_mission(1),
+        after_receive=start,
+    )
+    assert states[-1].state == MissionState.FAILED
+    assert states[-1].reason_code == "ACTION_SERVER_UNAVAILABLE"
+    assert goal_ids == []

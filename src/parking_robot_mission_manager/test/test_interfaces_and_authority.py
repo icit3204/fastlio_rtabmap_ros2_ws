@@ -106,3 +106,12 @@ def test_authoritative_ros_api_names_and_no_legacy_aliases():
         assert legacy not in source
     assert "SetBool" in source
     assert "Trigger" in source
+
+
+def test_mission_manager_node_uses_core_state_authority():
+    source = (SRC / "parking_robot_mission_manager" / "parking_robot_mission_manager" / "mission_manager_node.py").read_text()
+    assert "MissionStateMachine(" in source
+    assert "self._core" in source
+    assert "def _set_state" not in source
+    assert "self._state =" not in source
+    assert "validate_route_mission(" not in source
