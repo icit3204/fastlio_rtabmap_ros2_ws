@@ -4,7 +4,7 @@
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QProgressBar,
-    QButtonGroup, QFrame, QHBoxLayout, QTextEdit,
+    QButtonGroup, QFrame, QHBoxLayout, QTextEdit, QComboBox,
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPainter, QColor
@@ -100,6 +100,12 @@ class Sidebar(QWidget):
     process_data_requested = pyqtSignal()  # F-9.1 处理数据按钮
     auto_node_requested = pyqtSignal()  # F-9.11 auto_node 占位按钮
     mode_changed = pyqtSignal(str)      # OP-1 'debug' | 'op'
+    authority_mode_changed = pyqtSignal(str)
+    mission_publish_requested = pyqtSignal()
+    mission_start_requested = pyqtSignal()
+    mission_cancel_requested = pyqtSignal()
+    mission_pause_requested = pyqtSignal()
+    mission_resume_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -247,6 +253,50 @@ class Sidebar(QWidget):
         # ─── 分割线 ───
         layout.addWidget(_separator())
 
+        mission_title = QLabel('Mission')
+        mission_title.setFont(font_title)
+        mission_title.setStyleSheet('color: #2c2c2a;')
+        layout.addWidget(mission_title)
+
+        self._authority_mode = QComboBox()
+        self._authority_mode.setFont(font_small)
+        self._authority_mode.addItem('legacy', 'legacy')
+        self._authority_mode.addItem('mission_nav2', 'mission_nav2')
+        self._authority_mode.currentIndexChanged.connect(
+            lambda _idx: self.authority_mode_changed.emit(self.current_authority_mode())
+        )
+        layout.addWidget(self._authority_mode)
+
+        self._mission_status = QLabel('mission: --')
+        self._mission_status.setFont(mono_font(7))
+        self._mission_status.setWordWrap(True)
+        self._mission_status.setStyleSheet('color: #2c2c2a; background: #faf9f6; padding: 4px;')
+        layout.addWidget(self._mission_status)
+
+        self._btn_mission_publish = QPushButton('Publish Mission')
+        self._btn_mission_start = QPushButton('Start Mission')
+        self._btn_mission_cancel = QPushButton('Cancel')
+        self._btn_mission_pause = QPushButton('Pause')
+        self._btn_mission_resume = QPushButton('Resume')
+        for btn in (
+            self._btn_mission_publish,
+            self._btn_mission_start,
+            self._btn_mission_cancel,
+            self._btn_mission_pause,
+            self._btn_mission_resume,
+        ):
+            btn.setFont(font_small)
+            btn.setStyleSheet(_btn_style('#185fa5', '#ffffff'))
+            layout.addWidget(btn)
+        self._btn_mission_publish.clicked.connect(self.mission_publish_requested.emit)
+        self._btn_mission_start.clicked.connect(self.mission_start_requested.emit)
+        self._btn_mission_cancel.clicked.connect(self.mission_cancel_requested.emit)
+        self._btn_mission_pause.clicked.connect(self.mission_pause_requested.emit)
+        self._btn_mission_resume.clicked.connect(self.mission_resume_requested.emit)
+        self.set_mission_controls(False, False)
+
+        layout.addWidget(_separator())
+
         # ─── UDP 发送预览 ───
         udp_title = QLabel('UDP 发送预览')
         udp_title.setFont(font_title)
@@ -317,6 +367,20 @@ class Sidebar(QWidget):
         self.progress.setValue(value)
         if value >= 100:
             self.progress.setVisible(False)
+
+    def current_authority_mode(self) -> str:
+        return str(self._authority_mode.currentData() or 'legacy')
+
+    def set_mission_controls(self, route_ready: bool, start_ready: bool):
+        mission_mode = self.current_authority_mode() == 'mission_nav2'
+        self._btn_mission_publish.setEnabled(mission_mode and route_ready)
+        self._btn_mission_start.setEnabled(mission_mode and start_ready)
+        self._btn_mission_cancel.setEnabled(mission_mode)
+        self._btn_mission_pause.setEnabled(mission_mode)
+        self._btn_mission_resume.setEnabled(mission_mode)
+
+    def set_mission_status(self, text: str):
+        self._mission_status.setText(text)
 
     def set_play_button_text(self, playing: bool):
         self.btn_play.setText('Z - 暂停' if playing else 'Z - 播放')

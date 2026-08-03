@@ -21,6 +21,8 @@ from core.ui_font import mono_font  # [ADAPT-UBU-02] 跨平台等宽字体
 import os
 import sys
 import json
+import uuid
+from pathlib import Path
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QFileDialog, QStatusBar, QLabel, QShortcut,
@@ -35,6 +37,13 @@ from core.trajectory import TrajectoryPlayer
 from core.topology import TopologyManager
 from core.pathfinder import build_graph, find_path, interpolate_path, concat_trajectory_segments  # [IMPL] F-15.14
 from core.udp_sender import UdpSender
+from core.mission_bridge import (
+    AuthorityMode,
+    MissionBridgeThread,
+    TERMINAL_MISSION_STATES,
+    verify_route_topology_current,
+)
+from core.topology_identity import build_sparse_route_spec, load_topology, read_manifest
 
 from ui.sidebar import Sidebar
 from ui.map_view import MapView
@@ -105,6 +114,13 @@ class MainWindow(QMainWindow):
         # [IMPL] F-12.7 PoseReceiver 线程管理
         self._pose_receiver = None       # PoseReceiver | None
         self._plan_publisher = None      # PlanPublisher | None
+        self._mission_bridge = None      # MissionBridgeThread | None
+        self._authority_mode = AuthorityMode.LEGACY.value
+        self._pending_route_spec = None
+        self._published_route_spec = None
+        self._active_mission_id = ''
+        self._active_route_id = ''
+        self._latest_mission_state = None
         self._last_pose_time = 0.0       # 最后一次收到 TF 的时间戳
         self._current_robot_pose = None  # 缓存的实时机器人位姿
         self._pose_timeout_timer = QTimer(self)
@@ -346,6 +362,12 @@ class MainWindow(QMainWindow):
         self.sidebar.auto_node_requested.connect(self._on_auto_node)
         # [IMPL] F-12.1 模式切换信号
         self.sidebar.mode_changed.connect(self._on_mode_changed)
+        self.sidebar.authority_mode_changed.connect(self._on_authority_mode_changed)
+        self.sidebar.mission_publish_requested.connect(self._on_publish_mission_requested)
+        self.sidebar.mission_start_requested.connect(self._on_start_mission_requested)
+        self.sidebar.mission_cancel_requested.connect(self._on_cancel_mission_requested)
+        self.sidebar.mission_pause_requested.connect(self._on_pause_mission_requested)
+        self.sidebar.mission_resume_requested.connect(self._on_resume_mission_requested)
         self.log_panel.lock_requested.connect(self.lock_current_node)
         self.log_panel.config_changed.connect(self._on_config_change)
         self.log_panel.traj_params_changed.connect(self._on_traj_params_change)
@@ -876,7 +898,12 @@ class MainWindow(QMainWindow):
                             f'间隔约{self._calc_traj_dt(traj):.3f}s',
                             '#888780'
                         )
-                        self._start_udp_send(traj)
+                        self._prepare_mission_route(path_ids)
+                        if self._authority_mode == AuthorityMode.LEGACY.value:
+                            self._start_udp_send(traj)
+                        else:
+                            self._stop_udp_send()
+                            self.log('mission_nav2: UDP disabled; dense /plan_nav is display-only', 'info')
                         # [IMPL] F-16.1 操作模式下更新 /plan_nav 话题路径
                         if self._is_operation_mode() and self._plan_publisher:
                             self._plan_publisher.set_path(traj)
@@ -1131,7 +1158,10 @@ class MainWindow(QMainWindow):
             self._start_pose_receiver()
             # 4. 启动 /plan 发布线程
             self._start_plan_publisher()
+            if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
+                self._start_mission_bridge()
         else:
+            self._stop_mission_bridge()
             # 4. 停止 /plan 发布线程
             self._stop_plan_publisher()
             # 5. 调试模式：停止位姿接收线程
@@ -1206,6 +1236,176 @@ class MainWindow(QMainWindow):
         """返回当前是否处于操作模式"""
         return self.sidebar._mode_btn.current_mode == 'op'
 
+    def _on_authority_mode_changed(self, mode: str):
+        self._authority_mode = mode if mode in {m.value for m in AuthorityMode} else AuthorityMode.LEGACY.value
+        if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
+            self._stop_udp_send()
+            if self._is_operation_mode():
+                self._start_mission_bridge()
+        else:
+            self._stop_mission_bridge()
+        self._refresh_mission_controls()
+        self.sidebar.set_mission_status(f'mode: {self._authority_mode}')
+        self.log(f'authority mode: {self._authority_mode}', 'info')
+
+    def _prepare_mission_route(self, path_ids: list[int]):
+        self._pending_route_spec = None
+        self._published_route_spec = None
+        self._active_mission_id = ''
+        self._active_route_id = ''
+        if not self.topology:
+            self._set_mission_rejection('TOPOLOGY_NOT_LOADED', 'topology is not loaded')
+            return
+        topology_work_dir = Path(os.path.abspath(self.topology.work_dir))
+        nodes, edges, _legacy = load_topology(topology_work_dir)
+        manifest = read_manifest(topology_work_dir)
+        if manifest is None:
+            self._set_mission_rejection('TOPOLOGY_MANIFEST_MISSING', 'topology_manifest.json missing')
+            return
+        result = build_sparse_route_spec(
+            mission_id=f'mission-{uuid.uuid4().hex}',
+            ordered_node_ids=[int(node_id) for node_id in path_ids],
+            nodes=nodes,
+            edges=edges,
+            topology_manifest=manifest,
+        )
+        if not result.valid:
+            self._set_mission_rejection(result.reason_code, result.detail)
+            return
+        self._pending_route_spec = result.route
+        self.sidebar.set_mission_status(
+            f'mode: {self._authority_mode}\n'
+            f'mission ready\n'
+            f'route: {result.route.route_id}\n'
+            f'topology: {result.route.topology_version}'
+        )
+        self._refresh_mission_controls()
+
+    def _set_mission_rejection(self, reason: str, detail: str):
+        self.sidebar.set_mission_status(f'mode: {self._authority_mode}\n{reason}\n{detail}')
+        self.log(f'mission route rejected: {reason} ({detail})', 'error')
+        self._refresh_mission_controls()
+
+    def _start_mission_bridge(self):
+        if self._mission_bridge and self._mission_bridge.isRunning():
+            return
+        self._mission_bridge = MissionBridgeThread(self)
+        self._mission_bridge.mission_state_received.connect(self._on_mission_state_received)
+        self._mission_bridge.service_result_received.connect(self._on_mission_service_result)
+        self._mission_bridge.connected.connect(lambda msg: self.log(msg, 'info'))
+        self._mission_bridge.error_occurred.connect(lambda msg: self.log(msg, 'error'))
+        self._mission_bridge.start()
+
+    def _stop_mission_bridge(self):
+        if self._mission_bridge and self._mission_bridge.isRunning():
+            self._mission_bridge.stop()
+        self._mission_bridge = None
+
+    def _on_publish_mission_requested(self):
+        if self._authority_mode != AuthorityMode.MISSION_NAV2.value:
+            self._set_mission_rejection('MISSION_MODE_DISABLED', 'select mission_nav2 mode first')
+            return
+        if self._mission_active():
+            self._set_mission_rejection('MISSION_ALREADY_ACTIVE', 'wait for terminal mission state before publishing another mission')
+            return
+        if self._pending_route_spec is None:
+            self._set_mission_rejection('NO_TOPOLOGICAL_ROUTE', 'select a valid route first')
+            return
+        ok, reason, detail = verify_route_topology_current(self.topology.work_dir, self._pending_route_spec)
+        if not ok:
+            self._set_mission_rejection(reason, detail)
+            return
+        self._start_mission_bridge()
+        if not self._mission_bridge or not self._mission_bridge.publish_route(self._pending_route_spec):
+            self._set_mission_rejection('MISSION_BRIDGE_UNAVAILABLE', 'mission bridge is not ready')
+            return
+        self._published_route_spec = self._pending_route_spec
+        self._active_mission_id = self._pending_route_spec.mission_id
+        self._active_route_id = self._pending_route_spec.route_id
+        self.sidebar.set_mission_status(
+            f'mode: {self._authority_mode}\n'
+            f'published: {self._active_mission_id}\n'
+            f'route: {self._active_route_id}\n'
+            'waiting for RECEIVED'
+        )
+        self._refresh_mission_controls()
+
+    def _on_start_mission_requested(self):
+        if self._start_enabled() and self._mission_bridge:
+            self._mission_bridge.request_start()
+
+    def _on_cancel_mission_requested(self):
+        if self._mission_bridge:
+            self._mission_bridge.request_cancel()
+
+    def _on_pause_mission_requested(self):
+        if self._mission_bridge:
+            self._mission_bridge.request_pause()
+
+    def _on_resume_mission_requested(self):
+        if self._mission_bridge:
+            self._mission_bridge.request_resume()
+
+    def _on_mission_service_result(self, name: str, success: bool, reason: str, message: str):
+        self.log(f'/mission/{name}: {reason} success={success} {message}', 'info' if success else 'warn')
+
+    def _on_mission_state_received(self, msg):
+        if self._active_mission_id and msg.mission_id and msg.mission_id != self._active_mission_id:
+            return
+        if self._active_route_id and msg.route_id and msg.route_id != self._active_route_id:
+            return
+        self._latest_mission_state = msg
+        state_name = self._mission_state_name(int(msg.state))
+        self.sidebar.set_mission_status(
+            f'mode: {self._authority_mode}\n'
+            f'mission: {msg.mission_id}\n'
+            f'route: {msg.route_id}\n'
+            f'state: {state_name}\n'
+            f'wp: {msg.current_waypoint_index}  done: {msg.completed_waypoint_count}/{msg.total_waypoint_count}\n'
+            f'progress: {float(msg.progress):.2f}\n'
+            f'{msg.reason_code} {msg.detail}'
+        )
+        self._refresh_mission_controls()
+
+    def _mission_state_name(self, state: int) -> str:
+        names = {
+            0: 'IDLE',
+            1: 'RECEIVED',
+            2: 'VALIDATING',
+            3: 'PLANNING',
+            4: 'NAVIGATING',
+            5: 'PAUSED',
+            6: 'CANCELLING',
+            7: 'CANCELLED',
+            8: 'SUCCEEDED',
+            9: 'TEMPORARILY_BLOCKED',
+            10: 'BLOCKED',
+            11: 'FAILED',
+            12: 'HELP_REQUIRED',
+        }
+        return names.get(state, f'STATE_{state}')
+
+    def _mission_active(self) -> bool:
+        if self._latest_mission_state is None:
+            return False
+        if not self._active_mission_id:
+            return False
+        return int(self._latest_mission_state.state) not in TERMINAL_MISSION_STATES
+
+    def _start_enabled(self) -> bool:
+        msg = self._latest_mission_state
+        return (
+            self._authority_mode == AuthorityMode.MISSION_NAV2.value
+            and msg is not None
+            and msg.mission_id == self._active_mission_id
+            and msg.route_id == self._active_route_id
+            and int(msg.state) == 1
+        )
+
+    def _refresh_mission_controls(self):
+        route_ready = self._pending_route_spec is not None and not self._mission_active()
+        self.sidebar.set_mission_controls(route_ready, self._start_enabled())
+
     # ─── 配置变更 (F-8.2) ──────────────────────────────
 
     def _on_config_change(self, ip: str, port: int,
@@ -1266,6 +1466,9 @@ class MainWindow(QMainWindow):
 
     def _start_udp_send(self, path_nodes: list):
         """启动 UDP 逐帧发送路径点（Pure Pursuit F-11.1~F-11.5）"""
+        if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
+            self.log('mission_nav2: UDP send blocked by authority mode', 'warn')
+            return
         self._stop_udp_send()  # 先停掉旧线程
         self.udp_sender = UdpSender(
             path_nodes,
@@ -1297,3 +1500,15 @@ class MainWindow(QMainWindow):
         """UDP 发送完成回调"""
         self.statusBar().showMessage('UDP 路径发送完毕', 3000)
         self.udp_sender = None
+
+    def closeEvent(self, event):
+        self._stop_mission_bridge()
+        self._stop_plan_publisher()
+        self._stop_pose_receiver()
+        self._stop_udp_send()
+        try:
+            from core.ros_runtime import shutdown_rclpy_once
+            shutdown_rclpy_once()
+        except Exception:
+            pass
+        super().closeEvent(event)

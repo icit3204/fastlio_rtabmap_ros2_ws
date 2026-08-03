@@ -151,8 +151,9 @@ class MissionManagerNode(Node):
         *,
         goal_executor: Optional[MissionGoalExecutor] = None,
         steady_clock=time.monotonic,
+        parameter_overrides=None,
     ) -> None:
-        super().__init__("mission_manager")
+        super().__init__("mission_manager", parameter_overrides=parameter_overrides or [])
         self.declare_parameter("mission_topic", "/mission/route")
         self.declare_parameter("state_topic", "/mission/state")
         self.declare_parameter("navigate_to_pose_action", "/navigate_to_pose")

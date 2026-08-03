@@ -130,8 +130,8 @@ class PlanPublisher(QThread):
             return
 
         try:
-            if not rclpy.ok():
-                rclpy.init(args=[])
+            from core.ros_runtime import ensure_rclpy_initialized
+            ensure_rclpy_initialized(args=[])
         except Exception:
             pass
 

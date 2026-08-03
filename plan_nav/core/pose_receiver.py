@@ -123,8 +123,8 @@ class PoseReceiver(QThread):
 
         # ── 3. 初始化 ROS2 节点 ───────────────────────────
         try:
-            if not rclpy.ok():
-                rclpy.init()
+            from core.ros_runtime import ensure_rclpy_initialized
+            ensure_rclpy_initialized(args=[])
         except Exception as e:
             self.error_occurred.emit(
                 f'系统内没有检测到ROS2版本或无法正确收取到当前位姿。\n（rclpy.init 失败: {e}）'
