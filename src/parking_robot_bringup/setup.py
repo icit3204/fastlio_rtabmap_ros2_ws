@@ -27,6 +27,10 @@ setup(
             "phase2_goal_test_runner = parking_robot_bringup.phase2_goal_test_runner:main",
             "phase2_sequence_cancel_test_runner = parking_robot_bringup.phase2_sequence_cancel_test_runner:main",
             "phase2_failure_test_runner = parking_robot_bringup.phase2_failure_test_runner:main",
+            "phase4_p4b_preflight_monitor = parking_robot_bringup.phase4_p4b_preflight_monitor:main",
+            "phase4_p4b_nav2_scenario_runner = parking_robot_bringup.phase4_p4b_nav2_scenario_runner:main",
+            "phase4_p4b_raw_twist_fixture = parking_robot_bringup.phase4_p4b_raw_twist_fixture:main",
+            "phase4_p4b_synthetic_obstacles = parking_robot_bringup.phase4_p4b_synthetic_obstacles:main",
         ],
     },
 )
