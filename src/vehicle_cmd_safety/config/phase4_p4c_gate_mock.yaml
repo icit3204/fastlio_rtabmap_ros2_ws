@@ -1,0 +1,18 @@
+guarded_vehicle_cmd_gate:
+  ros__parameters:
+    frame_id: base_footprint
+    heartbeat_hz: 20.0
+    safe_twist_timeout_sec: 0.25
+    localization_timeout_sec: 0.50
+    controller_timeout_sec: 0.50
+    collision_valid_timeout_sec: 0.50
+    authority_stability_sec: 1.0
+    max_forward_velocity: 0.20
+    max_angular_velocity: 0.50
+    max_linear_increase_rate: 0.50
+    max_angular_increase_rate: 1.00
+    unsupported_axis_epsilon: 0.000001
+    reverse_epsilon: 0.000001
+    in_place_linear_epsilon: 0.01
+    in_place_angular_epsilon: 0.02
+    max_slew_dt_sec: 0.10

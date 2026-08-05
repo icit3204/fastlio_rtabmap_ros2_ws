@@ -1,0 +1,12 @@
+collision_monitor_validity_monitor:
+  ros__parameters:
+    source_type: pointcloud
+    source_topic: /phase4/synthetic_points
+    expected_frame: base_footprint
+    source_freshness_sec: 0.50
+    recovery_stability_sec: 0.50
+    heartbeat_hz: 20.0
+    collision_monitor_node_name: collision_monitor
+    expected_observation_source_name: pointcloud
+    expected_observation_source_type: pointcloud
+    expected_observation_source_topic: /phase4/synthetic_points
