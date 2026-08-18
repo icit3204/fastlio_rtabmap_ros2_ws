@@ -113,6 +113,29 @@ def spin_until(predicate, timeout=4.0):
     return False
 
 
+def action_server_stably_ready(manager, server, stable_sec=0.25, timeout=4.0):
+    """Bind readiness to this stub generation, not a retiring prior server."""
+    required = {
+        "/navigate_to_pose/_action/send_goal",
+        "/navigate_to_pose/_action/get_result",
+        "/navigate_to_pose/_action/cancel_goal",
+    }
+    deadline = time.monotonic() + timeout
+    stable_since = None
+    while time.monotonic() < deadline:
+        services = {name for name, _ in server.get_service_names_and_types_by_node(
+            server.get_name(), server.get_namespace())}
+        ready = required <= services and manager._action_client.server_is_ready()
+        if ready:
+            stable_since = stable_since or time.monotonic()
+            if time.monotonic() - stable_since >= stable_sec:
+                return True
+        else:
+            stable_since = None
+        time.sleep(0.01)
+    return False
+
+
 def call_trigger(client):
     assert client.wait_for_service(timeout_sec=2.0)
     future = client.call_async(Trigger.Request())
@@ -149,10 +172,10 @@ def run_nodes(outcomes, mission, *, after_receive=None, wait_predicate=None):
     thread = threading.Thread(target=executor.spin, daemon=True)
     thread.start()
     try:
-        assert spin_until(lambda: manager._action_client.server_is_ready())
+        assert action_server_stably_ready(manager, server)
         recorder.pub.publish(mission)
         assert spin_until(lambda: recorder.states and recorder.states[-1].state == MissionState.RECEIVED)
-        assert spin_until(lambda: manager._action_client.server_is_ready())
+        assert action_server_stably_ready(manager, server)
         if after_receive is None:
             assert call_trigger(recorder.start).success
         else:

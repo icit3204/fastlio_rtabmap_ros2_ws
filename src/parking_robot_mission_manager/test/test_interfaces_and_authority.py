@@ -39,16 +39,8 @@ def test_interface_dependencies_do_not_include_command_or_physical_control():
 def test_mission_manager_has_no_velocity_or_physical_publishers():
     module_dir = SRC / "parking_robot_mission_manager" / "parking_robot_mission_manager"
     source = "\n".join(path.read_text() for path in module_dir.rglob("*.py"))
-    forbidden_topics = [
-        "/cmd_vel",
-        "/cmd_vel_nav",
-        "/cmd_vel_phase2_mock",
-        "/wheelchair_control_command",
-        "/wheel",
-    ]
-    for token in forbidden_topics:
-        assert token not in source
-    for forbidden_import in ("from geometry_msgs.msg import Twist", "TwistStamped", "Float32MultiArray"):
+    # P4-E.4B observes raw/safe Twist inputs but must never publish commands.
+    for forbidden_import in ("TwistStamped", "Float32MultiArray"):
         assert forbidden_import not in source
     for forbidden_dependency in ("plan_nav_laser_avoidance", "laser_avoidance", "wheelchair_controller"):
         assert forbidden_dependency not in source

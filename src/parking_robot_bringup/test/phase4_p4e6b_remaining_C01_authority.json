@@ -1,0 +1,26 @@
+{
+  "authority_status": "PROSPECTIVE_ONLY_PENDING_SUPERVISOR_AUTHORIZATION",
+  "case_name": "C01",
+  "case_id": "B-C01",
+  "expected_reason": "COMMAND_PAIR_STALE",
+  "attempt_number": 1,
+  "not_an_attempt_authorization_token": true,
+  "required_pinned_identity": {
+    "runner": "458d2a6e184079a1236d28664c4554292a9b4a2cef72e3c576f5c4b89d545b71",
+    "matrix": "74c6f02f13c986574886a14afa98995919ec9e988a83846e895af6228109d069",
+    "remaining_controller": "57aba94ab3eb1cd47ceed52e2c46caa5a76e474e09f0f35f9a824cdfef63f7a7",
+    "s01_base_controller": "7d648d2500706d6ee03dc793118f17551658ebe745905358b2c1ad165b342e08",
+    "remaining_evidence": "563e7a9668f0cf5788d78a6995d568e96ffcaebe95bbc3acc35d4113223ddcda",
+    "base_live_evidence": "14e3660aad6036b659939698a8907ccc05eeb953b4d9ae87c2e886cff655c2bf",
+    "freeze_controller": "459c7d5f470f0ee73b0962fb745fd053cfdd34bf6fb72d6ce651e5fb85328fd3",
+    "witness": "3092843a68f2c8ffd53dfb027810bf07c7f83f73cad3d58de663765990b625be",
+    "feedback_relay": "0c2ca99568ad5acd08fef2d31bfa70c2b50aa273a02947576931397a799ce252",
+    "observation_relay": "143eb9ec5480126677be0ec1f83a1bf0dc248a5e2646ae3cd476eba6ad05cb7a",
+    "tf_observation_relay": "ababe69bb6851c3e9da74b2c81e9806f4aa87ac14ea164edbfad532ea9fae0bd",
+    "feedback_relay_installed": "bff66b06c4906454d966020d319c4b3bf3961d2bc6445efa06b270b64e6d4b9b",
+    "observation_relay_installed": "9a4c5e27cb290c9bd0b599e5583a5fac7fc7b847a4d9ba3843ac08bd55012165",
+    "tf_observation_relay_installed": "a640d3703b369df867a32908e141bc10df922f13887cdcb8ffc6e776f209fc6e",
+    "terminal_v2": "0dd58ec3e6f09686b14f5ef4bafb0185ec3469ade1c245b883be548ac31735b5"
+  },
+  "expected_values_self_derived": false
+}

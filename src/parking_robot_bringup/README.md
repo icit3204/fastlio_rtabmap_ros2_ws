@@ -1,5 +1,22 @@
 # parking_robot_bringup
 
+## Phase 4 P4-E.1A generic fake base
+
+`phase4_vehicle_cmd_fake_base` consumes only `TwistStamped`
+`/vehicle_cmd_safe` and publishes `/Odometry` plus dynamic
+`odom -> base_footprint` TF at 50 Hz. Integration, receipt deadman, and graph
+authority polling use retained steady clocks; ROS time is only an output stamp.
+It publishes no command and never owns `map -> odom`.
+
+P4-E.1B adds `phase4_p4e1b_clear_full_chain.launch.py`, a software-only,
+single-goal CLEAR integration launch.  It retains the accepted Phase-2 static
+`map -> odom` owner and routes Nav2 exclusively through Collision Monitor, the
+Generic Safety Gate, the mock adapter, and the Phase-4 fake base.
+
+`/initialpose` is accepted only in frame `odom`; the finite position and a
+normalized planar quaternion reset x/y/yaw directly in odom coordinates.
+Other frames are rejected because this component performs no TF lookup.
+
 Isolated Phase 2 P2-A/P2-B package for the Core Simple Nav2 Navigation Baseline.
 
 This package is deliberately independent of legacy `robot_bringup`, `plan_nav`,

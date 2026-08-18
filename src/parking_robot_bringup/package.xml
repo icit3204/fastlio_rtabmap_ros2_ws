@@ -10,8 +10,12 @@
   <buildtool_depend>ament_python</buildtool_depend>
 
   <exec_depend>action_msgs</exec_depend>
+  <exec_depend>parking_robot_interfaces</exec_depend>
+  <exec_depend>parking_robot_mission_manager</exec_depend>
+  <exec_depend>parking_robot_nav2_plugins</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
   <exec_depend>lifecycle_msgs</exec_depend>
   <exec_depend>nav2_behaviors</exec_depend>
   <exec_depend>nav2_bt_navigator</exec_depend>
@@ -28,12 +32,14 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>python3-pytest</test_depend>
   <test_depend>python3-yaml</test_depend>
+  <test_depend>vehicle_cmd_safety</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

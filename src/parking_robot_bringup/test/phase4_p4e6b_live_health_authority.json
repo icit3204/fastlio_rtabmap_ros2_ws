@@ -1,0 +1,12 @@
+{
+  "required_pinned_identity": {
+    "runner": "458d2a6e184079a1236d28664c4554292a9b4a2cef72e3c576f5c4b89d545b71",
+    "matrix": "74c6f02f13c986574886a14afa98995919ec9e988a83846e895af6228109d069",
+    "live_controller": "985f834864b50a28010c5af9b82f91583de2a181b787d232895ac8cd6bf90d0a",
+    "freeze_controller": "ce2bb254cb22a4f649ee2c86ce053eae7e2a849b8645238e0fc2b431f73156cc",
+    "witness": "3092843a68f2c8ffd53dfb027810bf07c7f83f73cad3d58de663765990b625be",
+    "relay": "0c2ca99568ad5acd08fef2d31bfa70c2b50aa273a02947576931397a799ce252"
+  },
+  "authority_kind": "supervisor_approved_prospective_identity_fixture",
+  "self_derived_expected_values": false
+}

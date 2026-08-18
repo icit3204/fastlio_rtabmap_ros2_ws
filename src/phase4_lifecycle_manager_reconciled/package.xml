@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>phase4_lifecycle_manager_reconciled</name>
+  <version>0.1.0</version>
+  <description>Workspace-owned single-authority lifecycle manager with bounded startup reconciliation.</description>
+  <maintainer email="dog@example.com">Phase 4</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>nav2_msgs</depend>
+  <depend>nav2_util</depend>
+  <depend>rclcpp_action</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>rclcpp_components</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>bondcpp</depend>
+  <depend>diagnostic_updater</depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

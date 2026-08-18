@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.5)
+project(phase4_lifecycle_manager_reconciled)
+
+find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(bondcpp REQUIRED)
+find_package(diagnostic_updater REQUIRED)
+
+include_directories(include)
+set(dependencies geometry_msgs lifecycle_msgs nav2_msgs nav2_util rclcpp
+  rclcpp_action rclcpp_lifecycle rclcpp_components std_msgs std_srvs
+  tf2_geometry_msgs bondcpp diagnostic_updater)
+
+add_library(${PROJECT_NAME}_core SHARED src/lifecycle_manager.cpp)
+ament_target_dependencies(${PROJECT_NAME}_core ${dependencies})
+add_executable(lifecycle_manager src/main.cpp)
+target_link_libraries(lifecycle_manager ${PROJECT_NAME}_core)
+ament_target_dependencies(lifecycle_manager ${dependencies})
+
+install(TARGETS ${PROJECT_NAME}_core ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
+install(TARGETS lifecycle_manager RUNTIME DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY include/ DESTINATION include/)
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME}_core)
+ament_export_dependencies(${dependencies})
+ament_package()

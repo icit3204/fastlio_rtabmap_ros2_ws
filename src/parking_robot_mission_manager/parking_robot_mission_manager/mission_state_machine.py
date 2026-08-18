@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import Enum, IntEnum, auto
 import time
 import traceback
 from typing import Callable, List, Optional
@@ -53,10 +53,22 @@ VALID_TRANSITIONS = {
         MissionStateCode.HELP_REQUIRED,
     },
     MissionStateCode.PAUSED: {MissionStateCode.PLANNING, MissionStateCode.CANCELLING},
-    MissionStateCode.CANCELLING: {MissionStateCode.PAUSED, MissionStateCode.CANCELLED, MissionStateCode.FAILED},
+    MissionStateCode.CANCELLING: {
+        MissionStateCode.PAUSED,
+        MissionStateCode.CANCELLED,
+        MissionStateCode.BLOCKED,
+        MissionStateCode.FAILED,
+    },
     MissionStateCode.CANCELLED: {MissionStateCode.IDLE},
     MissionStateCode.SUCCEEDED: {MissionStateCode.IDLE},
-    MissionStateCode.TEMPORARILY_BLOCKED: {MissionStateCode.PLANNING, MissionStateCode.CANCELLING, MissionStateCode.BLOCKED, MissionStateCode.FAILED},
+    MissionStateCode.TEMPORARILY_BLOCKED: {
+        MissionStateCode.NAVIGATING,
+        MissionStateCode.PLANNING,
+        MissionStateCode.CANCELLING,
+        MissionStateCode.SUCCEEDED,
+        MissionStateCode.BLOCKED,
+        MissionStateCode.FAILED,
+    },
     MissionStateCode.BLOCKED: {MissionStateCode.IDLE},
     MissionStateCode.FAILED: {MissionStateCode.IDLE},
     MissionStateCode.HELP_REQUIRED: {MissionStateCode.IDLE},
@@ -67,6 +79,25 @@ class GoalResultCode(IntEnum):
     SUCCEEDED = 4
     CANCELED = 5
     ABORTED = 6
+
+
+class TerminationIntent(Enum):
+    USER_CANCEL = auto()
+    USER_PAUSE = auto()
+    BLOCK_TERMINATION = auto()
+    HEALTH_FAILURE_TERMINATION = auto()
+
+
+@dataclass
+class PendingTermination:
+    intent: TerminationIntent
+    source_reason: str
+    active_goal_uuid: str
+    required_terminal: GoalResultCode = GoalResultCode.CANCELED
+    request_submitted: bool = False
+    response_deadline: Optional[float] = None
+    result_deadline: Optional[float] = None
+    response_accepted: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,6 +121,7 @@ class MissionSnapshot:
     active_goal_uuid: str = ""
     reason_code: str = ""
     detail: str = ""
+    block_reason: str = ""
 
 
 class MissionGoalExecutor:
@@ -143,10 +175,11 @@ class MissionStateMachine:
         self.active_goal_uuid = ""
         self.reason_code = ""
         self.detail = ""
+        self.block_reason = ""
         self.transition_errors: List[str] = []
         self.late_action_results: List[str] = []
         self.snapshots: List[MissionSnapshot] = []
-        self._pending_cancel_operation: Optional[str] = None
+        self._pending_cancel_operation: Optional[PendingTermination] = None
         self._cancel_response_deadline: Optional[float] = None
         self._cancel_result_deadline: Optional[float] = None
         self._cancel_response_accepted = False
@@ -186,6 +219,7 @@ class MissionStateMachine:
             active_goal_uuid=self.active_goal_uuid,
             reason_code=self.reason_code,
             detail=self.detail,
+            block_reason=self.block_reason,
         )
 
     def _publish(self) -> None:
@@ -230,6 +264,7 @@ class MissionStateMachine:
         self.current_waypoint_index = 0
         self.completed_waypoint_count = 0
         self.active_goal_uuid = ""
+        self.block_reason = ""
         self._clear_pending_cancel()
         self._transition(MissionStateCode.RECEIVED, "MISSION_RECEIVED", "mission stored; awaiting start")
         return ValidationResult(True, "RECEIVED", "mission received")
@@ -326,13 +361,18 @@ class MissionStateMachine:
                 self._clear_pending_cancel()
                 self._publish()
             return
-        if self.state != MissionStateCode.NAVIGATING:
+        if self.state not in {MissionStateCode.NAVIGATING, MissionStateCode.TEMPORARILY_BLOCKED}:
             return
         if status == GoalResultCode.SUCCEEDED:
+            was_temporarily_blocked = self.state is MissionStateCode.TEMPORARILY_BLOCKED
             self.completed_waypoint_count += 1
             self.current_waypoint_index += 1
             self.active_goal_uuid = ""
+            self.block_reason = ""
             self._publish()
+            if was_temporarily_blocked and self.current_waypoint_index >= self.total_waypoint_count:
+                self._transition(MissionStateCode.SUCCEEDED, "MISSION_SUCCEEDED", detail or "all waypoints completed")
+                return
             self._transition(MissionStateCode.PLANNING, "WAYPOINT_SUCCEEDED", detail or "waypoint succeeded")
             self._dispatch_current_waypoint()
             return
@@ -344,15 +384,17 @@ class MissionStateMachine:
     def request_cancel(self) -> bool:
         if self.state == MissionStateCode.CANCELLED:
             return True
-        if self.state == MissionStateCode.CANCELLING and self._pending_cancel_operation == "cancel":
+        if self.state == MissionStateCode.CANCELLING and self._pending_cancel_operation:
+            self._override_pending_intent(TerminationIntent.USER_CANCEL, "MISSION_CANCEL_REQUESTED")
             return True
-        if self.state not in {MissionStateCode.RECEIVED, MissionStateCode.PLANNING, MissionStateCode.NAVIGATING, MissionStateCode.PAUSED}:
+        if self.state not in {MissionStateCode.RECEIVED, MissionStateCode.PLANNING, MissionStateCode.NAVIGATING,
+                              MissionStateCode.TEMPORARILY_BLOCKED, MissionStateCode.PAUSED}:
             return False
         self._transition(MissionStateCode.CANCELLING, "MISSION_CANCEL_REQUESTED", "cancel requested")
         if not self.active_goal_uuid:
             self._transition(MissionStateCode.CANCELLED, "MISSION_CANCELLED", "mission cancelled before active goal")
             return True
-        self._begin_cancel_operation("cancel")
+        self._begin_cancel_operation(TerminationIntent.USER_CANCEL, "MISSION_CANCEL_REQUESTED")
         return True
 
     def pause(self) -> bool:
@@ -361,16 +403,16 @@ class MissionStateMachine:
     def request_pause(self) -> bool:
         if self.state == MissionStateCode.PAUSED:
             return True
-        if self.state == MissionStateCode.CANCELLING and self._pending_cancel_operation == "pause":
-            return True
-        if self.state != MissionStateCode.NAVIGATING:
+        if self.state == MissionStateCode.CANCELLING and self._pending_cancel_operation:
+            return self._override_pending_intent(TerminationIntent.USER_PAUSE, "MISSION_PAUSE_REQUESTED")
+        if self.state not in {MissionStateCode.NAVIGATING, MissionStateCode.TEMPORARILY_BLOCKED}:
             return False
         if not self.active_goal_uuid:
             self._transition(MissionStateCode.FAILED, "PAUSE_WITHOUT_ACTIVE_GOAL", "no active goal UUID is available")
             return False
         if not self._transition(MissionStateCode.CANCELLING, "MISSION_PAUSE_REQUESTED", "pause cancellation requested"):
             return False
-        self._begin_cancel_operation("pause")
+        self._begin_cancel_operation(TerminationIntent.USER_PAUSE, "MISSION_PAUSE_REQUESTED")
         return True
 
     def resume(self) -> bool:
@@ -383,15 +425,44 @@ class MissionStateMachine:
         self._dispatch_current_waypoint()
         return True
 
-    def _begin_cancel_operation(self, operation: str) -> None:
-        self._pending_cancel_operation = operation
+    def _begin_cancel_operation(self, intent: TerminationIntent, source_reason: str, *, defer_submit: bool = False) -> None:
+        if self._pending_cancel_operation is not None:
+            return
+        self._pending_cancel_operation = PendingTermination(intent, source_reason, self.active_goal_uuid)
         self._cancel_response_accepted = False
+        if defer_submit:
+            return
+        self._submit_pending_cancel()
+
+    def _submit_pending_cancel(self) -> None:
+        pending = self._pending_cancel_operation
+        if pending is None or pending.request_submitted:
+            return
         now = self._steady_clock()
         self._cancel_response_deadline = now + self.cancel_response_timeout_sec
         self._cancel_result_deadline = None
+        pending.request_submitted = True
+        pending.response_deadline = self._cancel_response_deadline
         request_sent = self.executor.cancel_goal(self.active_goal_uuid, self.cancel_response_timeout_sec)
         if not request_sent:
             self.on_cancel_response_rejected()
+
+    def _override_pending_intent(self, intent: TerminationIntent, reason: str) -> bool:
+        pending = self._pending_cancel_operation
+        if pending is None:
+            return False
+        if pending.intent is TerminationIntent.USER_CANCEL:
+            return True
+        if intent is TerminationIntent.USER_CANCEL or (
+            intent is TerminationIntent.USER_PAUSE
+            and pending.intent in {TerminationIntent.BLOCK_TERMINATION, TerminationIntent.HEALTH_FAILURE_TERMINATION}
+        ):
+            pending.intent = intent
+            pending.source_reason = reason
+            self.reason_code = reason
+            self.detail = "user intent overrides internal termination; existing cancellation retained"
+            self._publish()
+        return True
 
     def _clear_pending_cancel(self) -> None:
         self._pending_cancel_operation = None
@@ -400,8 +471,15 @@ class MissionStateMachine:
         self._cancel_response_accepted = False
 
     def _cancel_reason(self, suffix: str) -> str:
-        if self._pending_cancel_operation == "pause":
+        if self._pending_cancel_operation is None:
+            return f"CANCEL_{suffix}"
+        intent = self._pending_cancel_operation.intent
+        if intent is TerminationIntent.USER_PAUSE:
             return f"PAUSE_CANCEL_{suffix}"
+        if intent is TerminationIntent.BLOCK_TERMINATION:
+            return f"BLOCK_CANCEL_{suffix}"
+        if intent is TerminationIntent.HEALTH_FAILURE_TERMINATION:
+            return f"HEALTH_CANCEL_{suffix}"
         return f"CANCEL_{suffix}"
 
     def on_cancel_response_accepted(self) -> None:
@@ -410,6 +488,9 @@ class MissionStateMachine:
         self._cancel_response_accepted = True
         self._cancel_response_deadline = None
         self._cancel_result_deadline = self._steady_clock() + self.cancel_result_timeout_sec
+        self._pending_cancel_operation.response_accepted = True
+        self._pending_cancel_operation.response_deadline = None
+        self._pending_cancel_operation.result_deadline = self._cancel_result_deadline
         self.reason_code = self._cancel_reason("ACK_ACCEPTED")
         self.detail = "active goal cancellation acknowledged; waiting for CANCELED result"
         self._publish()
@@ -430,18 +511,24 @@ class MissionStateMachine:
     def on_cancel_result_canceled(self) -> None:
         if self.state != MissionStateCode.CANCELLING or not self._pending_cancel_operation:
             return
-        operation = self._pending_cancel_operation
+        pending = self._pending_cancel_operation
         self.active_goal_uuid = ""
         self._clear_pending_cancel()
-        if operation == "pause":
+        if pending.intent is TerminationIntent.USER_PAUSE:
             self._transition(MissionStateCode.PAUSED, "MISSION_PAUSED", "active goal cancelled; waypoint retained")
-        else:
+        elif pending.intent is TerminationIntent.USER_CANCEL:
             self._transition(MissionStateCode.CANCELLED, "MISSION_CANCELLED", "mission cancelled")
+        elif pending.intent is TerminationIntent.BLOCK_TERMINATION:
+            self._transition(MissionStateCode.BLOCKED, pending.source_reason, "active goal cancelled after persistent block")
+        else:
+            self.block_reason = ""
+            self._transition(MissionStateCode.FAILED, pending.source_reason, "active goal cancelled after health failure")
 
     def on_cancel_result_unexpected(self, status: GoalResultCode) -> None:
         if self.state != MissionStateCode.CANCELLING or not self._pending_cancel_operation:
             return
         reason = self._cancel_reason("RESULT_UNEXPECTED")
+        self.active_goal_uuid = ""
         self._clear_pending_cancel()
         self._transition(MissionStateCode.FAILED, reason, f"cancel result was {status.name}")
 
@@ -455,9 +542,56 @@ class MissionStateMachine:
         now = self._steady_clock() if steady_time is None else steady_time
         if self.state != MissionStateCode.CANCELLING or not self._pending_cancel_operation:
             return
+        if not self._pending_cancel_operation.request_submitted:
+            self._submit_pending_cancel()
+            return
         if not self._cancel_response_accepted:
             if self._cancel_response_deadline is not None and now >= self._cancel_response_deadline:
                 self.on_cancel_response_timeout()
             return
         if self._cancel_result_deadline is not None and now >= self._cancel_result_deadline:
             self.on_cancel_result_timeout()
+
+    def apply_progress_supervisor_result(self, result: object) -> None:
+        """Apply one accepted classifier result without taking transport ownership."""
+        event = result.primary_event.name
+        reason = event
+        block_events = {
+            "PERSISTENT_COLLISION_STOP", "CONTROLLER_NO_PROGRESS",
+            "RECOVERY_EXHAUSTED_NO_PROGRESS",
+        }
+        health_events = {
+            "FEEDBACK_STALE", "ODOMETRY_STALE", "TF_STALE", "COMMAND_PAIR_STALE",
+            "INITIAL_COMMAND_ACQUISITION_TIMEOUT",
+            "COLLISION_MONITOR_INVALID", "LOCALIZATION_INVALID", "CONTROLLER_INVALID",
+            "GATE_DISARMED", "GATE_FAULT", "COMMAND_AUTHORITY_INVALID", "ADAPTER_INVALID",
+        }
+        if self.state == MissionStateCode.CANCELLING and self._pending_cancel_operation:
+            return
+        if event == "COLLISION_STOP_TEMPORARY":
+            if self.state is MissionStateCode.NAVIGATING:
+                self.block_reason = reason
+                self._transition(MissionStateCode.TEMPORARILY_BLOCKED, reason, result.reason)
+            return
+        if event == "PROGRESSING" and self.state is MissionStateCode.TEMPORARILY_BLOCKED:
+            if result.reason == "clear recovery stable":
+                self.block_reason = ""
+                self._transition(MissionStateCode.NAVIGATING, "MISSION_PROGRESS_RESUMED", result.reason)
+            return
+        if event in block_events and self.state in {MissionStateCode.NAVIGATING, MissionStateCode.TEMPORARILY_BLOCKED}:
+            self.block_reason = reason
+            if self.state is MissionStateCode.NAVIGATING:
+                self._transition(MissionStateCode.TEMPORARILY_BLOCKED, reason, result.reason)
+            if not self.active_goal_uuid:
+                self._transition(MissionStateCode.BLOCKED, reason, result.reason)
+                return
+            self._transition(MissionStateCode.CANCELLING, reason, "persistent block termination requested")
+            self._begin_cancel_operation(TerminationIntent.BLOCK_TERMINATION, reason, defer_submit=True)
+            return
+        if event in health_events and self.state in {MissionStateCode.NAVIGATING, MissionStateCode.TEMPORARILY_BLOCKED}:
+            self.block_reason = ""
+            if not self.active_goal_uuid:
+                self._transition(MissionStateCode.FAILED, reason, result.reason)
+                return
+            self._transition(MissionStateCode.CANCELLING, reason, "health failure termination requested")
+            self._begin_cancel_operation(TerminationIntent.HEALTH_FAILURE_TERMINATION, reason)

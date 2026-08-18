@@ -10,3 +10,5 @@ collision_monitor_validity_monitor:
     expected_observation_source_name: scan
     expected_observation_source_type: scan
     expected_observation_source_topic: /phase4/synthetic_scan
+    query_watchdog_sec: 0.25
+    query_retry_interval_sec: 0.10

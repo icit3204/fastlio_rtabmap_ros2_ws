@@ -4,6 +4,7 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import TwistStamped
 from rclpy.clock import Clock, ClockType
 from rclpy.node import Node
+from rcl_interfaces.msg import SetParametersResult
 import rclpy
 from std_msgs.msg import Float32MultiArray
 
@@ -31,6 +32,8 @@ class MockWheelchairCmdAdapter(Node):
         self._input_publishers = 0
         self._output_publishers = 1
         self._last_result: ConversionResult | None = None
+        self._qualification_enabled = bool(self.get_parameter("qualification_health_control_enabled").value)
+        self._qualification_invalid = bool(self.get_parameter("qualification_force_invalid").value)
 
         self.create_subscription(TwistStamped, self._config.input_topic, self._input_cb, 10)
         self._output_pub = self.create_publisher(Float32MultiArray, self._config.output_topic, 10)
@@ -39,6 +42,7 @@ class MockWheelchairCmdAdapter(Node):
         heartbeat_period = 1.0 / self._config.heartbeat_hz
         self._heartbeat_timer = self.create_timer(heartbeat_period, self._heartbeat_cb, clock=self._heartbeat_clock)
         self._graph_timer = self.create_timer(0.1, self._graph_cb, clock=self._graph_clock)
+        self.add_on_set_parameters_callback(self._set_parameters_cb)
 
     def _load_config(self) -> AdapterConfig:
         self.declare_parameter("input_topic", "/vehicle_cmd_safe")
@@ -54,6 +58,8 @@ class MockWheelchairCmdAdapter(Node):
         self.declare_parameter("in_place_angular_epsilon", 0.02)
         self.declare_parameter("minimum_turn_radius_m", 1.0)
         self.declare_parameter("straight_radius_m", 10.0)
+        self.declare_parameter("qualification_health_control_enabled", False)
+        self.declare_parameter("qualification_force_invalid", False)
         config = AdapterConfig(
             input_topic=str(self.get_parameter("input_topic").value),
             output_topic=str(self.get_parameter("output_topic").value),
@@ -71,6 +77,14 @@ class MockWheelchairCmdAdapter(Node):
         )
         validate_topic_contract(config.input_topic, config.output_topic)
         return config
+
+    def _set_parameters_cb(self, params):
+        for param in params:
+            if param.name == "qualification_force_invalid":
+                if bool(param.value) and not self._qualification_enabled:
+                    return SetParametersResult(successful=False, reason="qualification control is disabled")
+                self._qualification_invalid = bool(param.value)
+        return SetParametersResult(successful=True)
 
     def _input_cb(self, msg: TwistStamped) -> None:
         self._latest_values = CommandValues(
@@ -90,6 +104,9 @@ class MockWheelchairCmdAdapter(Node):
 
     def _heartbeat_cb(self) -> None:
         result = self._evaluate()
+        if self._qualification_enabled and self._qualification_invalid:
+            result = ConversionResult(False, (0.0, 0.0, 0.0), result.reason,
+                                      {**result.details, "qualification_forced_invalid": True})
         self._last_result = result
         out = Float32MultiArray()
         out.data = list(result.output)
@@ -118,7 +135,8 @@ class MockWheelchairCmdAdapter(Node):
         status.name = "mock_wheelchair_cmd_adapter"
         status.hardware_id = "mock_only"
         status.level = DiagnosticStatus.OK if result.valid else DiagnosticStatus.WARN
-        status.message = result.reason.value
+        status.message = ("P4E6B_QUALIFICATION_INVALID" if self._qualification_enabled
+                          and self._qualification_invalid else result.reason.value)
         fields = {
             "condition": result.reason.value,
             "input_age_sec": details.get("input_age_sec"),

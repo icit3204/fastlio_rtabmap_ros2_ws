@@ -1,0 +1,16 @@
+phase4_vehicle_cmd_fake_base:
+  ros__parameters:
+    input_topic: /vehicle_cmd_safe
+    odom_topic: /Odometry
+    diagnostics_topic: /phase4_fake_base/diagnostics
+    expected_input_frame: base_footprint
+    odom_frame: odom
+    base_frame: base_footprint
+    publish_rate_hz: 50.0
+    command_timeout_sec: 0.50
+    max_integration_dt_sec: 0.10
+    unsupported_axis_epsilon: 1.0e-6
+    authority_poll_hz: 2.0
+    initial_x: 5.425
+    initial_y: -53.725
+    initial_yaw: 0.0

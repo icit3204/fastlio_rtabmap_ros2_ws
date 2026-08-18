@@ -1,0 +1,10 @@
+<library path="mission_manager_progress_checker">
+  <class
+    name="parking_robot_nav2_plugins::MissionManagerProgressChecker"
+    type="parking_robot_nav2_plugins::MissionManagerProgressChecker"
+    base_class_type="nav2_core::ProgressChecker">
+    <description>
+      Always-valid local checker for goals whose bounded progress authority is owned by Mission Manager.
+    </description>
+  </class>
+</library>
