@@ -1,0 +1,80 @@
+{
+  "task": "P5A-MK2C1R",
+  "checkpoint_time": "2026-09-06T19:51:35+08:00",
+  "status": "P5A_MK2C1R_SOFTWARE_READY_FOR_MINIMAL_RETEST",
+  "production_pre_repair_classification": "B_PRODUCTION_COSTMAP_ITSELF_USES_BODY",
+  "production_local_costmap": {
+    "global_frame": "odom_chassis",
+    "robot_base_frame": "base_footprint",
+    "rolling_window": true,
+    "width_m": 8.0,
+    "height_m": 8.0,
+    "resolution_m": 0.05,
+    "footprint_base_footprint_m": [[0.755, 0.300], [0.755, -0.300], [-0.145, -0.300], [-0.145, 0.300]],
+    "plugins": [
+      "nav2_costmap_2d::VoxelLayer",
+      "nav2_costmap_2d::InflationLayer"
+    ],
+    "observation_source": "lidar_cloud",
+    "topic": "/cloud_registered_body",
+    "message_type": "sensor_msgs/msg/PointCloud2",
+    "sensor_frame_parameter": null,
+    "min_obstacle_height_m": 0.1,
+    "max_obstacle_height_m": 1.6,
+    "obstacle_min_range_m": 0.0,
+    "obstacle_max_range_m": 3.0,
+    "raytrace_min_range_m": 0.0,
+    "raytrace_max_range_m": 3.5,
+    "voxel_origin_z_m": 0.0,
+    "voxel_z_resolution_m": 0.1,
+    "voxel_count_z": 16,
+    "mark_threshold": 0
+  },
+  "mk2c1_recorded_costmap_frame": "body",
+  "mk2c1_reason": "The standalone launch extracted the unchanged production local-costmap block; production itself specified global_frame body.",
+  "fast_lio_body": "FAST-LIO IMU/state frame; cloud_registered_body is LiDAR data transformed through the LiDAR-to-IMU extrinsic and labeled body; it is not the chassis-horizontal navigation frame.",
+  "body_to_base_footprint": {
+    "translation_m": [0.476208541216, -0.156607656246, -0.662756522534],
+    "rpy_deg": [-29.008923663, 12.613005834, 109.676720772],
+    "expected": true,
+    "recomposition_max_error": 1.11e-16
+  },
+  "nav2_height_semantics": "ObservationBuffer transforms PointCloud2 into the costmap global frame before applying source min/max obstacle-height tests.",
+  "mk2c1_cloud_window_z_analysis": {
+    "valid_for_recorded_body_costmap": true,
+    "measurement_frame_semantics_invalid": false,
+    "reusable_after_odom_repair": false
+  },
+  "software_changes": [
+    "Production local costmap global_frame changed from body to the calibrated chassis-horizontal sibling odom_chassis.",
+    "A static odom to odom_chassis basis transform was added using the frozen initial body-to-base_footprint calibration.",
+    "Production local VoxelLayer uses the ground-relative +0.10..+1.60 m band in odom_chassis.",
+    "Stale local footprint replaced with the authoritative 0.900 x 0.600 m MK-mini envelope about the rear-axle origin.",
+    "Read-only transformed-cloud and actual-costmap reconciliation observer added.",
+    "Static regression contracts and ROS package install dependencies added.",
+    "Global costmap configuration left unchanged."
+  ],
+  "verification": {
+    "observer_python_compile": "PASS",
+    "static_contract_tests": "5 passed",
+    "yaml_contract": "PASS",
+    "git_diff_check": "PASS",
+    "colcon_build_robot_bringup": "PASS",
+    "safe_launch_show_args_start_stack_false": "PASS",
+    "matching_runtime_processes_after_checks": 0
+  },
+  "safety": {
+    "sensors_started": false,
+    "nav2_started": false,
+    "collision_monitor_started": false,
+    "can_tx": false,
+    "robot_motion": false,
+    "git_mutation": false,
+    "source_mutation": true
+  },
+  "live_retest_pending": [
+    "clear baseline",
+    "upright 430 mm box at 0.595 m ahead of physical front edge",
+    "upright 430 mm box at 0.295 m ahead of physical front edge"
+  ]
+}

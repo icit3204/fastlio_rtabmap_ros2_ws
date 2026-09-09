@@ -1,0 +1,47 @@
+# Temporary Phase-5 no-motion profile. Geometry and height bounds derive from
+# P5-0C0 physical measurements, but raw-cloud self/floor behavior still requires
+# live no-motion tuning. The Collision Monitor validity authority fails the Gate
+# closed when this source is stale or structurally invalid.
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel_nav_raw"
+    cmd_vel_out_topic: "/cmd_vel_nav_safe"
+    transform_tolerance: 0.5
+    source_timeout: 0.5
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    polygons: ["Phase5Stop", "Phase5Slow"]
+    # TEMPORARY_PHASE5_NO_MOTION_TUNING_VALUE: measured rigid envelope plus
+    # 0.20 m stop clearance. This is not final product geometry.
+    Phase5Stop:
+      type: "polygon"
+      points: [1.05, 0.53, 1.05, -0.53, -0.42, -0.53, -0.42, 0.53]
+      action_type: "stop"
+      max_points: 3
+      visualize: false
+      polygon_pub_topic: "phase5_polygon_stop"
+      enabled: true
+    # TEMPORARY_PHASE5_NO_MOTION_TUNING_VALUE: measured rigid envelope plus
+    # 0.50 m slowdown clearance.
+    Phase5Slow:
+      type: "polygon"
+      points: [1.35, 0.83, 1.35, -0.83, -0.72, -0.83, -0.72, 0.83]
+      action_type: "slowdown"
+      max_points: 3
+      slowdown_ratio: 0.30
+      visualize: false
+      polygon_pub_topic: "phase5_polygon_slowdown"
+      enabled: true
+    observation_sources: ["mid360_body_cloud"]
+    mid360_body_cloud:
+      type: "pointcloud"
+      topic: "/cloud_registered_body"
+      # Humble PointCloud supports only a vertical pass band here, not a full
+      # chassis self-filter. Reject near-floor returns while retaining the
+      # measured robot/sensor height envelope for supervised live tuning.
+      min_height: 0.10
+      max_height: 1.60
+      enabled: true

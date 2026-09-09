@@ -38,10 +38,12 @@ def test_package_metadata_and_entry_points():
 
 def test_gate_topic_contract_and_no_raw_or_wheelchair_subscription():
     gate_text = text(GATE)
-    assert 'create_subscription(Twist, "/cmd_vel_nav_safe"' in gate_text
-    assert 'create_publisher(TwistStamped, "/vehicle_cmd_safe"' in gate_text
-    assert 'create_service(SetBool, "/vehicle_cmd_safety/arm"' in gate_text
-    assert 'create_publisher(DiagnosticStatus, "/vehicle_cmd_safety/state"' in gate_text
+    assert 'self.declare_parameter("safe_input_topic", "/cmd_vel_nav_safe")' in gate_text
+    assert "create_subscription(Twist, self._safe_input_topic" in gate_text
+    assert 'self.declare_parameter("output_topic", "/vehicle_cmd_safe")' in gate_text
+    assert "create_publisher(TwistStamped, self._output_topic" in gate_text
+    assert 'self.declare_parameter("arm_service", "/vehicle_cmd_safety/arm")' in gate_text
+    assert 'self.declare_parameter("state_topic", "/vehicle_cmd_safety/state")' in gate_text
     assert '"/cmd_vel_nav_raw"' not in gate_text
     for forbidden in ["/wheelchair_control_command_mock", "/wheelchair_control_command", "/wheelchair_control_command_raw"]:
         assert forbidden not in gate_text
@@ -108,7 +110,7 @@ def test_gate_ros_time_is_limited_to_output_and_diagnostic_stamps():
 
 def test_validity_monitor_topic_contract_and_no_safe_twist_inference():
     validity_text = text(VALIDITY)
-    assert 'create_publisher(Bool, "/system/collision_monitor_valid"' in validity_text
+    assert 'self.declare_parameter("validity_output_topic", "/system/collision_monitor_valid")' in validity_text
     assert "/phase4/synthetic_scan" in validity_text
     assert "/phase4/synthetic_points" not in validity_text
     assert "/cmd_vel_nav_safe" not in validity_text
@@ -221,7 +223,7 @@ def test_source_authority_forbidden_terms_absent_from_p4c_package():
         if not path.is_file():
             continue
         rel = path.relative_to(PKG).as_posix()
-        if rel.startswith("test/"):
+        if rel.startswith(("test/", "build/", "install/")):
             continue
         if rel in evidence_audit_sources:
             continue

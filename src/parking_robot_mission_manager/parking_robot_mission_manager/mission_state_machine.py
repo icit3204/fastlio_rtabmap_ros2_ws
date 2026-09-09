@@ -376,6 +376,12 @@ class MissionStateMachine:
             self._transition(MissionStateCode.PLANNING, "WAYPOINT_SUCCEEDED", detail or "waypoint succeeded")
             self._dispatch_current_waypoint()
             return
+        # The action result is terminal even when it is not a successful
+        # mission result.  Do not retain ownership of a goal handle that Nav2
+        # has already completed: externally reported state and cancel
+        # eligibility must describe the same authoritative ownership state.
+        self.active_goal_uuid = ""
+        self.block_reason = ""
         self._transition(MissionStateCode.FAILED, f"GOAL_{status.name}", detail or status.name)
 
     def cancel(self) -> bool:

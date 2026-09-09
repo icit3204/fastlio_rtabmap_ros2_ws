@@ -1,0 +1,48 @@
+# Canonical production Collision Monitor contract for the qualified MK-mini
+# MID-360 + T-mini sensor pair. The stationary qualification launch overrides
+# only cmd_vel topics; geometry and sensor parameters remain single-source.
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel_nav"
+    cmd_vel_out_topic: "/cmd_vel"
+    transform_tolerance: 0.5
+    source_timeout: 0.5
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+
+    # The authoritative footprint reaches X=+0.755 m and has 0.03 m padding.
+    # Both forward-only zones therefore begin at X=+0.785 m. This is a
+    # geometry-based self exclusion, not a sensor-angle or range mask.
+    polygons: ["Phase5Stop", "Phase5Slow"]
+    Phase5Stop:
+      type: "polygon"
+      points: [0.785, 0.53, 1.05, 0.53, 1.05, -0.53, 0.785, -0.53]
+      action_type: "stop"
+      max_points: 3
+      visualize: true
+      polygon_pub_topic: "/collision_monitor/phase5_stop"
+      enabled: true
+    Phase5Slow:
+      type: "polygon"
+      points: [0.785, 0.53, 1.35, 0.53, 1.35, -0.53, 0.785, -0.53]
+      action_type: "slowdown"
+      max_points: 3
+      slowdown_ratio: 0.30
+      visualize: true
+      polygon_pub_topic: "/collision_monitor/phase5_slow"
+      enabled: true
+
+    observation_sources: ["mid360_body_cloud", "tmini_scan"]
+    mid360_body_cloud:
+      type: "pointcloud"
+      topic: "/cloud_registered_body"
+      min_height: 0.10
+      max_height: 1.60
+      enabled: true
+    tmini_scan:
+      type: "scan"
+      topic: "/scan"
+      enabled: true

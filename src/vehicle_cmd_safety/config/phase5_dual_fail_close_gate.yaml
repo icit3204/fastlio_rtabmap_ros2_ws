@@ -1,0 +1,22 @@
+guarded_vehicle_cmd_gate:
+  ros__parameters:
+    frame_id: base_footprint
+    heartbeat_hz: 20.0
+    safe_twist_timeout_sec: 0.25
+    safe_zero_quiescence_enabled: false
+    localization_timeout_sec: 0.50
+    controller_timeout_sec: 0.50
+    collision_valid_timeout_sec: 0.25
+    authority_stability_sec: 1.0
+    max_forward_velocity: 0.25
+    max_angular_velocity: 0.50
+    max_linear_increase_rate: 2.50
+    max_angular_increase_rate: 2.50
+    max_slew_dt_sec: 0.10
+    safe_input_topic: /phase5/cm_test/cmd_vel_out
+    output_topic: /phase5/gate_test/cmd_vel_safe
+    localization_valid_topic: /system/localization_valid
+    controller_valid_topic: /system/controller_valid
+    collision_valid_topic: /system/collision_monitor_valid
+    state_topic: /phase5/gate_test/state
+    arm_service: /phase5/gate_test/arm

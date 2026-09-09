@@ -12,6 +12,7 @@ from rcl_interfaces.srv import GetParameters
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan, PointCloud2
 from std_msgs.msg import Bool
 
@@ -121,7 +122,8 @@ class CollisionMonitorValidityMonitor(Node):
         self._declare_parameters()
         self._core = CollisionMonitorValidityCore(self._config_from_parameters())
 
-        self._valid_pub = self.create_publisher(Bool, "/system/collision_monitor_valid", 10)
+        self._validity_output_topic = str(self.get_parameter("validity_output_topic").value)
+        self._valid_pub = self.create_publisher(Bool, self._validity_output_topic, 10)
         self._diag_pub = self.create_publisher(DiagnosticArray, "/diagnostics", 10)
         self._state_client = self.create_client(
             GetState,
@@ -148,9 +150,9 @@ class CollisionMonitorValidityMonitor(Node):
         self._last_params_service_ready = False
 
         if self._core.config.source_type == "scan":
-            self.create_subscription(LaserScan, self._core.config.source_topic, self._scan_cb, 10)
+            self.create_subscription(LaserScan, self._core.config.source_topic, self._scan_cb, qos_profile_sensor_data)
         elif self._core.config.source_type == "pointcloud":
-            self.create_subscription(PointCloud2, self._core.config.source_topic, self._cloud_cb, 10)
+            self.create_subscription(PointCloud2, self._core.config.source_topic, self._cloud_cb, qos_profile_sensor_data)
         else:
             raise ValueError("source_type must be scan or pointcloud")
 
@@ -169,6 +171,7 @@ class CollisionMonitorValidityMonitor(Node):
         self.declare_parameter("expected_observation_source_topic", "/phase4/synthetic_scan")
         self.declare_parameter("query_watchdog_sec", 0.25)
         self.declare_parameter("query_retry_interval_sec", 0.10)
+        self.declare_parameter("validity_output_topic", "/system/collision_monitor_valid")
 
     def _config_from_parameters(self) -> ValidityConfig:
         return ValidityConfig(
@@ -187,28 +190,47 @@ class CollisionMonitorValidityMonitor(Node):
     def _now_steady(self) -> float:
         return time.monotonic()
 
+    def _now_ros(self) -> float:
+        now = self.get_clock().now()
+        return float(now.nanoseconds) * 1e-9
+
+    @staticmethod
+    def _header_stamp_sec(msg: LaserScan | PointCloud2) -> float:
+        return float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
+
     def _scan_cb(self, msg: LaserScan) -> None:
         valid = (
             msg.angle_increment > 0.0
             and msg.range_max > msg.range_min > 0.0
             and len(msg.ranges) > 0
         )
-        self._core.set_observation(msg.header.frame_id, valid, self._now_steady())
+        self._core.set_observation(
+            msg.header.frame_id,
+            valid,
+            self._now_steady(),
+            self._header_stamp_sec(msg),
+        )
 
     def _cloud_cb(self, msg: PointCloud2) -> None:
         valid = msg.point_step > 0 and msg.row_step >= msg.point_step * msg.width and len(msg.data) >= msg.row_step
-        self._core.set_observation(msg.header.frame_id, valid, self._now_steady())
+        self._core.set_observation(
+            msg.header.frame_id,
+            valid,
+            self._now_steady(),
+            self._header_stamp_sec(msg),
+        )
 
     def _timer_cb(self) -> None:
         now = self._now_steady()
+        ros_now = self._now_ros()
         try:
             self._update_collision_monitor_state(now)
         except Exception as exc:  # noqa: BLE001 - heartbeat must survive service-query failures.
             self.get_logger().error(f"collision monitor state update failed: {exc!r}")
             self._state_future = None
             self._params_future = None
-        self._core.set_valid_publisher_count(len(self.get_publishers_info_by_topic("/system/collision_monitor_valid")))
-        status = self._core.tick(self._now_steady())
+        self._core.set_valid_publisher_count(len(self.get_publishers_info_by_topic(self._validity_output_topic)))
+        status = self._core.tick(now, ros_now)
         msg = Bool()
         msg.data = bool(status.valid)
         self._valid_pub.publish(msg)

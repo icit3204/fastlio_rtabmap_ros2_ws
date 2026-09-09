@@ -11,6 +11,8 @@ STATE_DISARMED = "DISARMED"
 STATE_ARMED = "ARMED"
 STATE_FAULT = "FAULT"
 MODE_MOCK = "MOCK"
+REASON_ARM_PENDING_SAFE = "ARM_PENDING_SAFE"
+REASON_SAFE_ZERO_QUIESCENT = "SAFE_ZERO_QUIESCENT"
 
 
 @dataclass(frozen=True)
@@ -59,6 +61,7 @@ class GateConfig:
     frame_id: str = "base_footprint"
     heartbeat_hz: float = 20.0
     safe_twist_timeout_sec: float = 0.25
+    safe_zero_quiescence_enabled: bool = False
     localization_timeout_sec: float = 0.50
     controller_timeout_sec: float = 0.50
     collision_valid_timeout_sec: float = 0.50
@@ -78,6 +81,8 @@ class GateConfig:
     def validation_error(self) -> Optional[str]:
         if self.frame_id != "base_footprint":
             return "INVALID_FRAME"
+        if not isinstance(self.safe_zero_quiescence_enabled, bool):
+            return "INVALID_ZERO_QUIESCENCE_CONFIGURATION"
         values = [
             self.heartbeat_hz,
             self.safe_twist_timeout_sec,
@@ -167,10 +172,29 @@ class GateCore:
         self.fault_reason: Optional[str] = None
         self.contributing_faults: list[str] = []
         self.last_arm_request = "none"
+        self.arm_pending = False
+        self.arm_request_stamp: Optional[float] = None
+        self.safe_command_accepted_after_arm = False
+        self.safe_zero_quiescent = False
 
     def set_safe_command(self, command: Twist6, now: float) -> None:
         self.safe_command = command
         self.safe_command_stamp = now
+        if self.state == STATE_ARMED:
+            self.safe_zero_quiescent = False
+        if (
+            self.state == STATE_DISARMED
+            and self.arm_pending
+            and self.arm_request_stamp is not None
+            and now > self.arm_request_stamp
+            and not any(self._pending_fault_reasons(now))
+        ):
+            self.arm_pending = False
+            self.safe_command_accepted_after_arm = True
+            self.safe_zero_quiescent = False
+            self.state = STATE_ARMED
+            self.last_output = ZERO_TWIST
+            self.last_output_time = now
 
     def set_permission(self, name: str, value: bool, now: float) -> None:
         sample = PermissionSample(value=value, stamp=now)
@@ -198,12 +222,19 @@ class GateCore:
             if self.state == STATE_FAULT:
                 if self._fault_causes_present(now):
                     return False, self.fault_reason or "FAULT_CAUSE_PRESENT"
+            was_pending = self.arm_pending
             self.state = STATE_DISARMED
+            self.arm_pending = False
+            self.arm_request_stamp = None
+            self.safe_command_accepted_after_arm = False
+            self.safe_zero_quiescent = False
             self.fault_reason = None
             self.contributing_faults.clear()
             self.authority_correct_since = now if self.authority.correct() else None
             self.last_output = ZERO_TWIST
             self.last_output_time = now
+            if was_pending:
+                return True, "DISARMED_ARM_PENDING_CANCELLED"
             return True, "DISARMED_FAULT_CLEARED"
 
         if self.state == STATE_FAULT:
@@ -211,40 +242,67 @@ class GateCore:
         reason = self.first_blocking_reason(now)
         if reason is not None:
             return False, reason
+        if self.config.safe_zero_quiescence_enabled:
+            self.state = STATE_DISARMED
+            self.arm_pending = True
+            self.arm_request_stamp = now
+            self.safe_command_accepted_after_arm = False
+            self.safe_zero_quiescent = False
+            self.last_output = ZERO_TWIST
+            self.last_output_time = now
+            return True, REASON_ARM_PENDING_SAFE
         self.state = STATE_ARMED
+        self.arm_pending = False
+        self.arm_request_stamp = None
+        self.safe_command_accepted_after_arm = True
+        self.safe_zero_quiescent = False
         self.last_output_time = now
         return True, "ARMED"
 
     def first_blocking_reason(self, now: float) -> Optional[str]:
+        return next(iter(self._pending_fault_reasons(now)), None)
+
+    def _pending_fault_reasons(self, now: float) -> Iterable[str]:
         config_error = self.config.validation_error()
         if config_error is not None:
-            return config_error
+            yield config_error
         command_reason = self._command_invalid_reason(self.safe_command)
         if command_reason is not None:
-            return command_reason
+            yield command_reason
         conflict = self.authority.conflict_reason()
         if conflict is not None:
-            return conflict
+            yield conflict
         if self.authority_correct_since is None:
-            return "AUTHORITY_NOT_STABLE"
-        if now - self.authority_correct_since < self.config.authority_stability_sec:
-            return "AUTHORITY_NOT_STABLE"
+            yield "AUTHORITY_NOT_STABLE"
+        elif now - self.authority_correct_since < self.config.authority_stability_sec:
+            yield "AUTHORITY_NOT_STABLE"
         if not self.localization.fresh_true(now, self.config.localization_timeout_sec):
-            return "LOCALIZATION_PERMISSION_INVALID"
+            yield "LOCALIZATION_PERMISSION_INVALID"
         if not self.controller.fresh_true(now, self.config.controller_timeout_sec):
-            return "CONTROLLER_PERMISSION_INVALID"
+            yield "CONTROLLER_PERMISSION_INVALID"
         if not self.collision_valid.fresh_true(now, self.config.collision_valid_timeout_sec):
-            return "COLLISION_MONITOR_VALID_INVALID"
-        return None
+            yield "COLLISION_MONITOR_VALID_INVALID"
 
     def tick(self, now: float) -> GateStatus:
+        if self.state == STATE_DISARMED and self.arm_pending:
+            for reason in self._pending_fault_reasons(now):
+                self._latch_fault(reason)
+                break
         if self.state == STATE_ARMED:
             for reason in self._armed_fault_reasons(now):
                 self._latch_fault(reason)
         output = ZERO_TWIST
         reason = "DISARMED_ZERO"
         detail = "disarmed"
-        if self.state == STATE_ARMED:
+        if self.state == STATE_DISARMED and self.arm_pending:
+            reason = REASON_ARM_PENDING_SAFE
+            detail = "arm accepted; waiting for a fresh safe Twist received after the arm request"
+        elif self.state == STATE_ARMED and self._safe_zero_quiescence_active(now):
+            self.safe_zero_quiescent = True
+            reason = REASON_SAFE_ZERO_QUIESCENT
+            detail = "last accepted safe command was zero; output remains gate-owned zero while upstream is quiet"
+        elif self.state == STATE_ARMED:
+            self.safe_zero_quiescent = False
             output = self._limited_output(now)
             reason = "ARMED_COMMAND"
             detail = "passing validated command"
@@ -264,26 +322,32 @@ class GateCore:
         self.state = STATE_FAULT
 
     def _armed_fault_reasons(self, now: float) -> Iterable[str]:
-        config_error = self.config.validation_error()
-        if config_error is not None:
-            yield config_error
-        command_reason = self._command_invalid_reason(self.safe_command)
-        if command_reason is not None:
-            yield command_reason
-        if not self._safe_command_fresh(now):
+        yield from self._pending_fault_reasons(now)
+        if not self._safe_command_fresh(now) and not self._safe_zero_quiescence_allowed(now):
             yield "SAFE_TWIST_STALE"
-        if not self.localization.fresh_true(now, self.config.localization_timeout_sec):
-            yield "LOCALIZATION_PERMISSION_INVALID"
-        if not self.controller.fresh_true(now, self.config.controller_timeout_sec):
-            yield "CONTROLLER_PERMISSION_INVALID"
-        if not self.collision_valid.fresh_true(now, self.config.collision_valid_timeout_sec):
-            yield "COLLISION_MONITOR_VALID_INVALID"
-        conflict = self.authority.conflict_reason()
-        if conflict is not None:
-            yield conflict
+
+    def _safe_zero_quiescence_allowed(self, now: float) -> bool:
+        return (
+            self.config.safe_zero_quiescence_enabled
+            and self.safe_command_accepted_after_arm
+            and self.safe_command_stamp is not None
+            and self.safe_command.is_zero()
+            and not any(self._pending_fault_reasons(now))
+        )
+
+    def _safe_zero_quiescence_active(self, now: float) -> bool:
+        return self._safe_zero_quiescence_allowed(now) and not self._safe_command_fresh(now)
 
     def _fault_causes_present(self, now: float) -> bool:
-        return any(True for _ in self._armed_fault_reasons(now))
+        if any(self._pending_fault_reasons(now)):
+            return True
+        if not self.config.safe_zero_quiescence_enabled:
+            return not self._safe_command_fresh(now)
+        if not self.safe_command_accepted_after_arm:
+            return False
+        if self.safe_command.is_zero():
+            return False
+        return not self._safe_command_fresh(now)
 
     def _safe_command_fresh(self, now: float) -> bool:
         return (
@@ -350,6 +414,11 @@ class GateCore:
             "reason_code": reason,
             "detail": detail,
             "safe_twist_age_sec": self._age_text(self.safe_command_stamp, now),
+            "safe_zero_quiescence_enabled": str(self.config.safe_zero_quiescence_enabled).lower(),
+            "safe_zero_quiescent": str(self.safe_zero_quiescent).lower(),
+            "arm_pending": str(self.arm_pending).lower(),
+            "arm_request_age_sec": self._age_text(self.arm_request_stamp, now),
+            "safe_command_accepted_after_arm": str(self.safe_command_accepted_after_arm).lower(),
             "localization_age_sec": self._age_text(self.localization.stamp, now),
             "controller_age_sec": self._age_text(self.controller.stamp, now),
             "collision_monitor_valid_age_sec": self._age_text(self.collision_valid.stamp, now),

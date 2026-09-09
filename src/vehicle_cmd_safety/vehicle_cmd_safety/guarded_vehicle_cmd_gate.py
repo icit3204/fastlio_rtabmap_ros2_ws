@@ -22,15 +22,20 @@ class GuardedVehicleCmdGate(Node):
         self._declare_parameters()
         self._core = GateCore(self._config_from_parameters())
 
-        self._output_pub = self.create_publisher(TwistStamped, "/vehicle_cmd_safe", 10)
-        self._state_pub = self.create_publisher(DiagnosticStatus, "/vehicle_cmd_safety/state", 10)
+        self._output_topic = str(self.get_parameter("output_topic").value)
+        self._safe_input_topic = str(self.get_parameter("safe_input_topic").value)
+        self._localization_topic = str(self.get_parameter("localization_valid_topic").value)
+        self._controller_topic = str(self.get_parameter("controller_valid_topic").value)
+        self._collision_topic = str(self.get_parameter("collision_valid_topic").value)
+        self._output_pub = self.create_publisher(TwistStamped, self._output_topic, 10)
+        self._state_pub = self.create_publisher(DiagnosticStatus, str(self.get_parameter("state_topic").value), 10)
         self._diag_pub = self.create_publisher(DiagnosticArray, "/diagnostics", 10)
 
-        self.create_subscription(Twist, "/cmd_vel_nav_safe", self._safe_cb, 10)
-        self.create_subscription(Bool, "/system/localization_valid", self._localization_cb, 10)
-        self.create_subscription(Bool, "/system/controller_valid", self._controller_cb, 10)
-        self.create_subscription(Bool, "/system/collision_monitor_valid", self._collision_cb, 10)
-        self.create_service(SetBool, "/vehicle_cmd_safety/arm", self._arm_cb)
+        self.create_subscription(Twist, self._safe_input_topic, self._safe_cb, 10)
+        self.create_subscription(Bool, self._localization_topic, self._localization_cb, 10)
+        self.create_subscription(Bool, self._controller_topic, self._controller_cb, 10)
+        self.create_subscription(Bool, self._collision_topic, self._collision_cb, 10)
+        self.create_service(SetBool, str(self.get_parameter("arm_service").value), self._arm_cb)
 
         self._heartbeat_clock = Clock(clock_type=ClockType.STEADY_TIME)
         self._graph_clock = Clock(clock_type=ClockType.STEADY_TIME)
@@ -46,6 +51,7 @@ class GuardedVehicleCmdGate(Node):
         self.declare_parameter("frame_id", "base_footprint")
         self.declare_parameter("heartbeat_hz", 20.0)
         self.declare_parameter("safe_twist_timeout_sec", 0.25)
+        self.declare_parameter("safe_zero_quiescence_enabled", False)
         self.declare_parameter("localization_timeout_sec", 0.50)
         self.declare_parameter("controller_timeout_sec", 0.50)
         self.declare_parameter("collision_valid_timeout_sec", 0.50)
@@ -59,12 +65,20 @@ class GuardedVehicleCmdGate(Node):
         self.declare_parameter("in_place_linear_epsilon", 0.01)
         self.declare_parameter("in_place_angular_epsilon", 0.02)
         self.declare_parameter("max_slew_dt_sec", 0.10)
+        self.declare_parameter("safe_input_topic", "/cmd_vel_nav_safe")
+        self.declare_parameter("output_topic", "/vehicle_cmd_safe")
+        self.declare_parameter("localization_valid_topic", "/system/localization_valid")
+        self.declare_parameter("controller_valid_topic", "/system/controller_valid")
+        self.declare_parameter("collision_valid_topic", "/system/collision_monitor_valid")
+        self.declare_parameter("state_topic", "/vehicle_cmd_safety/state")
+        self.declare_parameter("arm_service", "/vehicle_cmd_safety/arm")
 
     def _config_from_parameters(self) -> GateConfig:
         return GateConfig(
             frame_id=str(self.get_parameter("frame_id").value),
             heartbeat_hz=float(self.get_parameter("heartbeat_hz").value),
             safe_twist_timeout_sec=float(self.get_parameter("safe_twist_timeout_sec").value),
+            safe_zero_quiescence_enabled=bool(self.get_parameter("safe_zero_quiescence_enabled").value),
             localization_timeout_sec=float(self.get_parameter("localization_timeout_sec").value),
             controller_timeout_sec=float(self.get_parameter("controller_timeout_sec").value),
             collision_valid_timeout_sec=float(self.get_parameter("collision_valid_timeout_sec").value),
@@ -114,11 +128,11 @@ class GuardedVehicleCmdGate(Node):
     def _graph_cb(self) -> None:
         now = self._now_steady()
         authority = AuthoritySnapshot(
-            safe_input_publishers=len(self.get_publishers_info_by_topic("/cmd_vel_nav_safe")),
-            output_publishers=len(self.get_publishers_info_by_topic("/vehicle_cmd_safe")),
-            localization_publishers=len(self.get_publishers_info_by_topic("/system/localization_valid")),
-            controller_publishers=len(self.get_publishers_info_by_topic("/system/controller_valid")),
-            collision_valid_publishers=len(self.get_publishers_info_by_topic("/system/collision_monitor_valid")),
+            safe_input_publishers=len(self.get_publishers_info_by_topic(self._safe_input_topic)),
+            output_publishers=len(self.get_publishers_info_by_topic(self._output_topic)),
+            localization_publishers=len(self.get_publishers_info_by_topic(self._localization_topic)),
+            controller_publishers=len(self.get_publishers_info_by_topic(self._controller_topic)),
+            collision_valid_publishers=len(self.get_publishers_info_by_topic(self._collision_topic)),
         )
         self._core.set_authority(authority, now)
 

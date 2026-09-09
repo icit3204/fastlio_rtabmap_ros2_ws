@@ -160,6 +160,55 @@ def test_cancel_acknowledged_and_canceled_result_reaches_cancelled():
     assert sm.active_goal_uuid == ""
 
 
+def test_navigating_with_accepted_goal_always_accepts_user_cancel():
+    sm, executor = active_machine(["delayed"])
+    assert sm.snapshot().state is MissionStateCode.NAVIGATING
+    assert sm.snapshot().active_goal_uuid
+    assert sm.request_cancel()
+    assert sm.state is MissionStateCode.CANCELLING
+    assert executor.cancel_count == 1
+
+
+def test_goal_ownership_clear_cannot_leave_reported_state_navigating():
+    sm, _ = active_machine(["delayed"])
+    sm.on_goal_result(GoalResultCode.CANCELED, "unexpected cancellation")
+    snapshot = sm.snapshot()
+    assert snapshot.active_goal_uuid == ""
+    assert snapshot.state is MissionStateCode.FAILED
+    assert snapshot.reason_code == "GOAL_CANCELED"
+
+
+def test_pause_resume_does_not_poison_later_user_cancel():
+    sm, executor = active_machine(["delayed", "delayed"])
+    assert sm.request_pause()
+    sm.on_cancel_response_accepted(); sm.on_cancel_result_canceled()
+    preserved_index = sm.current_waypoint_index
+    assert sm.resume()
+    assert sm.state is MissionStateCode.NAVIGATING
+    assert sm.current_waypoint_index == preserved_index
+    assert sm.active_goal_uuid
+    assert sm.request_cancel()
+    assert sm.state is MissionStateCode.CANCELLING
+    assert executor.cancel_count == 2
+    sm.on_cancel_response_accepted(); sm.on_cancel_result_canceled()
+    assert sm.state is MissionStateCode.CANCELLED
+    assert len(executor.sent_waypoint_ids) == 2
+
+
+def test_second_independent_mission_after_cancel_is_cancellable_without_next_goal():
+    sm, executor = active_machine(["delayed", "delayed"], count=2)
+    assert sm.request_cancel()
+    sm.on_cancel_response_accepted(); sm.on_cancel_result_canceled()
+    assert sm.receive_mission(mission(2)).valid
+    assert sm.start().valid
+    assert sm.state is MissionStateCode.NAVIGATING
+    assert sm.request_cancel()
+    sm.on_cancel_response_accepted(); sm.on_cancel_result_canceled()
+    assert sm.state is MissionStateCode.CANCELLED
+    assert sm.completed_waypoint_count == 0
+    assert len(executor.sent_waypoint_ids) == 2
+
+
 def test_immediate_cancel_rejection_is_not_timeout():
     sm, executor = active_machine(["delayed", "cancel_reject"])
     assert sm.request_cancel()

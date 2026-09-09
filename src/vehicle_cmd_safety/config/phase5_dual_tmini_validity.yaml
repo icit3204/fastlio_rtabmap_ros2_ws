@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    source_type: scan
+    source_topic: /scan
+    expected_frame: laser_frame
+    source_freshness_sec: 0.50
+    recovery_stability_sec: 0.30
+    heartbeat_hz: 20.0
+    collision_monitor_node_name: collision_monitor
+    expected_observation_source_name: tmini_scan
+    expected_observation_source_type: scan
+    expected_observation_source_topic: /scan
+    validity_output_topic: /phase5/perception/tmini_valid
+    query_watchdog_sec: 1.00
+    query_retry_interval_sec: 0.50

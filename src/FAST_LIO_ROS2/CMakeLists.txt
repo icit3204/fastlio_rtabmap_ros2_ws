@@ -125,4 +125,31 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  enable_testing()
+  add_executable(startup_freshness_guard_test
+    test/startup_freshness_guard_test.cpp
+  )
+  target_include_directories(startup_freshness_guard_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+  add_test(NAME startup_freshness_guard_test COMMAND startup_freshness_guard_test)
+
+  add_executable(startup_ingress_guard_test
+    test/startup_ingress_guard_test.cpp
+  )
+  target_include_directories(startup_ingress_guard_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+  add_test(NAME startup_ingress_guard_test COMMAND startup_ingress_guard_test)
+
+  add_executable(startup_sync_drain_test
+    test/startup_sync_drain_test.cpp
+  )
+  target_include_directories(startup_sync_drain_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+  add_test(NAME startup_sync_drain_test COMMAND startup_sync_drain_test)
+endif()
+
 ament_package()

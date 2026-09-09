@@ -1,0 +1,32 @@
+# Blank identity values are deliberate.  Populate only from a legible physical
+# label or a separately authorized read-only identification result.
+schema: mkmini_installed_unit_identity_v1
+status_values: [VALUE, NOT_VISIBLE, NOT_PRESENT, UNKNOWN]
+physical_disassembly_authorized: false
+identity:
+  vcu_controller:
+    manufacturer: {status: NOT_VISIBLE, value: null}
+    controller_model: {status: NOT_VISIBLE, value: null}
+    hardware_revision: {status: NOT_VISIBLE, value: null}
+    firmware_software_revision: {status: NOT_VISIBLE, value: null}
+    protocol_revision: {status: NOT_VISIBLE, value: null}
+    serial_number: {status: NOT_VISIBLE, value: null}
+    qr_code_text: {status: NOT_VISIBLE, value: null}
+  rear_drive:
+    manufacturer: {status: NOT_VISIBLE, value: null}
+    model: {status: NOT_VISIBLE, value: null}
+    part_number: {status: NOT_VISIBLE, value: null}
+    serial_number: {status: NOT_VISIBLE, value: null}
+    rated_voltage_v: {status: NOT_VISIBLE, value: null}
+    rated_power_w: {status: NOT_VISIBLE, value: null}
+  encoder_gearbox:
+    encoder_model: {status: NOT_VISIBLE, value: null}
+    line_or_pulse_count: {status: NOT_VISIBLE, value: null}
+    gear_ratio: {status: NOT_VISIBLE, value: null}
+    part_number: {status: NOT_VISIBLE, value: null}
+    serial_number: {status: NOT_VISIBLE, value: null}
+notes:
+  identity_capture_result: NO_USABLE_EXTERIOR_LABEL_VISIBLE
+  brake_profile_resolution: LABEL_IDENTITY_NOT_SUFFICIENT_TO_RESOLVE_PROFILE
+  encoder_profile_resolution: LABEL_IDENTITY_NOT_SUFFICIENT_TO_RESOLVE_PROFILE
+  operator_instruction: Read visible labels only; do not remove, loosen, or disassemble hardware.

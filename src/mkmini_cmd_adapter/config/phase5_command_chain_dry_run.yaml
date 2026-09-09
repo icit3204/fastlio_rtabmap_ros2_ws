@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    # Qualified-stationary composition only.  The node's transport is the
+    # in-memory MockTransport; this file has no CAN interface parameter.
+    safe_command_topic: /phase5/gate_test/cmd_vel_safe
+    gate_state_topic: /phase5/gate_test/state
+    diagnostic_topic: /phase5/mkmini_dry_run/adapter_state
+    command_timeout_sec: 0.25
+    gate_state_timeout_sec: 0.25
+    standstill_speed_threshold_mps: 0.01
+    standstill_stability_sec: 0.30

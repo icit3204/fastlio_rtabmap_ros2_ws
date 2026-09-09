@@ -1,0 +1,212 @@
+schema_version: "1.0.0"
+calibration_id: "P5-0C0-JETSON2-WHEELCHAIR-MID360-20260820"
+status: "MEASURED_WITH_DOCUMENTED_UNCERTAINTY"
+date: "2026-08-20"
+timezone: "Asia/Shanghai"
+operator: "Zeeshan"
+
+authority:
+  architecture_document: "FINAL_REVISED_ARCHITECTURE_AND_IMPLEMENTATION_STRATEGY_AFTER_DAY0_V3_1_FINAL_PHASE0_AUTHORITY.md"
+  phase4_baseline_commit: "de990c7b4b27e56a8ae1402e5d55777eb60a9c18"
+  phase4_tag: "phase4_engineering_closed_gap"
+  supersedes_for_phase5:
+    file: "docs/phases/phase_01/PHASE_01_CALIBRATION_MANIFEST.yaml"
+    item: "TF03 unresolved body -> base_footprint conflict"
+  historical_record_policy: "The Phase-1 manifest remains unchanged as evidence that the conflict was unresolved at that time."
+
+applicability:
+  machine: "Jetson 2"
+  chassis: "current CAN-controlled electric wheelchair development chassis"
+  sensor: "Livox MID-360"
+  sensor_mounting_state: "Rigidly mounted in intended final operational position; bracket tightened"
+  loading_state: "Unpowered, unloaded wheelchair; no person seated; normal tire loading"
+  surface: "Flat level ground"
+  method: "Tape measure and visual confirmation against source/manufacturer frame diagrams"
+
+hardware_state:
+  mid360_mechanically_mounted: true
+  mid360_powered: false
+  mid360_ethernet_connected: false
+  live_imu: false
+  wheelchair_drive_authority: "OFF"
+  can_connected: false
+  can_manipulated: false
+  physical_motion_commanded: false
+
+coordinate_convention:
+  convention: "ROS REP-103"
+  x: "forward"
+  y: "left"
+  z: "up"
+  positive_yaw: "counter-clockwise when viewed from above"
+  rotation_representation: "fixed-axis roll, pitch, yaw in degrees; R = Rz(yaw) * Ry(pitch) * Rx(roll)"
+  translation_units: "metres"
+  angle_units: "degrees"
+
+frame_definitions:
+  body:
+    physical_definition: "MID-360 built-in IMU origin and IMU-state axes used by FAST-LIO"
+    evidence: "FAST-LIO publishes odom -> body and transforms LiDAR points into the IMU frame for /cloud_registered_body."
+  base_link:
+    physical_definition: "Midpoint between the left and right drive-wheel axle centres"
+    orientation: "REP-103 chassis axes"
+    convention_status: "PHASE5_CHASSIS_CALIBRATION_CONVENTION_ACCEPTED_BY_OPERATOR"
+  base_footprint:
+    physical_definition: "Vertical projection of base_link onto the flat ground-contact plane"
+    longitudinal_reference: "drive-wheel axle-centre plane"
+    lateral_reference: "midpoint between left and right drive-wheel axle centres"
+    ground_reference: "flat floor beneath the normally loaded, unoccupied wheelchair"
+    orientation: "same as base_link"
+  livox_frame:
+    physical_definition: "Native MID-360 point-cloud frame O-XYZ"
+    origin: "Sensor centreline, 47 mm above the bottom mounting surface"
+    axes: "Native manufacturer axes shown in the MID-360 user manual"
+    note: "This physical frame is distinct from any virtual point frame produced by driver-side install-attitude correction."
+
+measurement_uncertainty:
+  direct_translation_m: 0.005
+  direct_rotation_deg: 1.0
+  derived_body_to_base_footprint_translation_m: 0.030
+  derived_body_to_base_footprint_rotation_deg: 1.0
+  rationale: "Derived translation conservatively includes direct tape uncertainty and orientation uncertainty propagated through the approximately 1.44 m body-to-ground lever arm."
+
+source_internal_extrinsics:
+  fast_lio_lidar_to_imu:
+    semantic_transform: "body(IMU) -> native livox_frame; child origin expressed in body coordinates"
+    translation_m: [-0.011, -0.02329, 0.04412]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    source: "src/FAST_LIO_ROS2/config/mid360.yaml"
+    runtime_consumer: "FAST-LIO LiDAR/IMU fusion"
+    status: "SOURCE_DERIVED_VERIFIED_BY_MANUFACTURER_GEOMETRY"
+    note: "Equivalent manufacturer IMU origin in native LiDAR coordinates is [+0.011, +0.02329, -0.04412] m. This is internal sensor geometry, not chassis mounting."
+  livox_driver_install_attitude:
+    translation_m: [0.0, 0.0, 0.0]
+    rotation_rpy_deg: [0.0, 28.5, 0.0]
+    source: "src/livox_ros_driver2/config/MID360_config.json"
+    runtime_consumer: "Livox driver/device install-attitude correction for point output"
+    physical_mounting_confirmation: "Operator confirmed +28.5 degree physical mounting pitch"
+    status: "CONFIGURED_VALUE_PHYSICALLY_CONFIRMED_BUT_RUNTIME_FRAME_SEMANTICS_REQUIRE_CORRECTION"
+
+transforms:
+  body_to_base_footprint:
+    parent_frame: "body"
+    child_frame: "base_footprint"
+    static_or_dynamic: "static"
+    translation_m:
+      x: 0.452466
+      y: -0.183290
+      z: -1.396285
+    rotation_rpy_deg:
+      roll: 0.0
+      pitch: -28.5
+      yaw: 0.0
+    translation_uncertainty_m: 0.030
+    rotation_uncertainty_deg: 1.0
+    status: "SOURCE_DERIVED_VERIFIED_BY_MEASUREMENT"
+    derivation: "Inverse of measured base_footprint -> body. base_footprint -> body is composed from base_footprint -> base_link, measured base_link -> native livox_frame, and inverse of the manufacturer-consistent body -> native livox_frame internal extrinsic."
+    derived_inverse_for_audit:
+      transform: "base_footprint -> body"
+      translation_m: [0.268615, 0.183290, 1.442978]
+      rotation_rpy_deg: [0.0, 28.5, 0.0]
+  base_footprint_to_base_link:
+    parent_frame: "base_footprint"
+    child_frame: "base_link"
+    static_or_dynamic: "static"
+    translation_m:
+      x: 0.0
+      y: 0.0
+      z: 0.125
+    rotation_rpy_deg:
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+    translation_uncertainty_m: 0.005
+    rotation_uncertainty_deg: 1.0
+    status: "MEASURED_WITH_DOCUMENTED_UNCERTAINTY"
+    repeated_measurements_m:
+      axle_height: [0.125, 0.125, 0.125]
+  base_link_to_livox_frame:
+    parent_frame: "base_link"
+    child_frame: "livox_frame"
+    static_or_dynamic: "static"
+    translation_m:
+      x: 0.280
+      y: 0.160
+      z: 1.362
+    rotation_rpy_deg:
+      roll: 0.0
+      pitch: 28.5
+      yaw: 0.0
+    translation_uncertainty_m: 0.005
+    rotation_uncertainty_deg: 1.0
+    status: "MEASURED_WITH_DOCUMENTED_UNCERTAINTY"
+    repeated_measurements_m:
+      x: [0.280, 0.280, 0.280]
+      y: [0.160, 0.160, 0.160]
+      z: [1.362, 1.362, 1.362]
+    orientation_method: "Operator confirmation of the rigid mounting pitch; roll/yaw checked against mounting geometry and visual frame diagram"
+
+historical_conflict_resolution:
+  historical_candidate_a:
+    transform: "body -> base_footprint"
+    translation_m: [0.0, 0.0, -1.5]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    disposition: "REJECTED_BY_PHYSICAL_MEASUREMENT"
+  historical_candidate_b:
+    transform: "body -> base_footprint"
+    translation_m: [0.0, 0.0, 0.0]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    disposition: "REJECTED_BY_PHYSICAL_MEASUREMENT"
+  selected_transform:
+    translation_m: [0.452466, -0.183290, -1.396285]
+    rotation_rpy_deg: [0.0, -28.5, 0.0]
+  measured_body_height_above_ground_m: 1.442978
+  difference_from_candidate_a_translation_m: [0.452466, -0.183290, 0.103715]
+  difference_from_candidate_b_translation_m: [0.452466, -0.183290, -1.396285]
+  rationale: "Both historical candidates assumed zero rotation and zero horizontal offset. The measured sensor installation and manufacturer internal IMU offset establish a pitched and horizontally offset body frame; neither historical six-DOF candidate represents it."
+
+extrinsic_reconciliation:
+  double_application_risk: "HIGH_IN_CURRENT_CONFIGURATION"
+  finding: "The +28.5 degree physical mount is represented by the measured base_link -> native livox_frame transform and is also configured as Livox driver install attitude. FAST-LIO initially assumes parallel LiDAR/IMU axes while consuming point and IMU streams under livox_frame semantics."
+  accepted_physical_authority: "base_link -> native livox_frame includes +28.5 degree pitch exactly once"
+  required_p5_0c_configuration_action: "Represent the physical pitch in the static chassis-to-native-sensor transform and prevent driver-side point correction from applying the same mounting rotation a second time. Verify point/IMU frame semantics statically before launch."
+  configuration_changed_by_p5_0c0: false
+  runtime_validation_required: true
+
+wheelchair_footprint:
+  reference_frame: "base_footprint"
+  rigid_extents_m:
+    frontmost_x: 0.850
+    rearmost_x: -0.220
+    leftmost_y: 0.330
+    rightmost_y: -0.330
+  repeated_measurements_m:
+    frontmost_x: [0.850, 0.850, 0.850]
+    rearmost_x: [-0.220, -0.220, -0.220]
+    leftmost_y: [0.330, 0.330, 0.330]
+    rightmost_y: [-0.330, -0.330, -0.330]
+  included_rigid_protrusions: ["drive wheels", "footrest", "anti-tip wheels"]
+  excluded: ["human passenger"]
+  uncertainty_m: 0.005
+  existing_nav2_footprint_extents_m:
+    frontmost_x: 0.250
+    rearmost_x: -0.350
+    leftmost_y: 0.100
+    rightmost_y: -0.400
+  collision_geometry_comparison: "EXISTING_FOOTPRINT_NEEDS_UPDATE"
+  comparison_reason: "The measured front and left extents materially exceed the current Nav2 polygon; the existing Collision Monitor stop zone also overlaps the measured rigid front envelope."
+
+optional_height_envelope:
+  lowest_rigid_chassis_height_m: 0.113
+  highest_chassis_body_extent_m: 1.487
+  native_mid360_origin_height_m: 1.487
+  status: "MEASURED_WITH_DOCUMENTED_UNCERTAINTY"
+
+validation_contract:
+  yaml_parse_required: true
+  finite_six_dof_required: true
+  operator_and_date_required: true
+  uncertainty_required: true
+  historical_conflict_resolution_required: true
+  runtime_tf_confirmation: "LIVE_VALIDATION_REQUIRED"
+  physical_sensor_calibration_validation: "LIVE_VALIDATION_REQUIRED"

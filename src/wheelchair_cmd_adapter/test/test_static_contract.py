@@ -110,7 +110,8 @@ def test_core_is_pure_no_ros_graph_code_or_clocks():
 
 def test_guarded_vehicle_cmd_gate_unmodified_by_adapter_contract():
     gate_text = text(GATE)
-    assert 'create_publisher(TwistStamped, "/vehicle_cmd_safe"' in gate_text
+    assert 'self.declare_parameter("output_topic", "/vehicle_cmd_safe")' in gate_text
+    assert "create_publisher(TwistStamped, self._output_topic" in gate_text
     assert "wheelchair_cmd_adapter" not in gate_text
     assert "/wheelchair_control_command_mock" not in gate_text
 
@@ -118,10 +119,12 @@ def test_guarded_vehicle_cmd_gate_unmodified_by_adapter_contract():
 def test_p4d3_static_integration_contract_and_package_separation():
     gate_text = text(GATE)
     node_text = text(NODE)
-    assert 'create_subscription(Twist, "/cmd_vel_nav_safe"' in gate_text
+    assert 'self.declare_parameter("safe_input_topic", "/cmd_vel_nav_safe")' in gate_text
+    assert "create_subscription(Twist, self._safe_input_topic" in gate_text
     for topic in ["/system/localization_valid", "/system/controller_valid", "/system/collision_monitor_valid"]:
         assert topic in gate_text
-    assert 'create_publisher(TwistStamped, "/vehicle_cmd_safe"' in gate_text
+    assert 'self.declare_parameter("output_topic", "/vehicle_cmd_safe")' in gate_text
+    assert "create_publisher(TwistStamped, self._output_topic" in gate_text
     assert 'self.create_subscription(TwistStamped, self._config.input_topic' in node_text
     assert 'self.create_publisher(Float32MultiArray, self._config.output_topic' in node_text
     assert 'self.declare_parameter("frame_id", "base_footprint")' in gate_text

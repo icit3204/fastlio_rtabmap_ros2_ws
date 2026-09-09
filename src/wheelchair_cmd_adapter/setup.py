@@ -26,6 +26,7 @@ setup(
             "mock_wheelchair_cmd_adapter = wheelchair_cmd_adapter.mock_wheelchair_cmd_adapter:main",
             "phase4_p4d1_mock_preflight_runner = wheelchair_cmd_adapter.phase4_p4d1_mock_preflight_runner:main",
             "phase4_p4d2_matrix_runner = wheelchair_cmd_adapter.phase4_p4d2_matrix_runner:main",
+            "gate_to_labmate_bridge = wheelchair_cmd_adapter.gate_to_labmate_bridge:main",
         ],
     },
 )

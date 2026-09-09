@@ -1,0 +1,18 @@
+localization_validity_monitor:
+  ros__parameters:
+    odom_topic: /Odometry
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_footprint
+    odom_freshness_sec: 0.50
+    tf_freshness_sec: 0.50
+    translation_jump_threshold_m: 1.0
+    rotation_jump_threshold_rad: 0.7853981633974483
+    quaternion_norm_tolerance: 0.001
+    stability_duration_sec: 1.0
+    stability_min_observations: 3
+    # RTAB map->odom is intentionally stamped at node-now + tf_tolerance;
+    # Phase-5's RTAB contract uses tf_tolerance=0.10 s. This is a bounded
+    # producer/consumer contract, not an arbitrary tolerance relaxation.
+    future_stamp_tolerance_sec: 0.10
+    publish_rate_hz: 20.0

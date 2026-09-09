@@ -3,6 +3,7 @@ guarded_vehicle_cmd_gate:
     frame_id: base_footprint
     heartbeat_hz: 20.0
     safe_twist_timeout_sec: 0.25
+    safe_zero_quiescence_enabled: false
     localization_timeout_sec: 0.50
     controller_timeout_sec: 0.50
     collision_valid_timeout_sec: 0.50

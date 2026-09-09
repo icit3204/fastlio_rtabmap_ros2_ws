@@ -13,6 +13,7 @@ from std_msgs.msg import Bool
 
 from parking_robot_mission_manager.mission_manager_node import (
     INITIAL_COMMAND_ACQUISITION_TIMEOUT_SEC,
+    INITIAL_MISSION_ACTIVATION_DEADLINE_SEC,
     MissionManagerNode,
     ProgressPolicyActivationState,
 )
@@ -843,6 +844,93 @@ def test_ambiguity_breaks_continuity_once_not_each_watchdog(manager):
     assert calls == [10.03]
 
 
+def test_captured_20hz_10hz_first_pair_cadence_stays_bounded_priming_then_establishes(manager):
+    node, _ = manager
+    clock = [10.0]
+    node._steady_clock = lambda: clock[0]
+    node.accept_progress_goal("captured-cadence")
+    raw = Twist(); safe = Twist()
+
+    # Representative changing 20 Hz MPPI and 10 Hz Collision Monitor cadence.
+    # The first two safe observations are ambiguous because several raw
+    # candidates carry different meanings; this is expected first-pair
+    # acquisition, not a dead command stream.
+    for at, kind, value in (
+        (10.05, "raw", .10), (10.10, "raw", .12), (10.15, "raw", .14),
+        (10.151, "safe", .10), (10.20, "raw", .16), (10.25, "raw", .18),
+        (10.251, "safe", .14), (10.30, "raw", .20),
+    ):
+        clock[0] = at
+        if kind == "raw":
+            raw.linear.x = value; node._raw_command_cb(raw)
+        else:
+            safe.linear.x = value; node._safe_command_cb(safe)
+
+    clock[0] = 10.31
+    assert node._command_pairer.adjudicate(clock[0]).state is CausalPairState.STALE
+    assert node._explicit_failure_event(clock[0]) is None
+    assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
+
+    # The next causal output resolves the frontier and establishes the epoch.
+    clock[0] = 10.35; raw.linear.x = .22; node._raw_command_cb(raw)
+    clock[0] = 10.351; safe.linear.x = .18; node._safe_command_cb(safe)
+    assert node._command_pairer.command_stream_phase is CommandStreamPhase.STREAM_ESTABLISHED
+    assert node._command_pairer.current.state is CausalPairState.VALID
+
+
+def test_healthy_ambiguous_first_pair_waits_but_priming_deadline_is_bounded(manager):
+    node, _ = manager
+    node.accept_progress_goal("goal")
+    node._command_pairer.command_stream_phase = CommandStreamPhase.ACQUIRING_FIRST_COMMAND_PAIR_RAW_PENDING
+    node._command_pairer.current = NS(state=CausalPairState.STALE)
+    node._epoch_first_raw_receipt_sec = 10.05
+    node._epoch_latest_raw_receipt_sec = 11.99
+    node._epoch_first_safe_receipt_sec = 10.15
+    node._epoch_latest_safe_receipt_sec = 11.99
+    assert node._explicit_failure_event(11.999) is None
+    event = node._explicit_failure_event(12.0)
+    assert event.name == "INITIAL_PAIR_ACQUISITION_TIMEOUT"
+    assert INITIAL_MISSION_ACTIVATION_DEADLINE_SEC == 2.0
+
+
+@pytest.mark.parametrize("stopped", ["raw", "safe"])
+def test_command_stream_stop_during_first_pair_priming_fails(manager, stopped):
+    node, _ = manager
+    node.accept_progress_goal("goal")
+    node._command_pairer.command_stream_phase = CommandStreamPhase.ACQUIRING_FIRST_COMMAND_PAIR_RAW_PENDING
+    node._epoch_first_raw_receipt_sec = 10.05
+    node._epoch_first_safe_receipt_sec = 10.10
+    node._epoch_latest_raw_receipt_sec = 10.10 if stopped == "raw" else 10.36
+    node._epoch_latest_safe_receipt_sec = 10.10 if stopped == "safe" else 10.36
+    assert node._explicit_failure_event(10.36) is SupervisorEvent.COMMAND_PAIR_STALE
+
+
+def test_missing_first_cm_sample_is_bounded_by_command_freshness(manager):
+    node, _ = manager
+    node.accept_progress_goal("goal")
+    node._command_pairer.command_stream_phase = CommandStreamPhase.ACQUIRING_FIRST_COMMAND_PAIR_RAW_PENDING
+    node._epoch_first_raw_receipt_sec = 10.05
+    node._epoch_latest_raw_receipt_sec = 10.29
+    assert node._explicit_failure_event(10.299) is None
+    assert node._explicit_failure_event(10.30) is SupervisorEvent.COMMAND_PAIR_STALE
+
+
+def test_pair_established_then_stale_remains_strict_during_activation_priming(manager):
+    node, _ = manager
+    clock = [10.0]
+    node._steady_clock = lambda: clock[0]
+    node.accept_progress_goal("goal")
+    raw = Twist(); raw.linear.x = .2
+    safe = Twist(); safe.linear.x = .2
+    clock[0] = 10.05; node._raw_command_cb(raw)
+    clock[0] = 10.06; node._safe_command_cb(safe)
+    assert node._command_pairer.command_stream_phase is CommandStreamPhase.STREAM_ESTABLISHED
+    clock[0] = 10.10; raw.linear.x = .21; node._raw_command_cb(raw)
+    clock[0] = 10.35; node._command_pairer.adjudicate(clock[0])
+    assert node._explicit_failure_event(clock[0]) is SupervisorEvent.COMMAND_PAIR_STALE
+    assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
+
+
 @pytest.mark.parametrize("field,event", [
     ("gate_fault", "GATE_FAULT"),
     ("collision", "COLLISION_MONITOR_INVALID"),
@@ -899,20 +987,18 @@ def test_health_is_immediate_after_active(manager, kwargs, event):
     assert apply and result.primary_event.name == event
 
 
-def test_second_waypoint_keeps_activation_latch_and_resets_only_progress(manager):
+def test_every_accepted_goal_starts_a_fresh_bounded_priming_epoch(manager):
     node, _ = manager
     node.accept_progress_goal("first")
     policy_evidence(node, 10.2)
     evaluate_policy(node, 10.2)
-    start = node._progress_policy_activation_start_sec
-    activated = node._progress_policy_activated_sec
     reset_count = node._progress_goal_reset_count
     baseline_identity = id(node._progress_supervisor)
     node._steady_clock = lambda: 10.3
     node.accept_progress_goal("second")
-    assert node._progress_policy_activation_state is ProgressPolicyActivationState.ACTIVE
-    assert node._progress_policy_activation_start_sec == start
-    assert node._progress_policy_activated_sec == activated
+    assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
+    assert node._progress_policy_activation_start_sec == 10.3
+    assert node._progress_policy_activated_sec is None
     assert node._progress_goal_reset_count == reset_count + 1
     assert id(node._progress_supervisor) == baseline_identity
     assert node._latest_feedback is None
@@ -936,7 +1022,7 @@ def test_second_waypoint_missing_feedback_has_no_new_health_grace(manager, kwarg
     assert apply and result.primary_event.name == event
 
 
-def test_second_waypoint_missing_feedback_alone_is_immediate_stale(manager):
+def test_second_waypoint_missing_feedback_uses_new_bounded_priming_window(manager):
     node, _ = manager
     node.accept_progress_goal("first")
     policy_evidence(node, 10.2)
@@ -945,7 +1031,7 @@ def test_second_waypoint_missing_feedback_alone_is_immediate_stale(manager):
     node.accept_progress_goal("second")
     policy_evidence(node, 10.3, feedback_present=False)
     result, apply = evaluate_policy(node, 10.3)
-    assert apply and result.primary_event.name == "FEEDBACK_STALE"
+    assert not apply and result.primary_event.name == "FEEDBACK_STALE"
 
 
 def test_optional_adapter_invalid_is_immediate_during_priming(manager):
@@ -1015,16 +1101,19 @@ def test_terminal_resets_activation_for_next_mission(manager, terminal):
     assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
 
 
-def test_preactivation_pause_resume_keeps_original_initial_deadline(manager):
+def test_resume_accepted_goal_restarts_initial_priming_deadline(manager):
     node, _ = manager
     node.accept_progress_goal("before-pause")
     start = node._progress_policy_activation_start_sec
     node.finish_progress_goal("before-pause")
     assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
+    node._steady_clock = lambda: 10.5
     node.accept_progress_goal("after-resume")
-    assert node._progress_policy_activation_start_sec == start
-    policy_evidence(node, 12.0, feedback_present=False, gate=GateState.DISARMED)
-    result, apply = evaluate_policy(node, 12.0)
+    assert node._progress_policy_activation_start_sec == 10.5
+    assert node._progress_policy_activation_start_sec != start
+    assert node._progress_policy_activation_state is ProgressPolicyActivationState.INITIAL_PRIMING
+    policy_evidence(node, 12.5, feedback_present=False, gate=GateState.DISARMED)
+    result, apply = evaluate_policy(node, 12.5)
     assert apply and result.primary_event.name == "GATE_DISARMED"
 
 

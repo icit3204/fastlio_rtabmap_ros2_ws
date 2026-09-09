@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+  MK-mini frame template. MID-360 numeric values are intentionally absent.
+  mkmini_calibrated_localization.launch.py renders this template exclusively
+  from config/mkmini_platform_profile.yaml, the single current authority.
+-->
+<robot name="mkmini_frames">
+  <link name="base_footprint"/>
+  <link name="base_link"/>
+  <link name="rear_axle"/>
+  <link name="front_axle"/>
+  <link name="livox_frame"/>
+  <joint name="base_footprint_to_base_link" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 @BASE_LINK_Z@" rpy="0 0 0"/>
+  </joint>
+  <joint name="base_link_to_rear_axle" type="fixed">
+    <parent link="base_link"/>
+    <child link="rear_axle"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <joint name="base_link_to_front_axle" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_axle"/>
+    <origin xyz="@FRONT_AXLE_X@ 0 0" rpy="0 0 0"/>
+  </joint>
+  <joint name="base_link_to_livox_frame" type="fixed">
+    <parent link="base_link"/>
+    <child link="livox_frame"/>
+    <origin xyz="@LIVOX_XYZ@" rpy="@LIVOX_RPY_RAD@"/>
+  </joint>
+</robot>

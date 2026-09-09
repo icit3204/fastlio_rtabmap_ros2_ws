@@ -62,6 +62,7 @@
 #include <livox_ros_driver2/msg/custom_msg.hpp>
 #include "preprocess.h"
 #include <ikd-Tree/ikd_Tree.h>
+#include "startup_freshness_guard.hpp"
 
 #define INIT_TIME           (0.1)
 #define LASER_POINT_COV     (0.001)
@@ -308,13 +309,15 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::UniquePtr msg)
 
 double timediff_lidar_wrt_imu = 0.0;
 bool   timediff_set_flg = false;
-void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg) 
+void livox_pcl_cbk_legacy(
+    const livox_ros_driver2::msg::CustomMsg::UniquePtr &msg,
+    const bool loopback_already_checked = false)
 {
     mtx_buffer.lock();
     double cur_time = get_time_sec(msg->header.stamp);
     double preprocess_start_time = omp_get_wtime();
     scan_count ++;
-    if (!is_first_lidar && cur_time < last_timestamp_lidar)
+    if (!loopback_already_checked && !is_first_lidar && cur_time < last_timestamp_lidar)
     {
         std::cerr << "lidar loop back, clear buffer" << std::endl;
         lidar_buffer.clear();
@@ -853,6 +856,9 @@ public:
         this->declare_parameter<int>("pcd_save.interval", -1);
         this->declare_parameter<vector<double>>("mapping.extrinsic_T", vector<double>());
         this->declare_parameter<vector<double>>("mapping.extrinsic_R", vector<double>());
+        this->declare_parameter<bool>("startup_freshness_guard_enabled", false);
+        this->declare_parameter<double>("startup_max_lidar_age_sec", 0.5);
+        this->declare_parameter<int>("startup_fresh_consecutive_groups", 10);
 
         this->get_parameter_or<bool>("publish.path_en", path_en, true);
         this->get_parameter_or<bool>("publish.effect_map_en", effect_pub_en, false);
@@ -890,7 +896,26 @@ public:
         this->get_parameter_or<vector<double>>("mapping.extrinsic_T", extrinT, vector<double>());
         this->get_parameter_or<vector<double>>("mapping.extrinsic_R", extrinR, vector<double>());
 
+        bool startup_freshness_guard_enabled = false;
+        double startup_max_lidar_age_sec = 0.5;
+        int startup_fresh_consecutive_groups = 10;
+        this->get_parameter_or<bool>("startup_freshness_guard_enabled", startup_freshness_guard_enabled, false);
+        this->get_parameter_or<double>("startup_max_lidar_age_sec", startup_max_lidar_age_sec, 0.5);
+        this->get_parameter_or<int>("startup_fresh_consecutive_groups", startup_fresh_consecutive_groups, 10);
+        startup_freshness_guard_ = std::make_unique<StartupFreshnessGuard>(
+            startup_freshness_guard_enabled,
+            startup_max_lidar_age_sec,
+            startup_fresh_consecutive_groups);
+
         RCLCPP_INFO(this->get_logger(), "p_pre->lidar_type %d", p_pre->lidar_type);
+        if (startup_freshness_guard_->enabled())
+        {
+            RCLCPP_INFO(
+                this->get_logger(),
+                "Startup freshness guard enabled: max_lidar_age=%.6f sec, consecutive_groups=%d",
+                startup_max_lidar_age_sec,
+                startup_fresh_consecutive_groups);
+        }
 
         path.header.stamp = this->get_clock()->now();
         path.header.frame_id ="odom";
@@ -940,7 +965,10 @@ public:
         /*** ROS subscribe initialization ***/
         if (p_pre->lidar_type == AVIA)
         {
-            sub_pcl_livox_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(lid_topic, 20, livox_pcl_cbk);
+            sub_pcl_livox_ = this->create_subscription<livox_ros_driver2::msg::CustomMsg>(
+                lid_topic,
+                20,
+                std::bind(&LaserMappingNode::livox_pcl_cbk, this, std::placeholders::_1));
         }
         else
         {
@@ -975,10 +1003,152 @@ public:
     }
 
 private:
+    void livox_pcl_cbk(livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
+    {
+        const double header_time_sec = get_time_sec(msg->header.stamp);
+        const bool loopback = !is_first_lidar && header_time_sec < last_timestamp_lidar;
+
+        // Preserve the existing loopback safety action even when the ingress
+        // filter rejects the message before the legacy callback body.
+        if (loopback)
+        {
+            std::lock_guard<std::mutex> lock(mtx_buffer);
+            std::cerr << "lidar loop back, clear buffer" << std::endl;
+            lidar_buffer.clear();
+        }
+
+        const auto ingress_decision = startup_freshness_guard_->observe_ingress(
+            this->get_clock()->now().seconds(), header_time_sec);
+        if (ingress_decision == StartupFreshnessGuard::IngressDecision::DROP_STALE)
+        {
+            const auto stale = startup_freshness_guard_->ingress_stale_dropped();
+            const auto invalid = startup_freshness_guard_->ingress_invalid_timestamp_groups();
+            if (stale == 1U || invalid == 1U || (stale > 0U && stale % 10U == 0U))
+            {
+                RCLCPP_WARN(
+                    this->get_logger(),
+                    "Startup ingress guard dropped raw LiDAR header: age=%.6f sec, ingress_stale_dropped=%llu, invalid=%llu",
+                    startup_freshness_guard_->last_ingress_age_sec(),
+                    static_cast<unsigned long long>(stale),
+                    static_cast<unsigned long long>(invalid));
+            }
+            return;
+        }
+
+        // The existing preprocessing, buffer, synchronization, and final
+        // synchronized startup guard remain unchanged for accepted candidates.
+        livox_pcl_cbk_legacy(msg, loopback);
+    }
+
     void timer_callback()
     {
+        if (startup_freshness_guard_->enabled() && !startup_freshness_guard_->admitted())
+        {
+            std::uint64_t startup_sync_drain_batch = 0;
+            const auto report_startup_drain_batch = [&]()
+            {
+                if (startup_sync_drain_batch > max_startup_sync_drain_batch_)
+                {
+                    max_startup_sync_drain_batch_ = startup_sync_drain_batch;
+                }
+                if (startup_sync_drain_batch > 1)
+                {
+                    RCLCPP_INFO(
+                        this->get_logger(),
+                        "Startup synchronized stale-prefix drain batch=%llu, max_batch=%llu",
+                        static_cast<unsigned long long>(startup_sync_drain_batch),
+                        static_cast<unsigned long long>(max_startup_sync_drain_batch_));
+                }
+            };
+
+            // The production executor is single-threaded: while this timer
+            // callback runs, sensor callbacks cannot append new groups. Each
+            // DROP_STALE iteration consumes one synchronized front group, so
+            // this loop is bounded by the finite synchronizable prefix.
+            while (true)
+            {
+                if (!sync_packages(Measures))
+                {
+                    report_startup_drain_batch();
+                    return;
+                }
+
+                const auto startup_decision = startup_freshness_guard_->observe(
+                    this->get_clock()->now().seconds(), Measures.lidar_end_time);
+                if (startup_decision == StartupFreshnessGuard::Decision::DROP_STALE)
+                {
+                    ++startup_sync_drain_batch;
+                    const auto dropped = startup_freshness_guard_->stale_groups_dropped();
+                    const auto invalid = startup_freshness_guard_->invalid_timestamp_groups();
+                    if (dropped == 1U || invalid == 1U || (dropped > 0U && dropped % 10U == 0U))
+                    {
+                        RCLCPP_WARN(
+                            this->get_logger(),
+                            "Startup freshness guard dropped synchronized group: age=%.6f sec, stale_dropped=%llu, invalid=%llu",
+                            startup_freshness_guard_->last_age_sec(),
+                            static_cast<unsigned long long>(dropped),
+                            static_cast<unsigned long long>(invalid));
+                    }
+                    continue;
+                }
+
+                report_startup_drain_batch();
+                if (startup_decision == StartupFreshnessGuard::Decision::WAIT_FRESH_WINDOW &&
+                    startup_freshness_guard_->fresh_group_count() == 1)
+                {
+                    RCLCPP_INFO(this->get_logger(), "Startup freshness guard began fresh window");
+                }
+                else if (startup_decision == StartupFreshnessGuard::Decision::ADMIT)
+                {
+                    RCLCPP_INFO(
+                        this->get_logger(),
+                        "Startup freshness guard admitted after %d fresh groups; next synchronized group enters normal processing",
+                        startup_freshness_guard_->fresh_group_count());
+                }
+                // WAIT_FRESH_WINDOW and ADMIT both stop this callback. The
+                // tenth group remains discarded; normal processing starts on
+                // the next timer callback. PROCESS is defensive-only here.
+                return;
+            }
+        }
+
+        // Disabled and already-admitted operation retains the original
+        // one-group timer behavior below.
         if(sync_packages(Measures))
         {
+            const auto startup_decision = startup_freshness_guard_->observe(
+                this->get_clock()->now().seconds(), Measures.lidar_end_time);
+            if (startup_decision != StartupFreshnessGuard::Decision::PROCESS)
+            {
+                if (startup_decision == StartupFreshnessGuard::Decision::DROP_STALE)
+                {
+                    const auto dropped = startup_freshness_guard_->stale_groups_dropped();
+                    const auto invalid = startup_freshness_guard_->invalid_timestamp_groups();
+                    if (dropped == 1U || invalid == 1U || (dropped > 0U && dropped % 10U == 0U))
+                    {
+                        RCLCPP_WARN(
+                            this->get_logger(),
+                            "Startup freshness guard dropped synchronized group: age=%.6f sec, stale_dropped=%llu, invalid=%llu",
+                            startup_freshness_guard_->last_age_sec(),
+                            static_cast<unsigned long long>(dropped),
+                            static_cast<unsigned long long>(invalid));
+                    }
+                }
+                else if (startup_decision == StartupFreshnessGuard::Decision::WAIT_FRESH_WINDOW &&
+                         startup_freshness_guard_->fresh_group_count() == 1)
+                {
+                    RCLCPP_INFO(this->get_logger(), "Startup freshness guard began fresh window");
+                }
+                else if (startup_decision == StartupFreshnessGuard::Decision::ADMIT)
+                {
+                    RCLCPP_INFO(
+                        this->get_logger(),
+                        "Startup freshness guard admitted after %d fresh groups; next synchronized group enters normal processing",
+                        startup_freshness_guard_->fresh_group_count());
+                }
+                return;
+            }
+
             if (flg_first_scan)
             {
                 first_lidar_time = Measures.lidar_beg_time;
@@ -1158,6 +1328,9 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcl_pc_;
     rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr sub_pcl_livox_;
+
+    std::unique_ptr<StartupFreshnessGuard> startup_freshness_guard_;
+    std::uint64_t max_startup_sync_drain_batch_ = 0;
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;

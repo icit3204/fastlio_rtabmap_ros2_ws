@@ -91,6 +91,7 @@ INITIAL_COMMAND_ACQUISITION_TIMEOUT_SEC = 1.0
 
 class _InitialCommandAcquisitionEvent(Enum):
     INITIAL_COMMAND_ACQUISITION_TIMEOUT = auto()
+    INITIAL_PAIR_ACQUISITION_TIMEOUT = auto()
 
 
 class _NavigateToPoseTransport(MissionGoalExecutor):
@@ -217,6 +218,18 @@ class MissionManagerNode(Node):
         self.declare_parameter("min_waypoint_separation_m", 0.55)
         self.declare_parameter("cancel_response_timeout_sec", 2.0)
         self.declare_parameter("cancel_result_timeout_sec", 5.0)
+        # Transport observations are configurable so the mission policy can
+        # observe the canonical command chain without owning or rewriting it.
+        self.declare_parameter("odometry_topic", "/Odometry")
+        self.declare_parameter("raw_command_topic", "/cmd_vel_nav_raw")
+        self.declare_parameter("safe_command_topic", "/cmd_vel_nav_safe")
+        self.declare_parameter("gate_state_topic", "/vehicle_cmd_safety/state")
+        self.declare_parameter("collision_valid_topic", "/system/collision_monitor_valid")
+        self.declare_parameter("localization_valid_topic", "/system/localization_valid")
+        self.declare_parameter("controller_valid_topic", "/system/controller_valid")
+        self.declare_parameter("adapter_diagnostics_topic", "/wheelchair_cmd_adapter/diagnostics")
+        self.declare_parameter("progress_tf_frame", "odom")
+        self.declare_parameter("progress_base_frame", "base_footprint")
 
         self._lock = threading.RLock()
         self._steady_clock = steady_clock
@@ -259,6 +272,10 @@ class MissionManagerNode(Node):
         self._latest_safe_command = None
         self._causal_raw_command = None
         self._causal_safe_command = None
+        self._epoch_first_raw_receipt_sec = None
+        self._epoch_latest_raw_receipt_sec = None
+        self._epoch_first_safe_receipt_sec = None
+        self._epoch_latest_safe_receipt_sec = None
         self._command_pairer = CausalCommandPairer(
             freshness_sec=self._progress_supervisor.thresholds.command_pair_freshness_sec)
         self._latest_gate = None
@@ -272,14 +289,15 @@ class MissionManagerNode(Node):
         self._latest_tf_stamp_key = None
         self._feedback_receipt_times = []
 
-        self.create_subscription(Odometry, "/Odometry", self._odometry_cb, 50)
-        self.create_subscription(Twist, "/cmd_vel_nav_raw", self._raw_command_cb, 50)
-        self.create_subscription(Twist, "/cmd_vel_nav_safe", self._safe_command_cb, 50)
-        self.create_subscription(DiagnosticStatus, "/vehicle_cmd_safety/state", self._gate_state_cb, 50)
-        self.create_subscription(Bool, "/system/collision_monitor_valid", self._collision_valid_cb, 50)
-        self.create_subscription(Bool, "/system/localization_valid", self._localization_valid_cb, 50)
-        self.create_subscription(Bool, "/system/controller_valid", self._controller_valid_cb, 50)
-        self.create_subscription(DiagnosticArray, "/wheelchair_cmd_adapter/diagnostics", self._adapter_health_cb, 50)
+        topic = lambda name: str(self.get_parameter(name).value)
+        self.create_subscription(Odometry, topic("odometry_topic"), self._odometry_cb, 50)
+        self.create_subscription(Twist, topic("raw_command_topic"), self._raw_command_cb, 50)
+        self.create_subscription(Twist, topic("safe_command_topic"), self._safe_command_cb, 50)
+        self.create_subscription(DiagnosticStatus, topic("gate_state_topic"), self._gate_state_cb, 50)
+        self.create_subscription(Bool, topic("collision_valid_topic"), self._collision_valid_cb, 50)
+        self.create_subscription(Bool, topic("localization_valid_topic"), self._localization_valid_cb, 50)
+        self.create_subscription(Bool, topic("controller_valid_topic"), self._controller_valid_cb, 50)
+        self.create_subscription(DiagnosticArray, topic("adapter_diagnostics_topic"), self._adapter_health_cb, 50)
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self, spin_thread=False)
         self._core = MissionStateMachine(
@@ -315,12 +333,20 @@ class MissionManagerNode(Node):
             self._command_pairer.start_epoch(now)
             self._causal_raw_command = None
             self._causal_safe_command = None
+            self._epoch_first_raw_receipt_sec = None
+            self._epoch_latest_raw_receipt_sec = None
+            self._epoch_first_safe_receipt_sec = None
+            self._epoch_latest_safe_receipt_sec = None
             self._latest_passive_result = None
             self._passive_result_pending_apply = False
-            if self._progress_policy_activation_state is ProgressPolicyActivationState.NOT_STARTED:
-                self._progress_policy_activation_state = ProgressPolicyActivationState.INITIAL_PRIMING
-                self._progress_policy_activation_start_sec = now
-                self._progress_policy_activated_sec = None
+            # Every accepted Nav2 goal starts a fresh causal command epoch.
+            # This includes resume and next-waypoint dispatch: the Gate remains
+            # fail-closed while Planner/Controller/CM output is reacquired, and
+            # the mission observer receives the same bounded activation window
+            # instead of treating intentional action turnover as a stale fault.
+            self._progress_policy_activation_state = ProgressPolicyActivationState.INITIAL_PRIMING
+            self._progress_policy_activation_start_sec = now
+            self._progress_policy_activated_sec = None
             self._latest_feedback = None
             pose_sample = self._latest_transform or self._latest_odometry
             pose_xy = None if pose_sample is None else (pose_sample.x, pose_sample.y)
@@ -355,6 +381,10 @@ class MissionManagerNode(Node):
             now = self.steady_now()
             self._latest_raw_command = command_sample(msg, now)
             if self._latest_raw_command is not None:
+                if self._active_progress_goal_uuid:
+                    if self._epoch_first_raw_receipt_sec is None:
+                        self._epoch_first_raw_receipt_sec = now
+                    self._epoch_latest_raw_receipt_sec = now
                 self._command_pairer.observe_raw(self._latest_raw_command)
                 # A newer raw starts a new causal acquisition.  Never reuse the
                 # prior pair while its Collision Monitor output is outstanding.
@@ -367,6 +397,10 @@ class MissionManagerNode(Node):
             self._latest_safe_command = command_sample(msg, now)
             if self._latest_safe_command is None:
                 return
+            if self._active_progress_goal_uuid:
+                if self._epoch_first_safe_receipt_sec is None:
+                    self._epoch_first_safe_receipt_sec = now
+                self._epoch_latest_safe_receipt_sec = now
             prior_state = self._command_pairer.current.state
             result = self._command_pairer.observe_safe(self._latest_safe_command)
             if result.state is CausalPairState.VALID and not result.drain_only:
@@ -406,7 +440,9 @@ class MissionManagerNode(Node):
     def _observe_transform(self, steady_receipt_sec: float) -> None:
         try:
             msg = self._tf_buffer.lookup_transform(
-                "odom", "base_footprint", Time(), timeout=Duration(seconds=0.0)
+                str(self.get_parameter("progress_tf_frame").value),
+                str(self.get_parameter("progress_base_frame").value),
+                Time(), timeout=Duration(seconds=0.0)
             )
         except TransformException:
             return
@@ -500,14 +536,16 @@ class MissionManagerNode(Node):
         thresholds = self._progress_supervisor.thresholds
         health_freshness = thresholds.odometry_freshness_sec
         gate = self._latest_gate
+        deferred_gate_disarmed = False
         if gate is not None:
             if (not self._sample_fresh(now, gate, health_freshness)
                     or gate.fault_latched or gate.state is GateState.FAULT):
                 return SupervisorEvent.GATE_FAULT
-            if (gate.state is GateState.DISARMED
-                    and (self._progress_policy_activation_age(now) or 0.0)
-                    >= INITIAL_MISSION_ACTIVATION_DEADLINE_SEC):
-                return SupervisorEvent.GATE_DISARMED
+            deferred_gate_disarmed = (
+                gate.state is GateState.DISARMED
+                and (self._progress_policy_activation_age(now) or 0.0)
+                >= INITIAL_MISSION_ACTIVATION_DEADLINE_SEC
+            )
         for sample, event in (
             (self._latest_localization_valid, SupervisorEvent.LOCALIZATION_INVALID),
             (self._latest_controller_valid, SupervisorEvent.CONTROLLER_INVALID),
@@ -535,6 +573,31 @@ class MissionManagerNode(Node):
                     and acquisition_age >= self._initial_command_acquisition_timeout_sec):
                 return _InitialCommandAcquisitionEvent.INITIAL_COMMAND_ACQUISITION_TIMEOUT
             return None
+        if (self._progress_policy_activation_state
+                is ProgressPolicyActivationState.INITIAL_PRIMING
+                and self._command_pairer.command_stream_phase
+                is CommandStreamPhase.ACQUIRING_FIRST_COMMAND_PAIR_RAW_PENDING):
+            # Before the first trustworthy pair, distinguish healthy unequal-rate
+            # acquisition from runtime pair loss.  MPPI may publish twice for one
+            # Collision Monitor output, so the pairer's non-sliding 250 ms
+            # liveness can expire while both physical streams remain fresh.
+            # Epoch-local receipt markers prevent pre-goal samples from granting
+            # this bounded acquisition allowance.
+            freshness = thresholds.command_pair_freshness_sec
+            if (self._epoch_latest_raw_receipt_sec is None
+                    or now - self._epoch_latest_raw_receipt_sec > freshness):
+                return SupervisorEvent.COMMAND_PAIR_STALE
+            if self._epoch_latest_safe_receipt_sec is None:
+                if (self._epoch_first_raw_receipt_sec is not None
+                        and now - self._epoch_first_raw_receipt_sec >= freshness):
+                    return SupervisorEvent.COMMAND_PAIR_STALE
+                return None
+            if now - self._epoch_latest_safe_receipt_sec > freshness:
+                return SupervisorEvent.COMMAND_PAIR_STALE
+            if ((self._progress_policy_activation_age(now) or 0.0)
+                    >= INITIAL_MISSION_ACTIVATION_DEADLINE_SEC):
+                return _InitialCommandAcquisitionEvent.INITIAL_PAIR_ACQUISITION_TIMEOUT
+            return None
         if raw is not None and safe is not None and (
                 not self._sample_fresh(now, raw, thresholds.command_pair_freshness_sec)
                 or not self._sample_fresh(now, safe, thresholds.command_pair_freshness_sec)
@@ -544,12 +607,14 @@ class MissionManagerNode(Node):
         if raw is None or safe is None:
             if not self._command_pairer.pending_within_budget(now):
                 return SupervisorEvent.COMMAND_PAIR_STALE
+        if deferred_gate_disarmed:
+            return SupervisorEvent.GATE_DISARMED
         return None
 
     def _progress_policy_result_to_apply(self, result, now: float):
         explicit_event = self._explicit_failure_event(now)
         if self._progress_policy_activation_state is ProgressPolicyActivationState.ACTIVE:
-            if explicit_event is _InitialCommandAcquisitionEvent.INITIAL_COMMAND_ACQUISITION_TIMEOUT:
+            if isinstance(explicit_event, _InitialCommandAcquisitionEvent):
                 return replace(result, primary_event=explicit_event, reason=explicit_event.name)
             return result
         if self._progress_policy_activation_state is ProgressPolicyActivationState.NOT_STARTED:
@@ -577,6 +642,10 @@ class MissionManagerNode(Node):
         self._command_pairer.reset()
         self._causal_raw_command = None
         self._causal_safe_command = None
+        self._epoch_first_raw_receipt_sec = None
+        self._epoch_latest_raw_receipt_sec = None
+        self._epoch_first_safe_receipt_sec = None
+        self._epoch_latest_safe_receipt_sec = None
         self._passive_result_pending_apply = False
 
     def _progress_policy_diagnostics(self, now: float) -> dict[str, str]:
@@ -605,6 +674,14 @@ class MissionManagerNode(Node):
             ),
             "pair_liveness_age_sec": (
                 "none" if pair_liveness_age is None else f"{pair_liveness_age:.6f}"
+            ),
+            "initial_pair_acquisition_state": (
+                "PAIR_ESTABLISHED"
+                if command_stream_phase is CommandStreamPhase.STREAM_ESTABLISHED
+                else "PAIR_NOT_YET_ESTABLISHED"
+            ),
+            "initial_pair_acquisition_deadline_sec": (
+                f"{INITIAL_MISSION_ACTIVATION_DEADLINE_SEC:.6f}"
             ),
         }
 

@@ -11,10 +11,18 @@ Assumptions:
 - Nav2 outputs /cmd_vel_nav → collision_monitor filters → /cmd_vel → wheeltec hardware.
 """
 
+import hashlib
+import json
 import os
+import shutil
+import tempfile
+import time
+from pathlib import Path
+
+import yaml
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -29,21 +37,29 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     start_livox = LaunchConfiguration('start_livox')
+    start_rtabmap = LaunchConfiguration('start_rtabmap')
     start_ydlidar = LaunchConfiguration('start_ydlidar')  # <修改 version3 YDLIDAR 2D雷达支持>
     use_fast_lio = LaunchConfiguration('use_fast_lio')    # <修改 version3 控制是否使用FAST-LIO里程计>
     use_fake_odom = LaunchConfiguration('use_fake_odom')   # <修改 version3 假里程计模拟模式>
     enable_gps = LaunchConfiguration('enable_gps')
     enable_rviz = LaunchConfiguration('enable_rviz')
-    publish_base_link_tf = LaunchConfiguration('publish_base_link_tf')
+    stationary_integration_gate = LaunchConfiguration('stationary_integration_gate')
+    stationary_collision_monitor_gate = LaunchConfiguration('stationary_collision_monitor_gate')
+    stationary_fail_close_gate = LaunchConfiguration('stationary_fail_close_gate')
+    stationary_command_chain_dry_run = LaunchConfiguration('stationary_command_chain_dry_run')
+    stationary_mppi_mock_gate = LaunchConfiguration('stationary_mppi_mock_gate')
+    stationary_planner_mock_gate = LaunchConfiguration('stationary_planner_mock_gate')
+    stationary_bt_navigator_mock_gate = LaunchConfiguration('stationary_bt_navigator_mock_gate')
+    stationary_mission_manager_mock_gate = LaunchConfiguration('stationary_mission_manager_mock_gate')
     database_path = LaunchConfiguration('database_path')
+    rtabmap_use_working_copy = LaunchConfiguration('rtabmap_use_working_copy')
+    rtabmap_runtime_dir = LaunchConfiguration('rtabmap_runtime_dir')
     nav2_params_file = LaunchConfiguration('nav2_params_file')
     lookahead_distance = LaunchConfiguration('lookahead_distance')  # <修改 version2 预瞄点距离>
     scan_topic = LaunchConfiguration('scan_topic')  # <修改 version3 YDLIDAR 2D雷达scan话题>
 
     robot_bringup_share = FindPackageShare('robot_bringup')
     nav2_bringup_share = FindPackageShare('nav2_bringup')
-    livox_share = FindPackageShare('livox_ros_driver2')
-    fast_lio_share = FindPackageShare('fast_lio')
 
     declare_args = [
         DeclareLaunchArgument('namespace', default_value=''),
@@ -52,21 +68,39 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
         DeclareLaunchArgument('start_livox', default_value='true', description='Start Livox MID360 launch'),
+        DeclareLaunchArgument('start_rtabmap', default_value='true', description='Start the canonical RTAB-Map bridge when that localization/map owner is required'),
         # <修改 version3 YDLIDAR 2D雷达支持>
-        DeclareLaunchArgument('start_ydlidar', default_value='false', description='Start YDLIDAR T-mini Plus driver'),
+        DeclareLaunchArgument('start_ydlidar', default_value='true', description='Start qualified YDLIDAR T-mini Plus driver'),
         DeclareLaunchArgument('use_fast_lio', default_value='true', description='Use FAST-LIO for odometry (3D LiDAR). Set false for 2D LiDAR + RTAB-Map ICP odometry'),
         # <修改 version3 假里程计模式: 无机器人时模拟运动>
         DeclareLaunchArgument('use_fake_odom', default_value='false', description='Use fake odometry for simulation without a robot'),
-        DeclareLaunchArgument('ydlidar_params_file', default_value=PathJoinSubstitution([FindPackageShare('ydlidar_ros2_driver'), 'params', 'TminiPro.yaml']), description='YDLIDAR parameter file'),
+        DeclareLaunchArgument('ydlidar_params_file', default_value=PathJoinSubstitution([robot_bringup_share, 'config', 'tmini_mk2c.yaml']), description='Qualified YDLIDAR parameter file'),
         DeclareLaunchArgument('scan_topic', default_value='/scan', description='LaserScan topic from 2D LiDAR'),
         DeclareLaunchArgument('enable_gps', default_value='false', description='Enable navsat_transform and pass GPS fix to RTAB-Map'),
         DeclareLaunchArgument('enable_rviz', default_value='false', description='Launch RViz with Nav2 navigation config'),
-        DeclareLaunchArgument('publish_base_link_tf', default_value='true', description='Publish a zero static TF from base_footprint to base_link if URDF is not ready'),
+        DeclareLaunchArgument('publish_base_link_tf', default_value='false', description='Deprecated compatibility argument; calibrated robot_state_publisher owns this TF'),
+        DeclareLaunchArgument('stationary_integration_gate', default_value='false', description='Start the production local costmap while suppressing Nav2 control, BT, Collision Monitor and command producers'),
+        DeclareLaunchArgument('stationary_collision_monitor_gate', default_value='false', description='Add the production Collision Monitor with isolated Phase-5 command topics while suppressing all motion-capable nodes'),
+        DeclareLaunchArgument('stationary_fail_close_gate', default_value='false', description='Add dual-source freshness validity and the Generic Safety Gate on isolated Phase-5 topics'),
+        DeclareLaunchArgument('stationary_command_chain_dry_run', default_value='false', description='Run CM -> Gate -> labmate-derived MK-mini backend with hard-locked MockTransport and no control nodes'),
+        DeclareLaunchArgument('stationary_mppi_mock_gate', default_value='false', description='Add real controller_server/MPPI above the canonical safety chain; hard-locked MockTransport, no BT/planner/CAN'),
+        DeclareLaunchArgument('stationary_planner_mock_gate', default_value='false', description='Add real planner_server plus MPPI above the canonical safety chain; hard-locked MockTransport, no BT/CAN'),
+        DeclareLaunchArgument('stationary_bt_navigator_mock_gate', default_value='false', description='Add real BT Navigator/NavigateToPose above planner and MPPI; Ackermann-safe recovery tree, no behavior_server, hard-locked MockTransport'),
+        DeclareLaunchArgument('stationary_mission_manager_mock_gate', default_value='false', description='Add the typed Mission Manager above real NavigateToPose; hard-locked MockTransport and no CAN'),
+        DeclareLaunchArgument('collision_monitor_params_file', default_value=PathJoinSubstitution([robot_bringup_share, 'config', 'collision_monitor_dual_sensor.yaml']), description='Canonical dual-sensor Collision Monitor parameters'),
         DeclareLaunchArgument(
             'database_path',
-            default_value=EnvironmentVariable('PARKING_ROBOT_RTABMAP_DATABASE', default_value=''),
-            description='RTAB-Map database path. Explicit launch argument overrides PARKING_ROBOT_RTABMAP_DATABASE.',
+            default_value=EnvironmentVariable(
+                'PARKING_ROBOT_RTABMAP_DATABASE',
+                default_value='/home/dog/fastlio_rtabmap_ros2_ws/map/rtabmap_2d.db'),
+            description='Reference RTAB-Map database. Localization copies this file before RTAB-Map opens it.',
         ),
+        DeclareLaunchArgument(
+            'rtabmap_use_working_copy', default_value='true',
+            description='For localization/navigation, copy database_path into rtabmap_runtime_dir before RTAB-Map starts.'),
+        DeclareLaunchArgument(
+            'rtabmap_runtime_dir', default_value='/home/dog/phase5_runtime/rtabmap',
+            description='Persistent per-run RTAB-Map localization working-copy directory.'),
         DeclareLaunchArgument('rtabmap_args', default_value=''),
         DeclareLaunchArgument('nav2_params_file', default_value=PathJoinSubstitution([robot_bringup_share, 'config', 'nav2_common.yaml'])),
         DeclareLaunchArgument('rtabmap_frame_id', default_value='base_footprint'),
@@ -99,57 +133,20 @@ def generate_launch_description() -> LaunchDescription:
     ydlidar_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        name='base_link_to_laser_frame',
-        arguments=['--x', '0', '--y', '0', '--z', '0.02', '--roll', '0', '--pitch', '0', '--yaw', '0', '--frame-id', 'base_link', '--child-frame-id', 'laser_frame'],
+        name='main_base_link_to_laser_frame',
+        arguments=['--x', '0.703', '--y', '0', '--z', '0.1923', '--roll', '0', '--pitch', '0', '--yaw', '0', '--frame-id', 'base_link', '--child-frame-id', 'laser_frame'],
         condition=IfCondition(start_ydlidar),
     )
 
-    # ── 1c. LaserScan -> PointCloud2 converter (for costmaps when FAST-LIO is off) ──  # <修改 version3>
-    scan_to_pc = Node(
-        package='robot_bringup',
-        executable='scan_to_pointcloud.py',
-        name='scan_to_pointcloud',
-        output='screen',
-        condition=IfCondition(PythonExpression(["'", start_ydlidar, "' == 'true' and '", use_fast_lio, "' != 'true'"])),
-        parameters=[{
-            'target_topic': '/cloud_registered_body',
-            'scan_topic': scan_topic,
-        }],
-    )
-
-    # ── 1. Livox MID360 driver ──
-    livox_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([livox_share, 'launch', 'msg_MID360_launch.py'])),
-        condition=IfCondition(start_livox),
-    )
-
-    # ── 2. Static TFs ──
-    # <修改 version3 新式参数: 老式参数在ROS2 Humble中已不发布/tf_static>
-    base_tf = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_footprint_to_base_link',
-        arguments=['--x', '0', '--y', '0', '--z', '0', '--roll', '0', '--pitch', '0', '--yaw', '0', '--frame-id', 'base_footprint', '--child-frame-id', 'base_link'],
-        condition=IfCondition(publish_base_link_tf),
-    )
-
-    livox_tf = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_link_to_livox_frame',
-        arguments=['--x', '0', '--y', '0', '--z', '0', '--roll', '0', '--pitch', '0', '--yaw', '0', '--frame-id', 'base_link', '--child-frame-id', 'livox_frame'],
-    )
-
-    # ── 3. FAST-LIO (replaces icp_odometry + EKF) ──
-    # <修改 version3 YDLIDAR 2D雷达: use_fast_lio=false时跳过FAST-LIO，改用RTAB-Map ICP里程计>
-    fast_lio_launch = IncludeLaunchDescription(
+    # Qualified R3 sensor/localization authority owns MID-360, freshness,
+    # FAST-LIO, robot description and dependent body/chassis TFs.
+    calibrated_localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            PathJoinSubstitution([fast_lio_share, 'launch', 'mapping.launch.py'])),
-        condition=IfCondition(use_fast_lio),
+            PathJoinSubstitution([robot_bringup_share, 'launch', 'mkmini_calibrated_localization.launch.py'])),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'config_file': 'mid360.yaml',
-            'rviz': 'false',
+            'start_livox': start_livox,
+            'start_fast_lio': use_fast_lio,
         }.items(),
     )
 
@@ -181,7 +178,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     # ── 5. RTAB-Map (SLAM / Localization) ──
-    rtabmap_bridge = IncludeLaunchDescription(
+    rtabmap_bridge_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([robot_bringup_share, 'launch', 'rtabmap_bridge.launch.py'])),
         launch_arguments={
             'namespace': namespace,
@@ -205,6 +202,59 @@ def generate_launch_description() -> LaunchDescription:
             'rtabmap_viz': LaunchConfiguration('rtabmap_viz'),
         }.items(),
     )
+    # RTAB-Map remains default-on for the normal production launch.  The
+    # stationary command-chain dry run can explicitly suppress this optional
+    # map/localization bridge while it exercises the authoritative FAST-LIO
+    # TF, costmap, Collision Monitor and command safety chain.
+    rtabmap_bridge = GroupAction(
+        condition=IfCondition(LaunchConfiguration('start_rtabmap')),
+        actions=[rtabmap_bridge_launch],
+    )
+
+    def prepare_rtabmap_working_copy(context):
+        """Keep the map reference immutable when RTAB-Map localizes.
+
+        RTAB-Map may repair dictionaries or otherwise write a localization DB.
+        Mapping is intentionally excluded: its selected path is the new map
+        being authored. Localization/navigation always receives a fresh,
+        hash-verified copy and leaves the reference untouched.
+        """
+        if start_rtabmap.perform(context).lower() not in ('true', '1', 'yes'):
+            return []
+        if mode.perform(context) == 'mapping':
+            return []
+        if rtabmap_use_working_copy.perform(context).lower() not in ('true', '1', 'yes'):
+            return []
+        def sha256_file(path):
+            digest = hashlib.sha256()
+            with path.open('rb') as stream:
+                for block in iter(lambda: stream.read(1024 * 1024), b''):
+                    digest.update(block)
+            return digest.hexdigest()
+
+        reference = Path(database_path.perform(context)).expanduser().resolve()
+        if not reference.is_file():
+            raise RuntimeError(f'RTAB-Map reference database is not a file: {reference}')
+        reference_hash = sha256_file(reference)
+        runtime_dir = Path(rtabmap_runtime_dir.perform(context)).expanduser()
+        runtime_dir.mkdir(parents=True, exist_ok=True)
+        run_id = time.strftime('%Y%m%dT%H%M%S') + f'_pid{os.getpid()}'
+        runtime_db = runtime_dir / f'{reference.stem}_localization_{run_id}{reference.suffix}'
+        shutil.copy2(reference, runtime_db)
+        runtime_hash = sha256_file(runtime_db)
+        if runtime_hash != reference_hash:
+            raise RuntimeError('RTAB-Map working-copy hash mismatch; refusing localization startup')
+        provenance = runtime_db.with_suffix(runtime_db.suffix + '.provenance.json')
+        provenance.write_text(json.dumps({
+            'reference_db': str(reference),
+            'reference_sha256': reference_hash,
+            'runtime_db': str(runtime_db),
+            'runtime_sha256_before_rtabmap': runtime_hash,
+            'policy': 'preserve runtime DB after shutdown; never delete or modify reference automatically',
+        }, indent=2) + '\\n')
+        context.launch_configurations['database_path'] = str(runtime_db)
+        print(f'[robot_bringup] RTAB-Map localization working copy: {runtime_db}')
+        return []
 
     # ── 5b. RViz with Nav2 navigation config ──
     nav2_rviz_config = PathJoinSubstitution([robot_bringup_share, 'config', 'nav2_navigation.rviz'])
@@ -220,7 +270,7 @@ def generate_launch_description() -> LaunchDescription:
     # ── 6. Nav2 ──
     # Remap /cmd_vel → /cmd_vel_nav so collision_monitor can intercept before the hardware.
     nav2_launch = GroupAction(
-        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation'"])),
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation' and '", stationary_integration_gate, "' != 'true' and '", stationary_collision_monitor_gate, "' != 'true' and '", stationary_fail_close_gate, "' != 'true' and '", stationary_command_chain_dry_run, "' != 'true' and '", stationary_mppi_mock_gate, "' != 'true' and '", stationary_planner_mock_gate, "' != 'true' and '", stationary_bt_navigator_mock_gate, "' != 'true' and '", stationary_mission_manager_mock_gate, "' != 'true'"])),
         actions=[
             SetRemap('/cmd_vel', '/cmd_vel_nav'),
             IncludeLaunchDescription(
@@ -238,46 +288,242 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
+    def stationary_local_costmap_actions(context):
+        local_only = stationary_integration_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_cm = stationary_collision_monitor_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_gate = stationary_fail_close_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_chain = stationary_command_chain_dry_run.perform(context).lower() in ('true', '1', 'yes')
+        with_mppi = stationary_mppi_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if mode.perform(context) != 'navigation' or not (local_only or with_cm or with_gate or with_chain or with_mppi or with_planner or with_bt):
+            return []
+        # ControllerServer owns and spins its own local_costmap instance.
+        if with_mppi or with_planner or with_bt:
+            return []
+        production = Path(nav2_params_file.perform(context))
+        source = yaml.safe_load(production.read_text(encoding='utf-8'))
+        params = source['local_costmap']['local_costmap']['ros__parameters']
+        generated = Path(tempfile.gettempdir()) / 'p5a_mk2c3_main_local_costmap_effective.yaml'
+        generated.write_text(yaml.safe_dump({'/**': {'ros__parameters': params}}, sort_keys=False), encoding='utf-8')
+        return [
+            Node(package='nav2_costmap_2d', executable='nav2_costmap_2d',
+                 name='main_pipeline_costmap_host', output='screen', parameters=[str(generated)]),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 name='lifecycle_manager_main_pipeline_local_costmap', output='screen',
+                 parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
+                              'bond_timeout': 0.0, 'node_names': ['costmap/costmap']}]),
+        ]
+
+    def stationary_collision_monitor_actions(context):
+        cm_only = stationary_collision_monitor_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_gate = stationary_fail_close_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_chain = stationary_command_chain_dry_run.perform(context).lower() in ('true', '1', 'yes')
+        with_mppi = stationary_mppi_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if not (cm_only or with_gate or with_chain or with_mppi or with_planner or with_bt):
+            return []
+        production = Path(LaunchConfiguration('collision_monitor_params_file').perform(context))
+        source = yaml.safe_load(production.read_text(encoding='utf-8'))
+        params = source['collision_monitor']['ros__parameters']
+        if with_mppi or with_planner or with_bt:
+            params['cmd_vel_in_topic'] = '/cmd_vel_nav'
+            params['cmd_vel_out_topic'] = '/cmd_vel'
+        else:
+            params['cmd_vel_in_topic'] = '/phase5/cm_test/cmd_vel_in'
+            params['cmd_vel_out_topic'] = '/phase5/cm_test/cmd_vel_out'
+        generated = Path(tempfile.gettempdir()) / 'p5a_mk2d1_collision_monitor_isolated.yaml'
+        generated.write_text(
+            yaml.safe_dump({'/**': {'ros__parameters': params}}, sort_keys=False),
+            encoding='utf-8')
+        return [
+            Node(package='nav2_collision_monitor', executable='collision_monitor',
+                 name='collision_monitor', output='screen', parameters=[str(generated)]),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 name='lifecycle_manager_stationary_collision_monitor', output='screen',
+                 parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
+                              'service_call_timeout': 10.0,
+                              'node_names': ['collision_monitor']}]),
+        ]
+
+    def stationary_fail_close_actions(context):
+        with_gate = stationary_fail_close_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_chain = stationary_command_chain_dry_run.perform(context).lower() in ('true', '1', 'yes')
+        with_mppi = stationary_mppi_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if not (with_gate or with_chain or with_mppi or with_planner or with_bt):
+            return []
+        safety_share = Path(os.environ.get('COLCON_PREFIX_PATH', '').split(':')[0]) / 'share' / 'vehicle_cmd_safety'
+        if not safety_share.exists():
+            safety_share = Path('/home/dog/fastlio_rtabmap_ros2_ws/install/vehicle_cmd_safety/share/vehicle_cmd_safety')
+        config = safety_share / 'config'
+        return [
+            Node(package='vehicle_cmd_safety', executable='collision_monitor_validity_monitor',
+                 name='mid360_collision_validity', output='screen',
+                 parameters=[str(config / 'phase5_dual_mid360_validity.yaml')]),
+            Node(package='vehicle_cmd_safety', executable='collision_monitor_validity_monitor',
+                 name='tmini_collision_validity', output='screen',
+                 parameters=[str(config / 'phase5_dual_tmini_validity.yaml')]),
+            Node(package='vehicle_cmd_safety', executable='required_perception_validity',
+                 name='required_perception_validity', output='screen',
+                 parameters=[{'input_timeout_sec': 0.25, 'recovery_consecutive_ticks': 3, 'heartbeat_hz': 20.0}]),
+            Node(package='vehicle_cmd_safety', executable='phase4_p4c_permission_fixture',
+                 name='stationary_gate_permission_fixture', output='screen',
+                 parameters=[{'publish_localization': True, 'publish_controller': True,
+                              'publish_collision': False, 'publish_rate_hz': 20.0}]),
+            Node(package='vehicle_cmd_safety', executable='guarded_vehicle_cmd_gate',
+                 name='guarded_vehicle_cmd_gate', output='screen',
+                 parameters=[str(config / 'phase5_dual_fail_close_gate.yaml'),
+                             ({'safe_input_topic': '/cmd_vel',
+                               'output_topic': '/vehicle_cmd_safe'} if (with_mppi or with_planner or with_bt) else
+                              {'output_topic': '/vehicle_cmd_safe'} if with_chain else {})]),
+        ]
+
+    def stationary_command_chain_actions(context):
+        with_chain = stationary_command_chain_dry_run.perform(context).lower() in ('true', '1', 'yes')
+        with_mppi = stationary_mppi_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if not (with_chain or with_mppi or with_planner or with_bt):
+            return []
+        return [
+            Node(package='wheelchair_cmd_adapter', executable='gate_to_labmate_bridge',
+                 name='gate_to_labmate_bridge', output='screen',
+                 parameters=[PathJoinSubstitution([
+                     FindPackageShare('wheelchair_cmd_adapter'), 'config',
+                     'gate_to_labmate_bridge.yaml'])]),
+            # Hard lock: there is no launch substitution or argument capable
+            # of selecting physical CAN in this stationary qualification mode.
+            Node(package='wheelchair_controller', executable='wheelchair_controller_node',
+                 name='wheelchair_controller_node', output='screen',
+                 parameters=[PathJoinSubstitution([
+                     FindPackageShare('wheelchair_controller'), 'config',
+                     'wheelchair_controller_param.yaml']),
+                     {'output_transport': 'mock', 'auto_start': True,
+                      'can_interface': 'CANONICAL_MOCK_FORBIDDEN'}]),
+        ]
+
+    def stationary_mppi_controller_actions(context):
+        with_mppi = stationary_mppi_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if not (with_mppi or with_planner or with_bt):
+            return []
+        if mode.perform(context) != 'navigation':
+            return []
+        # ControllerServer configures its internal local costmap immediately.
+        # Give the real sensor/localization branch time to establish the
+        # odom_chassis -> base_footprint TF before lifecycle configuration;
+        # the safety chain is already running fail-closed during this delay.
+        return [TimerAction(period=10.0, actions=[
+            Node(package='nav2_controller', executable='controller_server',
+                 name='controller_server', output='screen',
+                 parameters=[nav2_params_file],
+                 remappings=[('/cmd_vel', '/cmd_vel_nav')]),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 name='lifecycle_manager_stationary_mppi', output='screen',
+                 parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
+                              'bond_timeout': 0.0,
+                              'service_call_timeout': 10.0,
+                              'node_names': ['controller_server']}]),
+        ])]
+
+    def stationary_planner_actions(context):
+        with_planner = stationary_planner_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+        with_bt = (stationary_bt_navigator_mock_gate.perform(context).lower() in ('true', '1', 'yes')
+                   or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
+        if not (with_planner or with_bt):
+            return []
+        if mode.perform(context) != 'navigation':
+            return []
+        # RTAB-Map is the canonical map -> odom and /map authority. Delay
+        # planner lifecycle activation until it has established map/TF and the
+        # static-layer global costmap can consume the actual map.
+        return [TimerAction(period=15.0, actions=[
+            Node(package='nav2_planner', executable='planner_server',
+                 name='planner_server', output='screen', parameters=[nav2_params_file]),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 name='lifecycle_manager_stationary_planner', output='screen',
+                 parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
+                              'bond_timeout': 0.0,
+                              'service_call_timeout': 10.0,
+                              'node_names': ['planner_server']}]),
+        ])]
+
+    def stationary_bt_navigator_actions(context):
+        if (stationary_bt_navigator_mock_gate.perform(context).lower() not in ('true', '1', 'yes')
+                and stationary_mission_manager_mock_gate.perform(context).lower() not in ('true', '1', 'yes')):
+            return []
+        if mode.perform(context) != 'navigation':
+            return []
+        # The current chassis is forward-only Ackermann.  This BT uses only
+        # planner/controller actions and costmap-clearing service recoveries.
+        # behavior_server is intentionally absent: Humble's Spin/BackUp/
+        # DriveOnHeading plugins publish cmd_vel below Collision Monitor.
+        safe_bt = PathJoinSubstitution([
+            robot_bringup_share, 'config', 'ackermann_navigate_to_pose.xml'])
+        return [TimerAction(period=20.0, actions=[
+            Node(package='nav2_bt_navigator', executable='bt_navigator',
+                 name='bt_navigator', output='screen',
+                 parameters=[nav2_params_file,
+                             {'default_nav_to_pose_bt_xml': safe_bt}]),
+            # Do not race the lifecycle Configure request with creation of the
+            # BT Navigator action servers.  Humble can leave a successfully
+            # configured navigator INACTIVE when both processes are spawned in
+            # the same launch tick and the first change-state response races
+            # DDS service discovery.  The delayed manager remains the sole
+            # lifecycle authority; it merely starts after the node is ready.
+            TimerAction(period=2.0, actions=[
+                Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                     name='lifecycle_manager_stationary_bt_navigator', output='screen',
+                     parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
+                                  'bond_timeout': 0.0,
+                                  'service_call_timeout': 10.0,
+                                  'node_names': ['bt_navigator']}]),
+            ]),
+        ])]
+
+    def stationary_mission_manager_actions(context):
+        if stationary_mission_manager_mock_gate.perform(context).lower() not in ('true', '1', 'yes'):
+            return []
+        if mode.perform(context) != 'navigation':
+            return []
+        # The manager owns mission-driven NavigateToPose goals only. Its
+        # progress observer watches the canonical Phase-5 chain; it publishes
+        # no velocity command and has no transport below MockTransport.
+        return [TimerAction(period=23.0, actions=[
+            Node(package='parking_robot_mission_manager', executable='mission_manager_node',
+                 name='mission_manager', output='screen', parameters=[{
+                     'expected_topology_version': 'v1',
+                     'navigate_to_pose_action': '/navigate_to_pose',
+                     'odometry_topic': '/Odometry',
+                     'raw_command_topic': '/cmd_vel_nav',
+                     'safe_command_topic': '/cmd_vel',
+                     'gate_state_topic': '/phase5/gate_test/state',
+                     'collision_valid_topic': '/system/collision_monitor_valid',
+                     'localization_valid_topic': '/system/localization_valid',
+                     'controller_valid_topic': '/system/controller_valid',
+                     'adapter_diagnostics_topic': '/gate_to_labmate_bridge/diagnostics',
+                     'progress_tf_frame': 'odom_chassis',
+                     'progress_base_frame': 'base_footprint',
+                 }]),
+        ])]
+
     # ── 7. Collision Monitor ──
     collision_monitor = Node(
         package='nav2_collision_monitor',
         executable='collision_monitor',
         name='collision_monitor',
         output='screen',
-        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation'"])),
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'base_frame_id': 'base_footprint',
-            'odom_frame_id': 'odom',
-            'cmd_vel_in_topic': '/cmd_vel_nav',
-            'cmd_vel_out_topic': '/cmd_vel',
-            'transform_tolerance': 0.3,
-            'source_timeout': 1.0,
-            'base_shift_correction': True,
-            'stop_pub_timeout': 1.0,
-            'polygons': ['StopZone', 'SlowZone'],
-            'observation_sources': ['pointcloud'],
-            'StopZone.type': 'polygon',
-            'StopZone.points': [0.35, 0.30, 0.35, -0.30, -0.10, -0.30, -0.10, 0.30],
-            'StopZone.action_type': 'stop',
-            'StopZone.max_points': 3,
-            'StopZone.visualize': True,
-            'StopZone.polygon_pub_topic': 'collision_monitor/stop_zone',
-            'StopZone.enabled': True,
-            'SlowZone.type': 'polygon',
-            'SlowZone.points': [0.55, 0.40, 0.55, -0.40, -0.25, -0.40, -0.25, 0.40],
-            'SlowZone.action_type': 'slowdown',
-            'SlowZone.max_points': 3,
-            'SlowZone.slowdown_ratio': 0.35,
-            'SlowZone.visualize': True,
-            'SlowZone.polygon_pub_topic': 'collision_monitor/slow_zone',
-            'SlowZone.enabled': True,
-            'pointcloud.type': 'pointcloud',
-            'pointcloud.topic': '/cloud_registered_body',
-            'pointcloud.min_height': 0.05,
-            'pointcloud.max_height': 1.80,
-            'pointcloud.enabled': True,
-        }],
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation' and '", stationary_integration_gate, "' != 'true' and '", stationary_collision_monitor_gate, "' != 'true' and '", stationary_fail_close_gate, "' != 'true' and '", stationary_command_chain_dry_run, "' != 'true' and '", stationary_mppi_mock_gate, "' != 'true' and '", stationary_planner_mock_gate, "' != 'true' and '", stationary_bt_navigator_mock_gate, "' != 'true' and '", stationary_mission_manager_mock_gate, "' != 'true'"])),
+        parameters=[LaunchConfiguration('collision_monitor_params_file'), {'use_sim_time': use_sim_time}],
     )
 
     collision_monitor_lifecycle = Node(
@@ -285,7 +531,7 @@ def generate_launch_description() -> LaunchDescription:
         executable='lifecycle_manager',
         name='lifecycle_manager_collision_monitor',
         output='screen',
-        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation'"])),
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation' and '", stationary_integration_gate, "' != 'true' and '", stationary_collision_monitor_gate, "' != 'true' and '", stationary_fail_close_gate, "' != 'true' and '", stationary_command_chain_dry_run, "' != 'true' and '", stationary_mppi_mock_gate, "' != 'true' and '", stationary_planner_mock_gate, "' != 'true' and '", stationary_bt_navigator_mock_gate, "' != 'true' and '", stationary_mission_manager_mock_gate, "' != 'true'"])),
         parameters=[{
             'use_sim_time': use_sim_time,
             'autostart': autostart,
@@ -299,7 +545,7 @@ def generate_launch_description() -> LaunchDescription:
         executable='preview_point_publisher.py',
         name='preview_point_publisher',
         output='screen',
-        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation'"])),
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation' and '", stationary_integration_gate, "' != 'true' and '", stationary_collision_monitor_gate, "' != 'true' and '", stationary_fail_close_gate, "' != 'true' and '", stationary_command_chain_dry_run, "' != 'true' and '", stationary_mppi_mock_gate, "' != 'true' and '", stationary_planner_mock_gate, "' != 'true' and '", stationary_bt_navigator_mock_gate, "' != 'true' and '", stationary_mission_manager_mock_gate, "' != 'true'"])),
         parameters=[{
             'use_sim_time': use_sim_time,
             'lookahead_distance': lookahead_distance,
@@ -332,19 +578,24 @@ def generate_launch_description() -> LaunchDescription:
 
     for action in declare_args:
         ld.add_action(action)
-    ld.add_action(base_tf)
-    ld.add_action(livox_tf)
-    ld.add_action(livox_launch)
+    ld.add_action(calibrated_localization)
     # <修改 version3 YDLIDAR 2D雷达节点>
     ld.add_action(ydlidar_node)
     ld.add_action(ydlidar_tf)
-    ld.add_action(scan_to_pc)
-    ld.add_action(fast_lio_launch)
     ld.add_action(navsat_transform)
+    ld.add_action(OpaqueFunction(function=prepare_rtabmap_working_copy))
     ld.add_action(rtabmap_bridge)
     ld.add_action(rviz_node)
     ld.add_action(nav2_launch)
+    ld.add_action(OpaqueFunction(function=stationary_local_costmap_actions))
     ld.add_action(collision_monitor)
     ld.add_action(collision_monitor_lifecycle)
+    ld.add_action(OpaqueFunction(function=stationary_collision_monitor_actions))
+    ld.add_action(OpaqueFunction(function=stationary_fail_close_actions))
+    ld.add_action(OpaqueFunction(function=stationary_command_chain_actions))
+    ld.add_action(OpaqueFunction(function=stationary_mppi_controller_actions))
+    ld.add_action(OpaqueFunction(function=stationary_planner_actions))
+    ld.add_action(OpaqueFunction(function=stationary_bt_navigator_actions))
+    ld.add_action(OpaqueFunction(function=stationary_mission_manager_actions))
     ld.add_action(preview_point)  # <修改 version2 预瞄点>
     return ld

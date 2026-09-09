@@ -1,0 +1,11 @@
+gate_to_labmate_bridge:
+  ros__parameters:
+    input_topic: /vehicle_cmd_safe
+    output_topic: /wheelchair_control_command
+    expected_frame: base_footprint
+    heartbeat_hz: 20.0
+    input_timeout_sec: 0.25
+    max_forward_velocity_mps: 0.25
+    max_reverse_velocity_mps: 0.25
+    max_angular_velocity_rps: 0.50
+    minimum_radius_m: 1.0

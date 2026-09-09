@@ -1,0 +1,282 @@
+schema_version: "1.0"
+profile_id: "mkmini_production_profile_mk2c1r3_current_yaw_20260907"
+platform: "Yuhesen MK-mini Ackermann chassis"
+status: "MKMINI_MID360_CURRENT_YAW_AUTHORITY_MK2C1R3"
+
+source_authority:
+  operator_worksheet:
+    path: "/home/dog/Downloads/PHASE5A_MK1B_CLEAN_MEASUREMENT_WORKSHEET_20260830_v3.md"
+    sha256: "4e54e486c2b87c5fe2a5c915f1b0891c6ba12c929378f7e75e4bef0208e8865d"
+    authority: "OPERATOR_MEASURED"
+    status: "INGESTED_FAITHFULLY_V3_REVISION"
+  chassis_manual:
+    path: "/home/dog/Downloads/MK_mini阿克曼线控底盘使用手册V3.0.0(1).pdf"
+    sha256: "fe07cffba9ae10f3bc6cf89a92737089231118a296c32444f0bb2fbbc64e72da"
+    authority: "MANUFACTURER_AUTHORITY"
+    status: "NOMINAL_GEOMETRY_AUTHORITY"
+
+frame_convention:
+  axes:
+    value: "+X forward, +Y left, +Z up"
+    authority: "PROJECT_FRAME_CONVENTION"
+    status: "ACCEPTED"
+  base_footprint:
+    value: "Rear-axle midpoint projected vertically onto the ground plane"
+    authority: "PROJECT_FRAME_CONVENTION"
+    status: "LOCKED_ACKERMANN_REAR_AXLE_REFERENCE"
+  base_link:
+    value: "Rear-axle midpoint at rear-axle centre height"
+    authority: "PROJECT_FRAME_CONVENTION"
+    status: "LOCKED_ACKERMANN_REAR_AXLE_REFERENCE"
+  kinematic_reference:
+    value: "Rear-axle midpoint / nonholonomic reference"
+    authority: "DERIVED_FROM_AUTHORITY"
+    status: "KINEMATICALLY_CONSISTENT_WITH_W_OVER_V_MODEL"
+
+geometry:
+  manufacturer_nominal:
+    overall_length_m: {value: 0.900, authority: "MANUFACTURER_AUTHORITY", status: "NOMINAL_METADATA_ONLY"}
+    overall_width_m: {value: 0.600, authority: "MANUFACTURER_AUTHORITY", status: "NOMINAL_METADATA_ONLY"}
+    bare_chassis_height_m: {value: 0.310, authority: "MANUFACTURER_AUTHORITY", status: "NOMINAL_METADATA_ONLY"}
+    wheelbase_m: {value: 0.600, authority: "MANUFACTURER_AUTHORITY", status: "MODEL_AUTHORITY"}
+    track_m: {value: 0.518, authority: "MANUFACTURER_AUTHORITY", status: "MODEL_AUTHORITY"}
+    tire_diameter_m: {value: 0.240, authority: "MANUFACTURER_AUTHORITY", status: "MODEL_AUTHORITY"}
+    ground_clearance_m: {value: 0.093, authority: "MANUFACTURER_AUTHORITY", status: "NOMINAL_METADATA_ONLY"}
+  operator_sanity:
+    overall_length_m: {value: 0.900, authority: "OPERATOR_MEASURED", status: "SANITY_AGREES"}
+    overall_width_m: {value: 0.600, authority: "OPERATOR_MEASURED", status: "SANITY_AGREES"}
+    wheelbase_m: {value: 0.600, authority: "OPERATOR_MEASURED", status: "SANITY_AGREES"}
+    tire_diameter_m: {value: 0.242, authority: "OPERATOR_MEASURED", status: "APPROXIMATE_SANITY_ONLY"}
+    track_m: {value: 0.520, authority: "OPERATOR_MEASURED", status: "APPROXIMATE_SANITY_ONLY"}
+    lower_deck_height_m: {value: 0.240, authority: "OPERATOR_MEASURED", status: "OBSERVATION_NOT_GROUND_CLEARANCE"}
+    upper_deck_height_m: {value: 0.260, authority: "OPERATOR_MEASURED", status: "OBSERVATION"}
+    current_max_rigid_height_m: {value: 0.890, authority: "OPERATOR_MEASURED", status: "ASSEMBLED_OBSERVATION"}
+
+transforms:
+  base_footprint_to_base_link:
+    translation_m: [0.0, 0.0, 0.120]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    authority: "DERIVED_FROM_AUTHORITY"
+    status: "NOMINAL_DRAFT_FROM_240MM_TIRE_DIAMETER"
+    note: "Operator approximately 0.121 m axle radius is sanity evidence; manufacturer nominal is used."
+  rear_axle:
+    parent: "base_link"
+    child: "rear_axle"
+    translation_m: [0.0, 0.0, 0.0]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    authority: "PROJECT_FRAME_CONVENTION"
+    status: "COINCIDENT_REFERENCE_FRAME"
+  front_axle:
+    parent: "base_link"
+    child: "front_axle"
+    translation_m: [0.600, 0.0, 0.0]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    authority: "DERIVED_FROM_AUTHORITY"
+    status: "NOMINAL_WHEELBASE_REFERENCE_FRAME"
+
+mid360_mount_reference:
+  mast_x_from_M0_m: {value: 0.1385, authority: "OPERATOR_MEASURED", status: "MAST_SENSOR_CENTERLINE_DATUM"}
+  sensor_x_reference_m: {value: 0.1385, authority: "DERIVED_FROM_AUTHORITY", status: "BOTTOM_CENTERLINE_REFERENCE_BEFORE_ROTATED_NATIVE_OFFSET"}
+  lateral_reference_m: {value: 0.019, uncertainty_m: 0.001, authority: "OPERATOR_MEASURED", status: "MAST_SENSOR_CENTERLINE_DATUM"}
+  working_height_from_floor_m: {value: 0.850, authority: "OPERATOR_MEASURED", status: "WORKING_PHYSICAL_REFERENCE_NOT_NATIVE_ORIGIN"}
+  reference_z_relative_to_base_link_m: {value: 0.730, authority: "DERIVED_FROM_AUTHORITY", status: "WORKING_REFERENCE_ONLY"}
+  physical_tilt_magnitude_deg: {value: 31.5, authority: "OPERATOR_MEASURED", status: "MAGNITUDE_ONLY"}
+  roll_estimate_deg: {value: 0.0, authority: "OPERATOR_MEASURED", status: "VISUAL_LEVEL_SANITY_ESTIMATE"}
+  rigidity:
+    bracket_sensor_tight: {value: true, authority: "OPERATOR_MEASURED", status: "CONFIRMED"}
+    mast_tight: {value: true, authority: "OPERATOR_MEASURED", status: "CONFIRMED"}
+    free_play: {value: false, authority: "OPERATOR_MEASURED", status: "CONFIRMED_NONE"}
+    cable_pull: {value: false, authority: "OPERATOR_MEASURED", status: "CONFIRMED_NONE"}
+
+livox_native_transform:
+  authorized: {value: true, authority: "P5A_MK2C1R3_CURRENT_HARDWARE_AUTHORITY", status: "CURRENT_HARDWARE_FRAME_CONTRACT_AUTHORIZED"}
+  x_m: {value: 0.162993658894, authority: "DERIVED_FROM_CURRENT_AUTHORITY", status: "CENTERLINE_DATUM_PLUS_RECOMPUTED_ROTATED_47MM_OFFSET"}
+  y_m: {value: 0.018657143794, authority: "DERIVED_FROM_CURRENT_AUTHORITY", status: "CENTERLINE_DATUM_PLUS_RECOMPUTED_ROTATED_47MM_OFFSET"}
+  z_m: {value: 0.739281661466, authority: "DERIVED_FROM_AUTHORITY", status: "TWO_CAPTURE_FLOOR_MIDPOINT_RELATIVE_TO_BASE_LINK"}
+  roll_deg: {value: 1.1096728679, authority: "P5A_MK1C1R2_LIVE_CALIBRATION", status: "ACCEPTED_ORIENTATION_CANDIDATE"}
+  pitch_deg: {value: 31.3946885517, authority: "P5A_MK1C1R2_LIVE_CALIBRATION", status: "ACCEPTED_ORIENTATION_CANDIDATE"}
+  yaw_deg: {value: 1.3275, uncertainty_deg: 2.0, authority: "P5A_MK2C1R3_MULTI_SCENE_CURRENT_PHYSICAL_FRONT", status: "CURRENT_HARDWARE_YAW_AUTHORITY"}
+  final_tf_frame: {value: "base_link -> livox_frame", authority: "P5A_MK2C1R3_CURRENT_HARDWARE_AUTHORITY", status: "PRODUCTION_PROFILE_AUTHORIZED"}
+  rotation_convention: "Rz(yaw) * Ry(pitch) * Rx(roll)"
+  mechanical_authority:
+    centerline_x_from_M0_m: {value: 0.1385, authority: "OPERATOR_MEASURED", status: "CONFIRMED_MAST_SENSOR_CENTERLINE"}
+    centerline_y_from_chassis_m: {value: 0.019, uncertainty_m: 0.001, authority: "OPERATOR_MEASURED", status: "CONFIRMED_MAST_SENSOR_CENTERLINE"}
+    native_origin_above_bottom_m: {value: 0.047, authority: "MANUFACTURER_AUTHORITY", status: "MID360_MANUAL_DIMENSION"}
+    rotated_offset_m: {value: [0.024493658894, -0.000342856206, 0.040111633271], authority: "DERIVED_FROM_CURRENT_AUTHORITY", status: "RECOMPUTED_FROM_47MM_LOCAL_Z_AND_CURRENT_RPY"}
+    implied_bottom_mount_floor_m: {value: 0.819170028195, authority: "DERIVED_FROM_AUTHORITY", status: "MECHANICAL_HEIGHT_CROSSCHECK_CONSISTENT"}
+    observed_lower_frame_range_m: {value: [0.817, 0.820], authority: "OPERATOR_MEASURED", status: "CROSSCHECK_ONLY_NOT_ORIGIN"}
+  floor_provenance:
+    capture_1_origin_distance_m: {value: 0.855073, authority: "P5A_MK1C_LIVE_CAPTURE", status: "ACCEPTED_PRIOR"}
+    capture_2_origin_distance_m: {value: 0.863490323, authority: "P5A_MK1C2R_LIVE_CAPTURE", status: "ACCEPTED_REPEAT"}
+    accepted_midpoint_m: {value: 0.859281661, authority: "P5A_MK1D_SUPERVISOR_AUTHORITY", status: "ACCEPTED_TWO_CAPTURE_MIDPOINT"}
+    capture_half_range_m: {value: 0.004209, authority: "DERIVED_FROM_AUTHORITY", status: "BOUNDED_ENGINEERING_UNCERTAINTY"}
+  uncertainty:
+    lateral_reference_m: {value: 0.001, authority: "OPERATOR_MEASURED", status: "BOUND"}
+    orientation_plane_fit_deg: {value: 0.84, authority: "P5A_MK1C1R2_LIVE_CALIBRATION", status: "BOUND_NOT_COVARIANCE"}
+    orientation_operator_alignment_deg: {value: 1.0, authority: "OPERATOR_MEASURED", status: "BOUND_NOT_COVARIANCE"}
+    covariance: {value: null, authority: "PROJECT_POLICY", status: "NOT_CLAIMED"}
+  history:
+    previous_status: "MKMINI_MID360_TF_CALIBRATED_C2R"
+    previous_profile_id: "mkmini_production_profile_c2r_20260831"
+    superseded_by: "P5A_MK2C1R3_CURRENT_MID360_YAW_AUTHORITY_AND_FRAME_REPAIR_PASS"
+    retired_current_hardware_yaw_deg: -112.6401945888
+    retired_current_hardware_yaw_status: "RETIRED_FOR_CURRENT_HARDWARE_FRAME_CONTRACT"
+    retired_reason: "Five current physical-front recordings and the manufacturer/connector mechanical reference contradict the old yaw. Historical record retained, not deleted."
+
+current_mid360_yaw_authority:
+  value_deg: 1.3275
+  uncertainty_deg: 2.0
+  fit: "Least-squares centering in chassis Y using five current /cloud_registered_body physical-front scenes; translation, roll and pitch held fixed."
+  raw_body_bearing_mean_deg: -2.7164825201
+  raw_body_bearing_sample_std_deg: 0.6960566044
+  per_scene_yaw_estimates_deg: [1.7265, 0.4280, 1.6955, 1.9530, 0.8085]
+  independent_direction_check:
+    manufacturer: "Official Mid-360 coordinate drawing: native +X is opposite the M12 connector; +Y and +Z define the right-handed native axes."
+    project_photo: "/home/dog/Downloads/bbbbbb.jpeg"
+    project_photo_sha256: "49d22884b43556280c1f3898bf4d703f1a56d113afdf2d02780b847e3594289d"
+    observation: "Saved side view shows the M12 cable/connector toward robot rear, so native +X is toward robot forward."
+    status: "INDEPENDENT_FORWARD_QUADRANT_AND_SIGN_VALIDATION"
+
+fast_lio_body_contract:
+  formula: "p_body = R_L_I * p_livox + T_L_I"
+  lidar_to_imu_translation_m: [-0.011, -0.02329, 0.04412]
+  lidar_to_imu_rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+  authority: "/home/dog/fastlio_rtabmap_ros2_ws/src/FAST_LIO_ROS2/config/mid360.yaml"
+
+sensor_status:
+  tmini:
+    status: "P5A_MK2A0R_TMINI_FINAL_TF_MEASUREMENT_FREEZE_PASS"
+    sensor_model: "YDLIDAR T-MINI"
+    expected_future_message_type: "sensor_msgs/msg/LaserScan"
+    expected_conceptual_frame: "laser_frame"
+    driver_activation: "DISABLED_SENSOR_DISCONNECTED"
+    can_work: false
+    can_tx: false
+    robot_motion: false
+    usb_connection: "DISCONNECTED"
+    stable_usb_identity: "UNRESOLVED_USE_DEV_SERIAL_BY_ID_OR_EQUIVALENT"
+    measurement_freeze:
+      TMINI_CENTERLINE_X_FROM_REAR_AXLE_M:
+        value: 0.703
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_FROZEN"
+      TMINI_CENTERLINE_Y_FROM_ROBOT_CENTER_M:
+        value: 0.000
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_FROZEN"
+      TMINI_FORWARD_OF_FRONT_AXLE_M:
+        value: 0.103
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_FROZEN"
+      TMINI_BEHIND_FRONT_EDGE_M:
+        value: 0.052
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_FROZEN"
+      REAR_AXLE_TO_FRONT_EDGE_M:
+        value: 0.755
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_FROZEN"
+      TMINI_HOUSING_BOTTOM_HEIGHT_FROM_FLOOR_M:
+        value: 0.286
+        authority: "OPERATOR_MEASURED"
+        status: "MEASURED_HOUSING_BOTTOM_ONLY"
+        note: "Housing bottom datum; optical centerline is measured separately."
+      BASE_LINK_HEIGHT_FROM_FLOOR_M:
+        value: 0.1200
+        authority: "PROJECT_FRAME_AUTHORITY"
+        status: "FROZEN_BASE_LINK_HEIGHT"
+      TMINI_OPTICAL_CENTERLINE_ABOVE_HOUSING_BOTTOM_M:
+        value: 0.0263
+        authority: "MANUFACTURER_TMINI_PLUS_DATASHEET"
+        status: "OPTICAL_DRAWING_AUTHORITY"
+      TMINI_SCAN_PLANE_HEIGHT_FROM_FLOOR_M:
+        value: 0.3123
+        authority: "OPERATOR_MEASURED_PLUS_MANUFACTURER_DATASHEET"
+        status: "MEASURED_FROZEN"
+        derivation: "0.2860 + 0.0263"
+      BASE_LINK_TO_TMINI_SCAN_PLANE_Z_M:
+        value: 0.1923
+        authority: "DERIVED_FROM_FROZEN_MEASUREMENT"
+        status: "MEASURED_FROZEN"
+        derivation: "0.3123 - 0.1200"
+      TMINI_ZERO_MARK_DIRECTION: "ROBOT_FORWARD_PLUS_X"
+      TMINI_NOMINAL_YAW_DEG:
+        value: 0.0
+        authority: "OPERATOR_ALIGNMENT_TO_MANUFACTURER_ZERO_MARK"
+        status: "NOMINAL_FROZEN"
+      manufacturer_zero_angle_tolerance_deg:
+        value: 3.0
+        range: [-3.0, 3.0]
+        authority: "MANUFACTURER_TMINI_PLUS_DATASHEET"
+        status: "INDIVIDUAL_ZERO_ANGLE_TOLERANCE"
+        note: "Informational tolerance; not converted into a TF correction."
+      yaw_orientation: "ROBOT_FORWARD_PLUS_X_NOMINAL_ZERO"
+      yaw_orientation_reference: "MANUFACTURER_TOP_ARROW_ALIGNED_TO_ROBOT_PLUS_X"
+      actual_scan_orientation_verification: "P5A_MK2A1R0_REVERSION_FALSE_FRONT_LEFT_RIGHT_QUALIFIED"
+      driver_reversion: false
+      driver_inverted: true
+      driver_orientation_result: "REVERSION_TRUE_CREATED_180_DEG_SCAN_ROTATION; REVERSION_FALSE_ALIGNS_FRONT_TO_0_DEG"
+      mount_rigidity: "YES"
+      front_obstruction: "NO"
+      left_obstruction: "NO"
+      right_obstruction: "NO"
+      rear_obstruction: "YES_COOLER_BODY"
+      chassis_obstruction: "REAR_ONLY_COOLER_BODY"
+      wheel_in_scan_plane: "NO"
+      cable_secure: "YES"
+    cross_checks:
+      wheelbase_plus_forward_of_front_axle:
+        expression: "0.600 + 0.103"
+        expected_m: 0.703
+        result_m: 0.703
+        status: "PASS"
+      centerline_x_plus_behind_front_edge:
+        expression: "0.703 + 0.052"
+        expected_m: 0.755
+        result_m: 0.755
+        status: "PASS"
+      housing_bottom_plus_optical_centerline:
+        expression: "0.2860 + 0.0263"
+        expected_m: 0.3123
+        result_m: 0.3123
+        status: "PASS"
+      scan_plane_minus_base_link_height:
+        expression: "0.3123 - 0.1200"
+        expected_m: 0.1923
+        result_m: 0.1923
+        status: "PASS"
+      diagonal_measurement: "NOT_INFERRED"
+    base_link_to_laser_frame_candidate:
+      parent_frame: "base_link"
+      child_frame: "laser_frame"
+      translation_m:
+        x: 0.703
+        y: 0.000
+        z: 0.1923
+      rotation_rpy_deg: [0.0, 0.0, 0.0]
+      rotation_authority: "NOMINAL_ZERO_ALIGNED_TO_ROBOT_FORWARD_PLUS_X"
+      manufacturer_yaw_tolerance_deg: 3.0
+      activation: "DISABLED_UNTIL_LIVE_SCAN_ORIENTATION_QUALIFICATION"
+  stereo:
+    status: "DEFERRED_OPTIONAL_EXACT_POSE"
+    physical_height_observation_m: {value: 0.760, authority: "OPERATOR_MEASURED", status: "REFERENCE_ONLY"}
+    optical_transform: "PENDING_OPERATOR_MEASUREMENT"
+
+safety_geometry:
+  operational_footprint: {status: "PENDING_FINAL_OPERATIONAL_ENVELOPE", active: false}
+  collision_monitor_polygons: {status: "PENDING_FINAL_OPERATIONAL_ENVELOPE_AND_SENSOR_COVERAGE", active: false}
+  nominal_dimensions_are_not_footprint: true
+
+protocol_blockers:
+  brake_profile: {value: "UNRESOLVED", authority: "P5A_MK0R1", status: "REAL_CAN_NOT_AUTHORIZED"}
+  encoder_scale: {value: "UNRESOLVED", authority: "P5A_MK0R1", status: "WHEEL_ODOMETRY_NOT_AUTHORIZED"}
+  real_can_tx: {value: false, authority: "PROJECT_SAFETY_POLICY", status: "NOT_AUTHORIZED"}
+
+profile_scope:
+  wheelchair_profile_modified: false
+  livox_native_tf_published: false
+  nav2_footprint_active: false
+  collision_monitor_polygons_active: false
+  tmini_activated: false
+  stereo_activated: false
+  can_implemented_or_changed: false
