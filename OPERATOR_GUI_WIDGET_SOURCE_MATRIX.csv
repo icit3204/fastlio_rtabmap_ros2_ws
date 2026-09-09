@@ -1,0 +1,17 @@
+widget,display,source,type,field_or_rule,stale_policy,control_authority
+mission_id,Mission ID,/mission/state,parking_robot_interfaces/msg/MissionState,mission_id,mission state stale -> UNKNOWN,none
+start_node,Start Node,/mission/route,parking_robot_interfaces/msg/RouteMission,node_ids[0],route mismatch -> UNKNOWN,none
+goal_node,Goal Node,/mission/route,RouteMission,node_ids[-1],route mismatch -> UNKNOWN,none
+current_edge,Current Edge,/mission/state + /mission/route,MissionState + RouteMission,edge_ids[current_waypoint_index],invalid index -> —,none
+current_goal,Current Goal,/mission/state + /mission/route,MissionState + RouteMission,poses[current_waypoint_index],invalid index -> UNKNOWN,none
+progress,Mission Progress,/mission/state,MissionState,completed/total and progress,stale -> UNKNOWN,none
+mission_state,Mission Manager State,/mission/state,MissionState,state,stale -> STALE,none
+nav2_state,Nav2 State,/mission/state + action status,MissionState + GoalStatusArray,high-level state plus passive status,unavailable -> UNKNOWN,none
+controller_valid,Controller Valid,/system/controller_valid,std_msgs/msg/Bool,data,stale -> STALE,none
+safe_speed,Safe Commanded Speed,/vehicle_cmd_safe,geometry_msgs/msg/TwistStamped,twist.linear.x,stale -> STALE,none
+perception_valid,Perception Valid,/system/collision_monitor_valid,std_msgs/msg/Bool,data,stale -> STALE,none
+localization_valid,Localization Valid,/system/localization_valid,std_msgs/msg/Bool,data,stale -> STALE,none
+collision_validity,Collision Monitor Validity,/system/collision_monitor_valid,std_msgs/msg/Bool,data,stale -> STALE,none
+gate_state,Generic Gate State,configured gate topic,diagnostic_msgs/msg/DiagnosticStatus,values[state],stale -> UNKNOWN,none
+gate_reason,Gate Reason,configured gate topic,DiagnosticStatus,message,stale -> UNKNOWN,none
+fault_reason,Fault Reason,Gate plus MissionState,DiagnosticStatus + MissionState,Gate message priority,stale -> UNKNOWN,none

@@ -1,0 +1,21 @@
+item,authority,integrated_demo_value,gui_result,rviz_result,qualification
+Mission ID,/mission/state.mission_id,demo-route-01,displayed demo-route-01,not spatially displayed,PASS
+Start Node,/mission/route.node_ids[0],A,displayed A,not spatially displayed,PASS
+Goal Node,/mission/route.node_ids[-1],D,displayed D,not spatially displayed,PASS
+Current Edge,/mission/route.edge_ids[current_waypoint_index],C->D,displayed C->D,not spatially displayed,PASS
+Current Metric Goal,/mission/route.poses[2],C (4.00 1.00),displayed C (4.00 1.00),goal marker at 4.00 1.00,PASS
+Mission Progress,/mission/state,2 / 4 (50%),displayed from MissionState,not spatially displayed,PASS
+Safe Commanded Speed,/vehicle_cmd_safe.twist.linear.x,0.20 m/s while NAVIGATING,displayed as commanded speed,not used by RViz,PASS
+Perception/CM validity,/system/collision_monitor_valid,true,YES/VALIDITY only,not spatially inferred,PASS
+Gate state/reason,/vehicle_cmd_safety/state,ARMED_COMMAND/NONE or DISARMED_ZERO/GATE_DISARMED_DEMO,displayed separately,not spatially inferred,PASS
+Global Map,/map,synthetic 120x120 occupancy grid,not GUI responsibility,configured and visually rendered,PASS
+Robot,TF plus /robot_description,map->base_footprint plus synthetic box,not GUI responsibility,configured and visually rendered,PASS
+Footprint,/local_costmap/published_footprint,synthetic polygon,not GUI responsibility,configured and visually rendered,PASS
+Global Plan,/plan,synthetic curved Path,not GUI responsibility,configured and visually rendered,PASS
+Nearest Path Point,/plan plus TF,nearest sampled pose (1.75 0.091875),not GUI responsibility,helper marker rendered,PASS
+Selected Local Trajectory,/trajectories Optimal Trajectory,cyan optimal marker,not GUI responsibility,displayed,PASS
+Candidate Trajectories,/trajectories Candidate Trajectories,two synthetic candidates,not GUI responsibility,published but default hidden,PASS
+Local Costmap/Obstacles,/local_costmap/costmap,synthetic obstacle cells,not GUI responsibility,configured and visually rendered,PASS
+Aim Point,none,not implemented,not displayed,not displayed,PASS
+Controls,/mission services,START PAUSE RESUME CANCEL,Qt signal to async service client,not RViz responsibility,PASS
+Reset Safety,none,not authorized,no control,not RViz responsibility,PASS

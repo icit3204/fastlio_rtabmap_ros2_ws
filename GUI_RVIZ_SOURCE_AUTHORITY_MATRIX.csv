@@ -1,0 +1,37 @@
+display_name,authoritative_node,topic_service_action,message_type,fields,frame,qos_or_rate,already_exists,derivation_needed,proposed_method,notes
+Mission ID,mission_manager,/mission/state,parking_robot_interfaces/msg/MissionState,mission_id,map,reliable transient-local,YES,NO,GUI text,primary mission authority
+Start Node,plan_nav/Mission Manager,/mission/route,parking_robot_interfaces/msg/RouteMission,node_ids[0],map,reliable transient-local,YES,YES,GUI text,observational field join
+Goal Node,plan_nav/Mission Manager,/mission/route,parking_robot_interfaces/msg/RouteMission,node_ids[-1],map,reliable transient-local,YES,YES,GUI text,observational field join
+Current Edge,Mission Manager + retained RouteMission,/mission/state + /mission/route,MissionState + RouteMission,edge_ids[current_waypoint_index],map,both reliable transient-local,NO,YES,GUI text,index join only; ARRIVAL/NONE at final pose
+Current Goal,Mission Manager,/mission/state + /mission/route,MissionState + RouteMission,current_waypoint_index + poses[index],map,both reliable transient-local,NO,YES,GUI metric-goal marker/text,not topological goal node
+Mission Progress,Mission Manager,/mission/state,parking_robot_interfaces/msg/MissionState,progress/completed_waypoint_count/total_waypoint_count,map,reliable transient-local,YES,NO,GUI progress bar,typed authority
+Mission State,Mission Manager,/mission/state,parking_robot_interfaces/msg/MissionState,state/reason_code/detail,map,reliable transient-local,YES,NO,GUI state badge,primary high-level status
+Mission Reason,Mission Manager,/mission/state,parking_robot_interfaces/msg/MissionState,reason_code/detail,map,reliable transient-local,YES,NO,GUI fault/reason text,diagnostics are secondary
+Nav2 State,Mission Manager + Nav2 actions,/mission/state and /navigate_to_pose,MissionState + nav2_msgs/action/NavigateToPose,state/result/feedback,map,action plus transient-local,PARTIAL,YES,GUI derived detail,primary GUI state remains MissionState
+Planner State,planner_server,/compute_path_to_pose,nav2_msgs/action/ComputePathToPose,goal/result,status,map,action QoS,YES,NO,GUI detail/RViz evidence,not primary GUI status
+Controller Valid,phase4_p4c_permission_fixture in mock chain,/system/controller_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,GUI validity badge,current mock publisher is fixture; production authority not frozen
+Safe Commanded Speed,guarded_vehicle_cmd_gate,/vehicle_cmd_safe,geometry_msgs/msg/TwistStamped,twist.linear.x,base_footprint,Gate heartbeat 20 Hz,YES,NO,GUI numeric field,not measured wheel speed
+Perception Valid,required_perception_validity,/system/collision_monitor_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,GUI validity badge,current required AND output uses CM-valid topic name
+MID-360 Valid,collision_monitor_validity_monitor,/phase5/perception/mid360_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,debug GUI,individual detail only
+T-mini Valid,collision_monitor_validity_monitor,/phase5/perception/tmini_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,debug GUI,individual detail only
+Localization Valid,localization_validity_monitor,/system/localization_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,GUI validity badge,existing authority
+Collision Monitor Health,collision_monitor_validity_monitor,/system/collision_monitor_valid,std_msgs/msg/Bool,data,none,20 Hz volatile,YES,NO,GUI health badge,health only not action state
+Collision Monitor Action State,stock nav2_collision_monitor,NOT EXPOSED,NO authoritative state message,UNKNOWN,UNKNOWN,UNKNOWN,NO,NO,do not infer in GUI,requires future observational adapter or explicit upstream exposure
+Gate State,guarded_vehicle_cmd_gate,/phase5/gate_test/state or /vehicle_cmd_safety/state,diagnostic_msgs/msg/DiagnosticStatus,message/values,none,20 Hz heartbeat,YES,NO,GUI state badge,configured topic is mode-dependent
+Gate Reason,guarded_vehicle_cmd_gate,same Gate state topic,diagnostic_msgs/msg/DiagnosticStatus,message/values,none,20 Hz heartbeat,YES,NO,GUI reason text,examples ARMED_COMMAND SAFE_TWIST_STALE
+Map,RTAB-Map,/map,nav_msgs/msg/OccupancyGrid,data/info/map_load_time,map,transient-local static layer,YES,NO,RViz Map display,canonical map authority
+Robot Pose,TF broadcaster,map -> base_footprint and odom_chassis -> base_footprint,tf2,transform,TF frames,TF dynamic,YES,NO,RViz TF/RobotModel,do not create pose topic
+Robot Footprint,Nav2 costmap,/local_costmap/published_footprint,geometry_msgs/msg/PolygonStamped,polygon,odom_chassis,volatile costmap publisher,YES,NO,RViz Polygon,configured footprint is shared contract
+Global Costmap,global_costmap,/global_costmap/costmap,nav_msgs/msg/OccupancyGrid,data/info,map,1 Hz configured,YES,NO,RViz optional,static map plus inflation
+Local Costmap,local_costmap,/local_costmap/costmap,nav_msgs/msg/OccupancyGrid,data/info,odom_chassis,5 Hz configured,YES,NO,RViz default,qualified dual-source local costmap
+Detected Obstacles,local_costmap,/local_costmap/costmap,nav_msgs/msg/OccupancyGrid,cost values,odom_chassis,5 Hz configured,YES,NO,RViz costmap,obstacle visualization is costmap observation
+Raw MID-360,FAST-LIO,/cloud_registered_body,sensor_msgs/msg/PointCloud2,points,body,source sensor rate,YES,NO,RViz debug cloud,not operator default
+Raw T-mini,T-mini driver,/scan,sensor_msgs/msg/LaserScan,ranges,laser_frame,source sensor rate,YES,NO,RViz debug scan,not operator default
+Global Plan,planner_server,/plan,nav_msgs/msg/Path,poses, map,planner action/lifecycle publication,YES,NO,RViz Path,valid plan publication is transient in operation
+Selected MPPI Trajectory,nav2_mppi_controller, /trajectories,visualization_msgs/msg/MarkerArray,namespace Optimal Trajectory,odom_chassis when configured,only when FollowPath.visualize=true,YES_WITH_CONFIG,NO,RViz MarkerArray namespace filter,built-in visualizer also includes candidates
+MPPI Local Reference,nav2_mppi_controller,/transformed_global_plan,nav_msgs/msg/Path,poses,odom_chassis,only when visualize=true,YES_WITH_CONFIG,NO,RViz Path,transformed plan not selected trajectory
+Nearest Point,observation-only helper,/plan + TF,geometry_msgs/msg/PointStamped,point,map,helper-defined,NO,YES,RViz Marker,nearest path point; no motion authority
+Aim Point,UNRESOLVED,NOT EXPOSED,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,NO,YES,do not display as authoritative,requires definition selection
+Current Metric Goal,Mission Manager,/mission/state + /mission/route,MissionState + RouteMission,poses[current_waypoint_index],map,transient-local,NO,YES,RViz Marker + GUI text,distinct from node goal
+CM Stop Zone,stock nav2_collision_monitor,/collision_monitor/phase5_stop,geometry_msgs/msg/PolygonStamped,polygon,base_footprint,visualize configured,YES,NO,RViz debug Polygon,geometry only
+CM Slow Zone,stock nav2_collision_monitor,/collision_monitor/phase5_slow,geometry_msgs/msg/PolygonStamped,polygon,base_footprint,visualize configured,YES,NO,RViz debug Polygon,geometry only

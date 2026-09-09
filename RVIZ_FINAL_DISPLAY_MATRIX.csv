@@ -1,0 +1,20 @@
+display,topic_or_source,type,classification,frame_or_fixed_frame,authority_notes
+Map,/map,nav_msgs/msg/OccupancyGrid,DEFAULT_ON,map,RTAB-Map static map authority
+Robot,TF plus URDF,tf2/robot_description,DEFAULT_ON,map,RobotModel if URDF is enabled
+Robot Footprint,/local_costmap/published_footprint,geometry_msgs/msg/PolygonStamped,DEFAULT_ON,odom_chassis,qualified footprint
+Global Plan,/plan,nav_msgs/msg/Path,DEFAULT_ON,map,Planner Server publication
+Selected Local Trajectory,/trajectories,visualization_msgs/msg/MarkerArray,DEFAULT_ON after visualize config,odom_chassis,filter namespace Optimal Trajectory only
+Nearest Point,observation-only helper,geometry_msgs/msg/PointStamped,OPTIONAL,map,not a controller target
+Aim Point,not yet defined,UNKNOWN,NOT_AVAILABLE_YET,UNKNOWN,do not invent a target
+Current Navigation Goal,mission route join,visualization_msgs/msg/Marker,DEFAULT_ON,map,metric pose from MissionState index plus RouteMission
+Local Costmap,/local_costmap/costmap,nav_msgs/msg/OccupancyGrid,DEFAULT_ON,odom_chassis,qualified dual-sensor costmap
+Detected Obstacles,local costmap,nav_msgs/msg/OccupancyGrid,DEFAULT_ON,odom_chassis,costmap observation
+Global Costmap,/global_costmap/costmap,nav_msgs/msg/OccupancyGrid,OPTIONAL,map,static planning context
+Collision Monitor Stop Zone,/collision_monitor/phase5_stop,geometry_msgs/msg/PolygonStamped,DEBUG_ONLY,base_footprint,zone geometry not state authority
+Collision Monitor Slow Zone,/collision_monitor/phase5_slow,geometry_msgs/msg/PolygonStamped,DEBUG_ONLY,base_footprint,zone geometry not state authority
+Raw MID-360,/cloud_registered_body,sensor_msgs/msg/PointCloud2,DEBUG_ONLY,body,engineering sensor view
+Raw T-mini,/scan,sensor_msgs/msg/LaserScan,DEBUG_ONLY,laser_frame,engineering sensor view
+MPPI Candidate Trajectories,/trajectories,visualization_msgs/msg/MarkerArray,DEBUG_ONLY,odom_chassis,filter Candidate Trajectories namespace off by default
+Transformed MPPI Reference,/transformed_global_plan,nav_msgs/msg/Path,OPTIONAL,odom_chassis,controller-local reference not selected trajectory
+TF Debug,TF,tf2,DEBUG_ONLY,all,engineering diagnostics
+Topology Edge Overlay,PlanNav topology,FUTURE_ONLY,NOT_AVAILABLE_YET,map,PlanNav remains unchanged

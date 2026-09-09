@@ -1,0 +1,173 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Selection
+    Name: Selection
+  - Class: rviz_common/Tool Properties
+    Name: Tool Properties
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Reference Grid
+      Reference Frame: <Fixed Frame>
+      Plane: XY
+      Plane Cell Count: 50
+      Cell Size: 1
+      Alpha: 0.25
+    - Class: rviz_default_plugins/Map
+      Enabled: true
+      Name: Global Map
+      Topic:
+        Value: /map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+      Alpha: 0.70
+      Color Scheme: map
+      Draw Behind: true
+    - Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Name: Robot
+      Description Source: Topic
+      Description Topic: /robot_description
+      Visual Enabled: true
+      Collision Enabled: false
+    - Class: rviz_default_plugins/Polygon
+      Enabled: true
+      Name: Robot Footprint
+      Topic:
+        Value: /local_costmap/published_footprint
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/Map
+      Enabled: true
+      Name: Local Costmap / Detected Obstacles
+      Topic:
+        Value: /local_costmap/costmap
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Alpha: 0.45
+      Color Scheme: costmap
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Global Plan
+      Topic:
+        Value: /plan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 0; 255; 0
+      Line Width: 0.08
+      Buffer Length: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Selected Local Trajectory
+      Topic:
+        Value: /trajectories
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Namespaces:
+        Optimal Trajectory: true
+        Candidate Trajectories: false
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Nearest Path Point
+      Topic:
+        Value: /visualization/nearest_path_point
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Current Navigation Goal
+      Topic:
+        Value: /visualization/current_navigation_goal
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/Path
+      Enabled: false
+      Name: Debug - Controller Reference
+      Topic:
+        Value: /transformed_global_plan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/Map
+      Enabled: false
+      Name: Debug - Global Costmap
+      Topic:
+        Value: /global_costmap/costmap
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Alpha: 0.35
+      Color Scheme: costmap
+    - Class: rviz_default_plugins/Polygon
+      Enabled: false
+      Name: Debug - CM Stop Zone
+      Topic:
+        Value: /collision_monitor/phase5_stop
+    - Class: rviz_default_plugins/Polygon
+      Enabled: false
+      Name: Debug - CM Slow Zone
+      Topic:
+        Value: /collision_monitor/phase5_slow
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: false
+      Name: Debug - MID360
+      Topic:
+        Value: /cloud_registered_body
+    - Class: rviz_default_plugins/LaserScan
+      Enabled: false
+      Name: Debug - T-mini
+      Topic:
+        Value: /scan
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: false
+      Name: Debug - MPPI Candidates
+      Topic:
+        Value: /trajectories
+      Namespaces:
+        Optimal Trajectory: false
+        Candidate Trajectories: true
+    - Class: rviz_default_plugins/TF
+      Enabled: false
+      Name: Debug - TF
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 30
+    Background Color: 48; 48; 48
+  Name: canonical_navigation
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 12
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Pitch: 1.0
+      Yaw: 0.0

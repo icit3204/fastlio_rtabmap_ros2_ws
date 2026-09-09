@@ -1,0 +1,18 @@
+display,source,type,implementation,default,frame,qualification
+Global Map,/map,nav_msgs/msg/OccupancyGrid,RViz Map,ON,map,configured and YAML-validated
+Robot,robot_description plus TF,urdf/tf,RViz RobotModel,ON,map,configured
+Robot Footprint,/local_costmap/published_footprint,geometry_msgs/msg/PolygonStamped,RViz Polygon,ON,odom_chassis,configured
+Global Plan,/plan,nav_msgs/msg/Path,RViz Path,ON,map,configured
+Selected Local Trajectory,/trajectories,visualization_msgs/msg/MarkerArray,RViz MarkerArray namespace Optimal Trajectory,ON,odom_chassis,namespace filter stored
+Nearest Path Point,/visualization/nearest_path_point,visualization_msgs/msg/Marker,observation helper marker,ON,map,offline tested
+Current Navigation Goal,/visualization/current_navigation_goal,visualization_msgs/msg/Marker,observation helper marker,ON,map,offline tested
+Local Costmap / Detected Obstacles,/local_costmap/costmap,nav_msgs/msg/OccupancyGrid,RViz Map,ON,odom_chassis,configured
+Controller Reference,/transformed_global_plan,nav_msgs/msg/Path,RViz Path,OFF,odom_chassis,debug only
+Global Costmap,/global_costmap/costmap,nav_msgs/msg/OccupancyGrid,RViz Map,OFF,map,optional
+CM Stop Zone,/collision_monitor/phase5_stop,geometry_msgs/msg/PolygonStamped,RViz Polygon,OFF,base_footprint,debug only
+CM Slow Zone,/collision_monitor/phase5_slow,geometry_msgs/msg/PolygonStamped,RViz Polygon,OFF,base_footprint,debug only
+Raw MID-360,/cloud_registered_body,sensor_msgs/msg/PointCloud2,RViz PointCloud2,OFF,body,debug only
+Raw T-mini,/scan,sensor_msgs/msg/LaserScan,RViz LaserScan,OFF,laser_frame,debug only
+MPPI Candidate Trajectories,/trajectories,visualization_msgs/msg/MarkerArray,RViz MarkerArray namespace Candidate Trajectories,OFF,odom_chassis,debug only
+TF Debug,TF,tf2,RViz TF,OFF,all,debug only
+Aim Point,none,none,not implemented,NOT DISPLAYED,none,not authoritative

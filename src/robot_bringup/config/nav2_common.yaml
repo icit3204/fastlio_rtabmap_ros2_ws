@@ -72,7 +72,9 @@ controller_server:
       iteration_count: 4          # 2 -> 4 (增加优化迭代)
       prune_distance: 1.7
       regenerate_noises: false
-      visualize: false
+      # Visualization-only publishers: /trajectories and
+      # /transformed_global_plan. This does not change MPPI control behavior.
+      visualize: true
       # Current development MK-mini uses the labmate-derived Ackermann
       # backend.  Keep MPPI inside the already-qualified Gate/bridge limits.
       motion_model: Ackermann

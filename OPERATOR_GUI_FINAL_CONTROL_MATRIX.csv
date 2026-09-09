@@ -1,0 +1,8 @@
+control,authority,interface,type,enable_condition,effect,allowed
+START,Mission Manager,/mission/start,std_srvs/srv/Trigger,loaded valid RouteMission and legal mission state,start mission-owned NavigateToPose sequence,YES
+PAUSE,Mission Manager,/mission/pause,std_srvs/srv/SetBool,data=true and active mission,cancel current NavigateToPose and preserve waypoint,YES
+RESUME,Mission Manager,/mission/pause,std_srvs/srv/SetBool,data=false and paused mission,re-send preserved waypoint,YES
+CANCEL,Mission Manager,/mission/cancel,std_srvs/srv/Trigger,active/cancellable mission,cancel current goal and terminate mission without next goal,YES
+RESET SAFETY,Generic Safety Gate,/phase5/gate_test/arm or /vehicle_cmd_safety/arm,std_srvs/srv/SetBool,NOT AUTHORIZED FOR GUI YET,do not expose until production operator authority is frozen,NO
+Direct velocity,none,none,none,never,forbidden,NO
+Direct NavigateToPose,none,none,none,never,Mission Manager is sole mission action owner,NO

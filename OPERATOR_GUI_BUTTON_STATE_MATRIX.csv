@@ -1,0 +1,6 @@
+button,service,type,enabled_states,disabled_states,request
+START,/mission/start,std_srvs/srv/Trigger,RECEIVED,all other/UNKNOWN,Trigger.Request()
+PAUSE,/mission/pause,std_srvs/srv/SetBool,NAVIGATING/TEMPORARILY_BLOCKED,all other/UNKNOWN,SetBool(data=true)
+RESUME,/mission/pause,std_srvs/srv/SetBool,PAUSED,all other/UNKNOWN,SetBool(data=false)
+CANCEL,/mission/cancel,std_srvs/srv/Trigger,RECEIVED/PLANNING/NAVIGATING/PAUSED/CANCELLING/TEMPORARILY_BLOCKED,IDLE/VALIDATING/SUCCEEDED/CANCELLED/FAILED/BLOCKED/HELP_REQUIRED/UNKNOWN,Trigger.Request()
+RESET SAFETY,none,none,NEVER,ALWAYS,NOT IMPLEMENTED
