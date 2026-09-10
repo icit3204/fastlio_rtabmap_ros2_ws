@@ -17,6 +17,61 @@ import numpy as np
 import math
 
 
+def edge_arrow_points(start, end, fraction=0.62, head_length=14.0,
+                      half_width=5.0):
+    """Return a small triangular arrowhead pointing from *start* to *end*.
+
+    This is deliberately a pure geometry helper so the direction convention
+    can be regression-tested without creating a Qt scene.  Coordinates are
+    scene/pixel coordinates and the arrow is placed at ``fraction`` along the
+    directed segment.
+    """
+    x0, y0 = start
+    x1, y1 = end
+    dx, dy = x1 - x0, y1 - y0
+    length = math.hypot(dx, dy)
+    if length < 1e-9:
+        return None
+    ux, uy = dx / length, dy / length
+    px, py = -uy, ux
+    tip = (x0 + fraction * dx, y0 + fraction * dy)
+    base = (tip[0] - head_length * ux, tip[1] - head_length * uy)
+    return (
+        tip,
+        (base[0] + half_width * px, base[1] + half_width * py),
+        (base[0] - half_width * px, base[1] - half_width * py),
+    )
+
+
+def edge_label_position(start, end, perpendicular_offset=0.0):
+    """Return the midpoint label position with a deterministic offset."""
+    x0, y0 = start
+    x1, y1 = end
+    dx, dy = x1 - x0, y1 - y0
+    length = math.hypot(dx, dy)
+    if length < 1e-9:
+        return ((x0 + x1) / 2, (y0 + y1) / 2)
+    return (
+        (x0 + x1) / 2 - dy / length * perpendicular_offset,
+        (y0 + y1) / 2 + dx / length * perpendicular_offset,
+    )
+
+
+def offset_point_perpendicular(point, start, end, perpendicular_offset):
+    """Offset an arbitrary point using the directed segment normal."""
+    x, y = point
+    x0, y0 = start
+    x1, y1 = end
+    dx, dy = x1 - x0, y1 - y0
+    length = math.hypot(dx, dy)
+    if length < 1e-9:
+        return point
+    return (
+        x - dy / length * perpendicular_offset,
+        y + dx / length * perpendicular_offset,
+    )
+
+
 class MapView(QGraphicsView):
     """2D 地图视口：渲染底图、轨迹、节点、边、规划路径"""
 
@@ -170,6 +225,19 @@ class MapView(QGraphicsView):
             self._scene.removeItem(item)
         self._edge_items.clear()
 
+    @staticmethod
+    def _offset_points(points, offset):
+        """Offset a polyline by a scene-space perpendicular amount."""
+        if not points or abs(offset) < 1e-9:
+            return points
+        start, end = points[0], points[-1]
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        length = math.hypot(dx, dy)
+        if length < 1e-9:
+            return points
+        nx, ny = -dy / length, dx / length
+        return [(x + offset * nx, y + offset * ny) for x, y in points]
+
     def clear_planned_path(self):
         """清除规划路径叠加层 (F-U3)"""
         for item in self._planned_path_items:
@@ -296,18 +364,38 @@ class MapView(QGraphicsView):
         """
         self.clear_edges()
         wp_map = {w['id']: w for w in waypoints}
-        # 检测双向边对
-        edge_set = {(e['from_id'], e['to_id']) for e in edges}
-        drawn_bi = set()  # 已绘制的双向对，避免重复画线
+        # Keep separate persisted A->B and B->A records separate.  The old
+        # renderer collapsed these into one green line, which hid one edge's
+        # identity and direction.  Sorting by edge_id makes the visual offset
+        # stable without changing topology order or identity.
+        pair_groups = {}
+        for edge in edges:
+            key = frozenset([edge['from_id'], edge['to_id']])
+            pair_groups.setdefault(key, []).append(edge)
+
         for e in edges:
             pair_key = frozenset([e['from_id'], e['to_id']])
-            is_bi = (e['to_id'], e['from_id']) in edge_set
-            if is_bi:
-                if pair_key in drawn_bi:
-                    continue  # 双向边只画一次
-                drawn_bi.add(pair_key)
+            reverse_pair = [item for item in pair_groups.get(pair_key, [])
+                            if item is not e and
+                            item['from_id'] == e['to_id'] and
+                            item['to_id'] == e['from_id']]
+            paired = bool(reverse_pair)
+            pair_members = sorted(
+                pair_groups.get(pair_key, []),
+                key=lambda item: str(item.get('edge_id', '')),
+            )
+            pair_rank = pair_members.index(e) if e in pair_members else 0
+            line_offset = 10.0 if paired and pair_rank % 2 == 0 else (
+                -10.0 if paired else 0.0
+            )
+            # `_offset_points` uses the directed line normal.  Reverse the
+            # sign for the record whose direction is opposite the canonical
+            # low-node -> high-node orientation, keeping the two visual
+            # polylines on opposite physical sides of the connection.
+            if paired and e['from_id'] > e['to_id']:
+                line_offset *= -1
 
-            edge_color = '#1d9e75' if is_bi else '#ba7517'
+            edge_color = '#1d9e75' if paired or e.get('direction') == 'bi' else '#ba7517'
             # [IMPL] F-15.12 线宽统一 6.0px
             pen = QPen(QColor(edge_color), 6.0)
 
@@ -318,18 +406,21 @@ class MapView(QGraphicsView):
 
             if points and len(points) >= 2:
                 # 折线绘制：沿轨迹点序列
+                scene_points = [self._w2p(point['x'], point['y'])
+                                for point in points]
+                scene_points = self._offset_points(scene_points, line_offset)
                 path = QPainterPath()
-                first_px, first_py = self._w2p(points[0]['x'], points[0]['y'])
+                first_px, first_py = scene_points[0]
                 path.moveTo(first_px, first_py)
-                for pt in points[1:]:
-                    px, py = self._w2p(pt['x'], pt['y'])
+                for px, py in scene_points[1:]:
                     path.lineTo(px, py)
                 item = self._scene.addPath(path, pen)
+                item.setZValue(1)
                 self._edge_items.append(item)
 
-                # [IMPL] F-15.13 距离标注取轨迹中点
-                mid_idx = len(points) // 2
-                mx, my = self._w2p(points[mid_idx]['x'], points[mid_idx]['y'])
+                # Use the actual rendered polyline for arrow/label placement.
+                mid_idx = len(scene_points) // 2
+                mx, my = scene_points[mid_idx]
             else:
                 # fallback：无轨迹时画直线
                 a = wp_map.get(e['from_id'])
@@ -338,16 +429,58 @@ class MapView(QGraphicsView):
                     continue
                 x0, y0 = self._w2p(a['x'], a['y'])
                 x1, y1 = self._w2p(b['x'], b['y'])
+                (x0, y0), (x1, y1) = self._offset_points(
+                    [(x0, y0), (x1, y1)], line_offset
+                )
                 item = self._scene.addLine(x0, y0, x1, y1, pen)
+                item.setZValue(1)
                 self._edge_items.append(item)
                 # 距离标注取两端中点
                 mx, my = (x0 + x1) / 2, (y0 + y1) / 2
 
-            label = self._scene.addText(f"{e['length']:.2f}m")
-            label.setDefaultTextColor(QColor('#1d9e75' if is_bi else '#888780'))
+            start = scene_points[0] if points and len(points) >= 2 else (x0, y0)
+            end = scene_points[-1] if points and len(points) >= 2 else (x1, y1)
+
+            # Direction is always the persisted from_id -> to_id direction.
+            # A single persisted `bi` edge represents both legal directions,
+            # so show a second reverse arrow without inventing a second ID.
+            arrow_specs = [(start, end, 0.62)]
+            if e.get('direction') == 'bi':
+                arrow_specs.append((end, start, 0.38))
+            for arrow_start, arrow_end, fraction in arrow_specs:
+                arrow = edge_arrow_points(arrow_start, arrow_end, fraction)
+                if arrow is None:
+                    continue
+                arrow_item = self._scene.addPolygon(
+                    QPolygonF([QPointF(x, y) for x, y in arrow]),
+                    QPen(QColor(edge_color), 1.0),
+                    QBrush(QColor(edge_color)),
+                )
+                arrow_item.setZValue(3)
+                self._edge_items.append(arrow_item)
+
+            label_x, label_y = mx, my
+            if paired:
+                # Place text around a common low-node -> high-node normal,
+                # rather than each directed record's own normal.  This makes
+                # the two labels separate in the same physical way as their
+                # paired lines, including for a reversed record.
+                reference_start, reference_end = start, end
+                if e['from_id'] > e['to_id']:
+                    reference_start, reference_end = end, start
+                label_x, label_y = offset_point_perpendicular(
+                    (mx, my), reference_start, reference_end,
+                    18.0 if pair_rank % 2 == 0 else -18.0,
+                )
+
+            label = self._scene.addText(
+                f"{e.get('edge_id', '')}\n{e['length']:.2f}m"
+            )
+            label.setDefaultTextColor(QColor('#1d6f54' if paired or e.get('direction') == 'bi' else '#854f0b'))
             label_font = mono_font(7)
             label.setFont(label_font)
-            label.setPos(mx + 4, my - 4)
+            label.setPos(label_x + 4, label_y - 10)
+            label.setZValue(4)
             self._edge_items.append(label)
 
     # ─── 规划路径绘制 (F-6.3) ────────────────────────────
@@ -360,6 +493,7 @@ class MapView(QGraphicsView):
             x0, y0 = self._w2p(path_nodes[i-1]['x'], path_nodes[i-1]['y'])
             x1, y1 = self._w2p(path_nodes[i]['x'], path_nodes[i]['y'])
             item = self._scene.addLine(x0, y0, x1, y1, pen)
+            item.setZValue(2)
             self._planned_path_items.append(item)
 
     # ─── 节点命中检测 (F-17.1) ──────────────────────────

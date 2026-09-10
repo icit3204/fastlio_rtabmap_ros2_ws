@@ -1,0 +1,8 @@
+Visual element,Source authority,Rendering behavior,Default,Regression boundary
+Direction arrow,edge.from_id -> edge.to_id,Filled arrowhead along each rendered directed edge,ON,No routing/topology mutation
+Paired reverse geometry,Separate persisted reverse edge records,Deterministic +/-10 px perpendicular offset,ON,Both edge records retained
+Edge ID label,edge.edge_id loaded from persisted topology,edge-id plus existing length at rendered midpoint,ON,Actual edge identity preserved
+Single bidirectional record,edge.direction=bi,Two opposite arrowheads on one retained edge geometry,ON,No duplicate edge identity
+Selected route,existing path_nodes route selection,Existing blue dashed overlay at z-order 2,PRESERVED,No Dijkstra/RouteMission change
+Waypoint labels,existing waypoint label,Existing node label rendering,PRESERVED,No node visual redesign
+Show Edge IDs toggle,None,No toggle introduced; labels are always visible,N/A,View-only behavior only
