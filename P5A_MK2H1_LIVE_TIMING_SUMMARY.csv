@@ -1,0 +1,21 @@
+Signal or event,Observed value,Result or note
+Launch start,1789045284.9288437,Canonical H1 launch
+Core processes start,1789045290.350-1789045290.380,RTAB sensors localization safety GUI and RViz
+Sensor freshness boundary OPEN,1789045296.771604300,Real dual-sensor groups admitted
+FAST-LIO admission,approximately 1789045297.760,10 fresh synchronized groups
+MID-360 point frequency,approximately 9.154 Hz sampled,Advancing real hardware stream
+T-mini scan frequency,10.00 Hz driver report,Advancing real hardware stream
+Odometry frequency,approximately 9.018 Hz sampled,Advancing FAST-LIO output
+Nav2 servers start,1789045300.277-1789045313.276,Controller planner BT and Mission Manager
+Controller lifecycle,ACTIVE [3],Ready before route gate
+Planner lifecycle,ACTIVE [3],Ready before route gate
+BT Navigator lifecycle,ACTIVE [3],Ready before route gate
+Collision Monitor lifecycle,ACTIVE [3],Ready before route gate
+Live localized pose,"x=-7.260 y=12.452 yaw=-96.1 deg",map to base_footprint
+Nearest accepted PlanNav node,"node 1 x=0.8461 y=-2.0429 distance=16.608 m",Route/localization admission failed
+Route publication count,0,Intentionally withheld
+Gate arm requests,0,Gate remained DISARMED_ZERO
+Safe commanded speed,0.000 m/s,No motion authority
+Shutdown requested,1789045612.4119647,SIGINT after blocker proved
+Final clean process exit,1789045617.7899339,RTAB completed runtime DB save
+CAN TX packets before/after,0 / 0,No CAN use

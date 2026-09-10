@@ -1,0 +1,15 @@
+evidence_set,source_database,target_database,correspondences,association,theta_deg,tx_m,ty_m,rms_residual_m,max_residual_m,orientation_rms_deg,orientation_max_deg,result
+underGround topology nodes,plan_nav/underGround_split1.db,its own optimized graph,20,timestamp matched,-0.005586,-0.005204,0.002073,0.000191,0.000479,0.002804,0.004529,proves underGround belongs to its separate DB
+canonical sibling topology nodes,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph,9,timestamp matched,0.579629264,-0.060278951,-0.288028419,0.206168305,0.263609391,0.537695,0.816725,accepted SE(2) fit
+canonical sibling edge trajectories,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph,188,timestamp matched using accepted node fit,0.579629264,-0.060278951,-0.288028419,0.224074447,0.376378575,UNKNOWN,UNKNOWN,independent dense validation accepted
+whole canonical raw graph,map/rtabmap_2d.db raw Node.pose,map/rtabmap_2d.db optimized graph,865,node ID matched,-0.981931,-0.177971,3.256584,3.136053,6.035822,UNKNOWN,UNKNOWN,global graph is not one rigid correction; do not transform arbitrary raw topology
+MK2H1 live pose,map TF,map/rtabmap_2d.db optimized graph node 945,1,live pose to optimized endpoint,NA,NA,NA,0.006847,0.006847,NA,NA,confirms live canonical map authority
+node 1,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 59,1,timestamp 1784709901.132,0.579629264,-0.060278951,-0.288028419,0.242751,0.242751,NA,0.163310,fit residual
+node 2,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 102,1,timestamp 1784709962.726,0.579629264,-0.060278951,-0.288028419,0.263609,0.263609,NA,0.502707,fit residual
+node 3,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 170,1,timestamp 1784710078.132,0.579629264,-0.060278951,-0.288028419,0.240325,0.240325,NA,0.767409,fit residual
+node 4,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 17,1,timestamp 1784709843.832,0.579629264,-0.060278951,-0.288028419,0.201085,0.201085,NA,0.797810,fit residual
+node 5,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 339,1,timestamp 1784710329.232,0.579629264,-0.060278951,-0.288028419,0.175479,0.175479,NA,0.495577,fit residual
+node 6,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 332,1,timestamp 1784710318.532,0.579629264,-0.060278951,-0.288028419,0.166076,0.166076,NA,0.169652,fit residual
+node 7,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 322,1,timestamp 1784710303.632,0.579629264,-0.060278951,-0.288028419,0.154539,0.154539,NA,0.363903,fit residual
+node 8,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 348,1,timestamp 1784710343.432,0.579629264,-0.060278951,-0.288028419,0.238569,0.238569,NA,0.152983,fit residual
+node 9,map/采集/图书馆2.db,map/rtabmap_2d.db optimized graph node 292,1,timestamp 1784710263.532,0.579629264,-0.060278951,-0.288028419,0.129489,0.129489,NA,0.816725,fit residual

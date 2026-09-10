@@ -1,0 +1,23 @@
+Display item,Topic or interface,Observed publisher/authority,MK2H1 result,Qualification note
+Mission State,/mission/state,mission_manager,Live publisher present; state IDLE,No route loaded and no mission started
+Route metadata,/mission/route,PlanNav MissionBridge,No publisher during run,Correctly withheld due route/localization mismatch
+Nav2 lifecycle,lifecycle services and action servers,controller_server/planner_server/bt_navigator,All ACTIVE,No NavigateToPose goal issued
+MID-360,/livox/lidar and /livox/imu,livox_lidar_publisher,LIVE real hardware,No demo publisher
+T-mini,/scan,ydlidar_ros2_driver_node,LIVE real hardware at driver-reported 10 Hz,No demo publisher
+FAST-LIO odometry,/Odometry,fastlio_mapping,LIVE and advancing,Stationary pose remained bounded
+Map,/map,rtabmap,LIVE one publisher,Canonical reference used through runtime copy
+Localization validity,/system/localization_valid,localization_validity_monitor,LIVE one real publisher,Transitions included VALID and intermittent ODOM_STALE under load
+Perception validity,/system/collision_monitor_valid,required_perception_validity,LIVE one real publisher,Dual-sensor real freshness authority
+Controller valid,/system/controller_valid,stationary_gate_permission_fixture,LIVE one publisher,MOCK PERMISSION NOT PHYSICAL CHASSIS HEALTH
+Local costmap,/local_costmap/costmap,controller_server local_costmap,LIVE,Real MID-360 and T-mini observation sources configured
+Global costmap,/global_costmap/costmap,planner_server global_costmap,LIVE,Static layer subscribed to real /map
+Collision Monitor,/cmd_vel,collision_monitor,Lifecycle ACTIVE,No active command because mission was not admitted
+Generic Gate,/phase5/gate_test/state,guarded_vehicle_cmd_gate,LIVE DISARMED_ZERO,Fail-closed and output zero
+Safe commanded speed,/vehicle_cmd_safe,guarded_vehicle_cmd_gate,LIVE 0.000 m/s,Gate was not armed
+Global plan,/plan,planner_server,Authority present but no path published,No goal issued
+Optimal trajectory,/trajectories,controller_server,Authority present but no trajectory produced,No FollowPath goal issued
+Nearest point,/visualization/nearest_path_point,navigation_visualization_helper,Helper live; no marker without /plan,Observation-only
+Current goal,/visualization/current_navigation_goal,navigation_visualization_helper,Helper live; no marker without RouteMission,Observation-only
+Operator GUI,subscriptions above,operator_gui,Graphical window live,Displayed real validity Gate state and zero safe speed
+RViz,canonical_navigation.rviz,rviz2,Graphical process live and /map received,Active-goal displays unavailable because mission was withheld
+Backend,internal transport,wheelchair_controller,MockTransport confirmed,SocketCAN forbidden

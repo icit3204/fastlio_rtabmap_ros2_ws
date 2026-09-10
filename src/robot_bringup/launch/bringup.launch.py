@@ -51,6 +51,8 @@ def generate_launch_description() -> LaunchDescription:
     stationary_planner_mock_gate = LaunchConfiguration('stationary_planner_mock_gate')
     stationary_bt_navigator_mock_gate = LaunchConfiguration('stationary_bt_navigator_mock_gate')
     stationary_mission_manager_mock_gate = LaunchConfiguration('stationary_mission_manager_mock_gate')
+    mission_manager_expected_topology_version = LaunchConfiguration('mission_manager_expected_topology_version')
+    stationary_real_localization_validity = LaunchConfiguration('stationary_real_localization_validity')
     database_path = LaunchConfiguration('database_path')
     rtabmap_use_working_copy = LaunchConfiguration('rtabmap_use_working_copy')
     rtabmap_runtime_dir = LaunchConfiguration('rtabmap_runtime_dir')
@@ -87,6 +89,12 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('stationary_planner_mock_gate', default_value='false', description='Add real planner_server plus MPPI above the canonical safety chain; hard-locked MockTransport, no BT/CAN'),
         DeclareLaunchArgument('stationary_bt_navigator_mock_gate', default_value='false', description='Add real BT Navigator/NavigateToPose above planner and MPPI; Ackermann-safe recovery tree, no behavior_server, hard-locked MockTransport'),
         DeclareLaunchArgument('stationary_mission_manager_mock_gate', default_value='false', description='Add the typed Mission Manager above real NavigateToPose; hard-locked MockTransport and no CAN'),
+        DeclareLaunchArgument(
+            'mission_manager_expected_topology_version', default_value='v1',
+            description='Exact topology version accepted by Mission Manager; defaults to the qualified synthetic-test value'),
+        DeclareLaunchArgument(
+            'stationary_real_localization_validity', default_value='false',
+            description='Replace only the stationary localization permission fixture with the qualified live localization-validity monitor; controller permission remains mock-only'),
         DeclareLaunchArgument('collision_monitor_params_file', default_value=PathJoinSubstitution([robot_bringup_share, 'config', 'collision_monitor_dual_sensor.yaml']), description='Canonical dual-sensor Collision Monitor parameters'),
         DeclareLaunchArgument(
             'database_path',
@@ -358,11 +366,12 @@ def generate_launch_description() -> LaunchDescription:
                    or stationary_mission_manager_mock_gate.perform(context).lower() in ('true', '1', 'yes'))
         if not (with_gate or with_chain or with_mppi or with_planner or with_bt):
             return []
+        real_localization = stationary_real_localization_validity.perform(context).lower() in ('true', '1', 'yes')
         safety_share = Path(os.environ.get('COLCON_PREFIX_PATH', '').split(':')[0]) / 'share' / 'vehicle_cmd_safety'
         if not safety_share.exists():
             safety_share = Path('/home/dog/fastlio_rtabmap_ros2_ws/install/vehicle_cmd_safety/share/vehicle_cmd_safety')
         config = safety_share / 'config'
-        return [
+        actions = [
             Node(package='vehicle_cmd_safety', executable='collision_monitor_validity_monitor',
                  name='mid360_collision_validity', output='screen',
                  parameters=[str(config / 'phase5_dual_mid360_validity.yaml')]),
@@ -374,7 +383,7 @@ def generate_launch_description() -> LaunchDescription:
                  parameters=[{'input_timeout_sec': 0.25, 'recovery_consecutive_ticks': 3, 'heartbeat_hz': 20.0}]),
             Node(package='vehicle_cmd_safety', executable='phase4_p4c_permission_fixture',
                  name='stationary_gate_permission_fixture', output='screen',
-                 parameters=[{'publish_localization': True, 'publish_controller': True,
+                 parameters=[{'publish_localization': not real_localization, 'publish_controller': True,
                               'publish_collision': False, 'publish_rate_hz': 20.0}]),
             Node(package='vehicle_cmd_safety', executable='guarded_vehicle_cmd_gate',
                  name='guarded_vehicle_cmd_gate', output='screen',
@@ -383,6 +392,12 @@ def generate_launch_description() -> LaunchDescription:
                                'output_topic': '/vehicle_cmd_safe'} if (with_mppi or with_planner or with_bt) else
                               {'output_topic': '/vehicle_cmd_safe'} if with_chain else {})]),
         ]
+        if real_localization:
+            actions.insert(3, Node(
+                package='vehicle_cmd_safety', executable='localization_validity_monitor',
+                name='localization_validity_monitor', output='screen',
+                parameters=[str(config / 'phase5_localization_validity.yaml')]))
+        return actions
 
     def stationary_command_chain_actions(context):
         with_chain = stationary_command_chain_dry_run.perform(context).lower() in ('true', '1', 'yes')
@@ -501,7 +516,7 @@ def generate_launch_description() -> LaunchDescription:
         return [TimerAction(period=23.0, actions=[
             Node(package='parking_robot_mission_manager', executable='mission_manager_node',
                  name='mission_manager', output='screen', parameters=[{
-                     'expected_topology_version': 'v1',
+                     'expected_topology_version': mission_manager_expected_topology_version,
                      'navigate_to_pose_action': '/navigate_to_pose',
                      'odometry_topic': '/Odometry',
                      'raw_command_topic': '/cmd_vel_nav',

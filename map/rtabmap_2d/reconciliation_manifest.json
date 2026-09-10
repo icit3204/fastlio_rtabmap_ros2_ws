@@ -1,0 +1,65 @@
+{
+  "coordinate_semantics": {
+    "edge_lengths": "unchanged under rigid transform",
+    "source": "RTAB Node.pose raw odometry trajectory",
+    "target": "RTAB optimized graph map frame via audited rigid SE(2) approximation",
+    "yaw": "source yaw plus SE(2) yaw, normalized",
+    "z": "unchanged"
+  },
+  "disposition": "CREATE_CANONICAL_TRANSFORMED_TOPOLOGY_COPY",
+  "fit_evidence": {
+    "node_correspondences": 9,
+    "node_max_residual_m": 0.2636093914065318,
+    "node_rms_residual_m": 0.20616830493565563,
+    "trajectory_correspondences": 188,
+    "trajectory_max_residual_m": 0.37637857487463,
+    "trajectory_rms_residual_m": 0.22407444744968932
+  },
+  "identity": {
+    "legacy_edge_records_persisted_as": [
+      "edge-000001",
+      "edge-000002",
+      "edge-000003",
+      "edge-000004",
+      "edge-000005",
+      "edge-000006"
+    ],
+    "node_ids_preserved": true,
+    "topology_id": "topology-sha256:baad7bc366cb8d1dfde380bda81e2d92d0b3ddbb83a943ebd712c2c9fbdffea7",
+    "topology_version": "sha256:f8bd2b688ce827446ea88f42f19777f97c918c2dc1832091fa9b379a85000d70"
+  },
+  "offline_route_probe": {
+    "edge_directions": [
+      1,
+      1
+    ],
+    "edge_ids": [
+      "edge-000002",
+      "edge-000001"
+    ],
+    "frame": "map",
+    "node_ids": [
+      "4",
+      "1",
+      "2"
+    ],
+    "result": "ROUTE_SPEC_BUILT"
+  },
+  "schema_version": 1,
+  "se2": {
+    "theta_deg": 0.5796292640690348,
+    "theta_rad": 0.010116439098916323,
+    "tx_m": -0.060278951352515264,
+    "ty_m": -0.2880284187648243
+  },
+  "source_database": "/home/dog/fastlio_rtabmap_ros2_ws/map/\u91c7\u96c6/\u56fe\u4e66\u99862.db",
+  "source_database_sha256": "73788305089e9ceb302ae8a68c3164ca35e2e1cd985458b755eeedee5efadaed",
+  "source_edge_format": "legacy-positional",
+  "source_edges_sha256": "d39a76ddea39b485518b9a44a2df8d16941a0739a9f2d9492fca3efeca8f4dc5",
+  "source_nodes_sha256": "569beb34760a3da2012746723f9a2bb2e06bc27cd3d037fcd11e2906ae6fd2b5",
+  "source_workspace": "/home/dog/fastlio_rtabmap_ros2_ws/map/\u91c7\u96c6/\u56fe\u4e66\u99862",
+  "target_database": "/home/dog/fastlio_rtabmap_ros2_ws/map/rtabmap_2d.db",
+  "target_database_sha256": "73788305089e9ceb302ae8a68c3164ca35e2e1cd985458b755eeedee5efadaed",
+  "target_workspace": "/home/dog/fastlio_rtabmap_ros2_ws/map/rtabmap_2d",
+  "tool_version": "p5a-mk2h1r-se2-v1"
+}

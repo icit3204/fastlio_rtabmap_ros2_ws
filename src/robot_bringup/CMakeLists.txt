@@ -71,6 +71,9 @@ if(BUILD_TESTING)
   ament_add_test(test_mk2f4_mission_manager_contract
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO
     COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2f4_mission_manager_contract.py)
+  ament_add_test(test_mk2h1_live_operator_contract
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1_live_operator_contract.py)
   set_tests_properties(
     test_mk2c_static_contract
     test_mk2c_retired_detector_guard
@@ -81,6 +84,7 @@ if(BUILD_TESTING)
     test_mk2f2a_map_runtime_hygiene_contract
     test_mk2f3_bt_navigator_contract
     test_mk2f4_mission_manager_contract
+    test_mk2h1_live_operator_contract
     PROPERTIES ENVIRONMENT "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1")
 endif()
 
