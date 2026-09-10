@@ -20,14 +20,13 @@
 from core.ui_font import mono_font  # [ADAPT-UBU-02] 跨平台等宽字体
 import os
 import sys
-import json
 import uuid
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QFileDialog, QStatusBar, QLabel, QShortcut,
 )
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 
 from core.db_loader import load_db
@@ -36,11 +35,8 @@ from core.db_loader import load_db
 from core.trajectory import TrajectoryPlayer
 from core.topology import TopologyManager
 from core.pathfinder import build_graph, find_path, interpolate_path, concat_trajectory_segments  # [IMPL] F-15.14
-from core.udp_sender import UdpSender
 from core.mission_bridge import (
-    AuthorityMode,
     MissionBridgeThread,
-    TERMINAL_MISSION_STATES,
     verify_route_topology_current,
 )
 from core.topology_identity import build_sparse_route_spec, load_topology, read_manifest
@@ -85,19 +81,10 @@ class MainWindow(QMainWindow):
         self.db_data = None
         self.player = None
         self.topology = None
-        self.udp_sender = None
-        self._current_traj = []  # 当前发送中的插值轨迹
         self._selected_nodes = []  # 规划模式下的节点选择队列
-        self._udp_ip = '127.0.0.1'
-        self._udp_port = 14550
         self._roboflow_api_key = ''
         self._yes_conf = 0.65
         self._axis_tolerance = 0.2
-        self._pursuit_r_min = 0.5
-        self._pursuit_r_max = 1.5
-        self._pursuit_delta_thresh = 30.0
-        self._pursuit_v_straight = 5000.0
-        self._pursuit_v_turn = 3000.0
         self._load_settings()
 
         self._setup_ui()
@@ -111,21 +98,9 @@ class MainWindow(QMainWindow):
         self.pic_overlay = None  # 延迟创建，首次播放时才 new PicOverlay(self.map_view)
         self._hover_preview = None  # [IMPL] F-14.1/F-14.5 悬停预览浮层
 
-        # [IMPL] F-12.7 PoseReceiver 线程管理
-        self._pose_receiver = None       # PoseReceiver | None
-        self._plan_publisher = None      # PlanPublisher | None
         self._mission_bridge = None      # MissionBridgeThread | None
-        self._authority_mode = AuthorityMode.LEGACY.value
         self._pending_route_spec = None
         self._published_route_spec = None
-        self._active_mission_id = ''
-        self._active_route_id = ''
-        self._latest_mission_state = None
-        self._last_pose_time = 0.0       # 最后一次收到 TF 的时间戳
-        self._current_robot_pose = None  # 缓存的实时机器人位姿
-        self._pose_timeout_timer = QTimer(self)
-        self._pose_timeout_timer.setInterval(1000)
-        self._pose_timeout_timer.timeout.connect(self._check_pose_timeout)
 
     # ─── F-10.2 启动配置加载 ────────────────────────────
 
@@ -140,16 +115,9 @@ class MainWindow(QMainWindow):
                 cfg = json.load(f)
         except (json.JSONDecodeError, OSError):
             return
-        self._udp_ip = cfg.get('udp_ip', self._udp_ip)
-        self._udp_port = int(cfg.get('udp_port', self._udp_port))
         self._roboflow_api_key = cfg.get('roboflow_api_key', '')
         self._yes_conf = float(cfg.get('yes_conf_default', 0.65))
         self._axis_tolerance = float(cfg.get('axis_tolerance_default', 0.2))
-        self._pursuit_r_min = float(cfg.get('pursuit_r_min', 0.5))
-        self._pursuit_r_max = float(cfg.get('pursuit_r_max', 1.5))
-        self._pursuit_delta_thresh = float(cfg.get('pursuit_delta_thresh', 30.0))
-        self._pursuit_v_straight = float(cfg.get('pursuit_v_straight', 5000.0))
-        self._pursuit_v_turn = float(cfg.get('pursuit_v_turn', 3000.0))
         cfg.setdefault('pic_playback_speed', 1.0)
         cfg.setdefault('pic_overlay_geometry', [1480, 76, 300, 320])
         self._settings = cfg
@@ -360,17 +328,9 @@ class MainWindow(QMainWindow):
         self.sidebar.reset_requested.connect(self._on_reset)
         self.sidebar.process_data_requested.connect(self._on_process_data)
         self.sidebar.auto_node_requested.connect(self._on_auto_node)
-        # [IMPL] F-12.1 模式切换信号
-        self.sidebar.mode_changed.connect(self._on_mode_changed)
-        self.sidebar.authority_mode_changed.connect(self._on_authority_mode_changed)
         self.sidebar.mission_publish_requested.connect(self._on_publish_mission_requested)
-        self.sidebar.mission_start_requested.connect(self._on_start_mission_requested)
-        self.sidebar.mission_cancel_requested.connect(self._on_cancel_mission_requested)
-        self.sidebar.mission_pause_requested.connect(self._on_pause_mission_requested)
-        self.sidebar.mission_resume_requested.connect(self._on_resume_mission_requested)
         self.log_panel.lock_requested.connect(self.lock_current_node)
-        self.log_panel.config_changed.connect(self._on_config_change)
-        self.log_panel.traj_params_changed.connect(self._on_traj_params_change)
+        self.log_panel.detector_config_changed.connect(self._on_detector_config_change)
         self.map_view.world_clicked.connect(self._on_map_click)
         # [IMPL] F-17.1 平移模式点击节点 → 注释编辑
         self.map_view.annotation_requested.connect(self._on_annotation_request)
@@ -394,13 +354,6 @@ class MainWindow(QMainWindow):
 
         # F-10.2 注入识别参数初值到右栏输入框
         self.log_panel.set_detector_defaults(self._yes_conf, self._axis_tolerance)
-        # F-11.9 注入轨迹控制参数初值
-        self.log_panel.set_traj_defaults(
-            self._pursuit_r_min, self._pursuit_r_max,
-            self._pursuit_delta_thresh,
-            self._pursuit_v_straight, self._pursuit_v_turn,
-        )
-
         # [IMPL] F-14.1/F-14.5 节点悬停信号连接
         self.map_view.node_hover_enter.connect(self._on_node_hover_enter)
         self.map_view.node_hover_leave.connect(self._on_node_hover_leave)
@@ -872,44 +825,9 @@ class MainWindow(QMainWindow):
                         self.map_view.draw_planned_path(
                             traj if traj else path_nodes
                         )
-                        # [IMPL] F-12.6 操作模式路径拼接：robot → wp_a 直线段
-                        if self._is_operation_mode() and self._current_robot_pose is not None:
-                            rx = self._current_robot_pose['x']
-                            ry = self._current_robot_pose['y']
-                            straight_nodes = _interpolate_line(
-                                rx, ry, start['x'], start['y'], step=0.05
-                            )
-                            if straight_nodes:
-                                # 直线段不含 timestamp，使用 traj[0] 的 timestamp 填充
-                                t0 = traj[0]['timestamp'] if traj else 0.0
-                                for pt in straight_nodes:
-                                    pt['timestamp'] = t0
-                                traj = straight_nodes + traj
-                        # 侧栏 UDP 预览：新规划清除旧内容，写入摘要
-                        self.sidebar.clear_udp_preview()
-                        self.sidebar.append_udp_info(
-                            f'{start["label"]} → {end["label"]}  '
-                            f'{total_len:.2f}m  {len(traj)}点  '
-                            f'步长约{self._calc_traj_step(traj):.2f}m',
-                            '#1d9e75'
-                        )
-                        self.sidebar.append_udp_info(
-                            f'目标 {self._udp_ip}:{self._udp_port}  '
-                            f'间隔约{self._calc_traj_dt(traj):.3f}s',
-                            '#888780'
-                        )
                         self._prepare_mission_route(path_ids)
-                        if self._authority_mode == AuthorityMode.LEGACY.value:
-                            self._start_udp_send(traj)
-                        else:
-                            self._stop_udp_send()
-                            self.log('mission_nav2: UDP disabled; dense /plan_nav is display-only', 'info')
-                        # [IMPL] F-16.1 操作模式下更新 /plan_nav 话题路径
-                        if self._is_operation_mode() and self._plan_publisher:
-                            self._plan_publisher.set_path(traj)
-                            self.log(f'/plan_nav 路径已更新: {len(traj)} 个轨迹点', 'info')
                         self.log(
-                            f'UDP 轨迹: {len(traj)} 个插值点 '
+                            f'路由轨迹: {len(traj)} 个插值点 '
                             f'(步长约 {self._calc_traj_step(traj):.2f}m)', 'info'
                         )
                     else:
@@ -1084,7 +1002,9 @@ class MainWindow(QMainWindow):
         self.map_view.clear_waypoints()
         self.map_view.clear_edges()
         self.map_view.clear_planned_path()
-        self.sidebar.clear_udp_preview()
+        self._pending_route_spec = None
+        self.sidebar.set_route_publish_enabled(False)
+        self.sidebar.set_mission_status('route: select Start and Goal')
         self._status_path.setText('路径: --')
         self._status_node.setText(
             f'节点: {len(self.topology.waypoints)} | '
@@ -1144,67 +1064,15 @@ class MainWindow(QMainWindow):
 
     def _on_mode_changed(self, mode: str):
         """处理模式切换：通知子组件 + 启停 PoseReceiver"""
-        op = (mode == 'op')
-        # 1. 通知各子组件切换 UI 状态
-        self.sidebar.set_operation_mode(op)
-        self.log_panel.set_operation_mode(op)
-        self.map_view.set_operation_mode(op)
-
-        if op:
-            # 2. 操作模式：初始化 🚗 图元（需 map 已加载）
-            if self.map_view.map_meta:
-                self.map_view.init_car_indicator()
-            # 3. 启动 ROS2 位姿接收线程
-            self._start_pose_receiver()
-            # 4. 启动 /plan 发布线程
-            self._start_plan_publisher()
-            if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
-                self._start_mission_bridge()
-        else:
-            self._stop_mission_bridge()
-            # 4. 停止 /plan 发布线程
-            self._stop_plan_publisher()
-            # 5. 调试模式：停止位姿接收线程
-            self._stop_pose_receiver()
-
-        self.log(f'已切换到{"操作" if op else "调试"}模式', 'info')
+        self.log('历史操作模式已隔离；请使用 Operator GUI 进行运行时监督', 'warn')
 
     def _start_pose_receiver(self):
         """启动 ROS2 位姿接收线程"""
-        from core.pose_receiver import PoseReceiver
-        self._stop_pose_receiver()  # 防止重复启动
-        self._pose_receiver = PoseReceiver(self)
-        self._pose_receiver.pose_updated.connect(self._on_pose_updated)
-        self._pose_receiver.error_occurred.connect(self._on_pose_error)
-        self._pose_receiver.connected.connect(
-            lambda msg: self.log(msg, 'info')
-        )
-        self._pose_receiver.start()
-        import time
-        self._last_pose_time = time.time()
-        self._pose_timeout_timer.start()
-
-    def _stop_pose_receiver(self):
-        """停止 ROS2 位姿接收线程"""
-        self._pose_timeout_timer.stop()
-        if self._pose_receiver and self._pose_receiver.isRunning():
-            self._pose_receiver.stop()
-            self._pose_receiver = None
+        self.log('历史 PlanNav 运行模式已隔离', 'warn')
 
     def _start_plan_publisher(self):
         """启动 /plan_nav 话题发布线程"""
-        from core.nav_publisher import PlanPublisher
-        self._stop_plan_publisher()
-        self._plan_publisher = PlanPublisher(self)
-        self._plan_publisher.log_message.connect(self.log)
-        self._plan_publisher.connected.connect(lambda msg: self.log(msg, 'info'))
-        self._plan_publisher.start()
-
-    def _stop_plan_publisher(self):
-        """停止 /plan_nav 话题发布线程"""
-        if self._plan_publisher and self._plan_publisher.isRunning():
-            self._plan_publisher.stop()
-            self._plan_publisher = None
+        self.log('历史 /plan_nav 运行时发布已隔离', 'warn')
 
     def _on_pose_updated(self, pose: dict):
         """主线程：收到新位姿，更新 🚗 和状态灯"""
@@ -1237,22 +1105,11 @@ class MainWindow(QMainWindow):
         return self.sidebar._mode_btn.current_mode == 'op'
 
     def _on_authority_mode_changed(self, mode: str):
-        self._authority_mode = mode if mode in {m.value for m in AuthorityMode} else AuthorityMode.LEGACY.value
-        if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
-            self._stop_udp_send()
-            if self._is_operation_mode():
-                self._start_mission_bridge()
-        else:
-            self._stop_mission_bridge()
-        self._refresh_mission_controls()
-        self.sidebar.set_mission_status(f'mode: {self._authority_mode}')
-        self.log(f'authority mode: {self._authority_mode}', 'info')
+        self.log('历史运行时 authority mode 已隔离', 'warn')
 
     def _prepare_mission_route(self, path_ids: list[int]):
         self._pending_route_spec = None
         self._published_route_spec = None
-        self._active_mission_id = ''
-        self._active_route_id = ''
         if not self.topology:
             self._set_mission_rejection('TOPOLOGY_NOT_LOADED', 'topology is not loaded')
             return
@@ -1274,24 +1131,23 @@ class MainWindow(QMainWindow):
             return
         self._pending_route_spec = result.route
         self.sidebar.set_mission_status(
-            f'mode: {self._authority_mode}\n'
-            f'mission ready\n'
+            f'route ready\n'
+            f'mission: {result.route.mission_id}\n'
             f'route: {result.route.route_id}\n'
             f'topology: {result.route.topology_version}'
         )
-        self._refresh_mission_controls()
+        self.sidebar.set_route_publish_enabled(True)
 
     def _set_mission_rejection(self, reason: str, detail: str):
-        self.sidebar.set_mission_status(f'mode: {self._authority_mode}\n{reason}\n{detail}')
+        self.sidebar.set_mission_status(f'{reason}\n{detail}')
         self.log(f'mission route rejected: {reason} ({detail})', 'error')
-        self._refresh_mission_controls()
+        self.sidebar.set_route_publish_enabled(False)
 
     def _start_mission_bridge(self):
         if self._mission_bridge and self._mission_bridge.isRunning():
             return
         self._mission_bridge = MissionBridgeThread(self)
-        self._mission_bridge.mission_state_received.connect(self._on_mission_state_received)
-        self._mission_bridge.service_result_received.connect(self._on_mission_service_result)
+        self._mission_bridge.route_published.connect(self._on_route_published)
         self._mission_bridge.connected.connect(lambda msg: self.log(msg, 'info'))
         self._mission_bridge.error_occurred.connect(lambda msg: self.log(msg, 'error'))
         self._mission_bridge.start()
@@ -1302,12 +1158,6 @@ class MainWindow(QMainWindow):
         self._mission_bridge = None
 
     def _on_publish_mission_requested(self):
-        if self._authority_mode != AuthorityMode.MISSION_NAV2.value:
-            self._set_mission_rejection('MISSION_MODE_DISABLED', 'select mission_nav2 mode first')
-            return
-        if self._mission_active():
-            self._set_mission_rejection('MISSION_ALREADY_ACTIVE', 'wait for terminal mission state before publishing another mission')
-            return
         if self._pending_route_spec is None:
             self._set_mission_rejection('NO_TOPOLOGICAL_ROUTE', 'select a valid route first')
             return
@@ -1320,134 +1170,29 @@ class MainWindow(QMainWindow):
             self._set_mission_rejection('MISSION_BRIDGE_UNAVAILABLE', 'mission bridge is not ready')
             return
         self._published_route_spec = self._pending_route_spec
-        self._active_mission_id = self._pending_route_spec.mission_id
-        self._active_route_id = self._pending_route_spec.route_id
         self.sidebar.set_mission_status(
-            f'mode: {self._authority_mode}\n'
-            f'published: {self._active_mission_id}\n'
-            f'route: {self._active_route_id}\n'
-            'waiting for RECEIVED'
+            f'publication requested\n'
+            f'mission: {self._pending_route_spec.mission_id}\n'
+            f'route: {self._pending_route_spec.route_id}\n'
+            'Operator GUI owns START / PAUSE / RESUME / CANCEL'
         )
-        self._refresh_mission_controls()
+        self.sidebar.set_route_publish_enabled(True)
 
-    def _on_start_mission_requested(self):
-        if self._start_enabled() and self._mission_bridge:
-            self._mission_bridge.request_start()
-
-    def _on_cancel_mission_requested(self):
-        if self._mission_bridge:
-            self._mission_bridge.request_cancel()
-
-    def _on_pause_mission_requested(self):
-        if self._mission_bridge:
-            self._mission_bridge.request_pause()
-
-    def _on_resume_mission_requested(self):
-        if self._mission_bridge:
-            self._mission_bridge.request_resume()
-
-    def _on_mission_service_result(self, name: str, success: bool, reason: str, message: str):
-        self.log(f'/mission/{name}: {reason} success={success} {message}', 'info' if success else 'warn')
-
-    def _on_mission_state_received(self, msg):
-        if self._active_mission_id and msg.mission_id and msg.mission_id != self._active_mission_id:
-            return
-        if self._active_route_id and msg.route_id and msg.route_id != self._active_route_id:
-            return
-        self._latest_mission_state = msg
-        state_name = self._mission_state_name(int(msg.state))
+    def _on_route_published(self, mission_id: str, route_id: str):
         self.sidebar.set_mission_status(
-            f'mode: {self._authority_mode}\n'
-            f'mission: {msg.mission_id}\n'
-            f'route: {msg.route_id}\n'
-            f'state: {state_name}\n'
-            f'wp: {msg.current_waypoint_index}  done: {msg.completed_waypoint_count}/{msg.total_waypoint_count}\n'
-            f'progress: {float(msg.progress):.2f}\n'
-            f'{msg.reason_code} {msg.detail}'
+            f'RouteMission published\nmission: {mission_id}\nroute: {route_id}\n'
+            'No runtime navigation was started'
         )
-        self._refresh_mission_controls()
-
-    def _mission_state_name(self, state: int) -> str:
-        names = {
-            0: 'IDLE',
-            1: 'RECEIVED',
-            2: 'VALIDATING',
-            3: 'PLANNING',
-            4: 'NAVIGATING',
-            5: 'PAUSED',
-            6: 'CANCELLING',
-            7: 'CANCELLED',
-            8: 'SUCCEEDED',
-            9: 'TEMPORARILY_BLOCKED',
-            10: 'BLOCKED',
-            11: 'FAILED',
-            12: 'HELP_REQUIRED',
-        }
-        return names.get(state, f'STATE_{state}')
-
-    def _mission_active(self) -> bool:
-        if self._latest_mission_state is None:
-            return False
-        if not self._active_mission_id:
-            return False
-        return int(self._latest_mission_state.state) not in TERMINAL_MISSION_STATES
-
-    def _start_enabled(self) -> bool:
-        msg = self._latest_mission_state
-        return (
-            self._authority_mode == AuthorityMode.MISSION_NAV2.value
-            and msg is not None
-            and msg.mission_id == self._active_mission_id
-            and msg.route_id == self._active_route_id
-            and int(msg.state) == 1
-        )
-
-    def _refresh_mission_controls(self):
-        route_ready = self._pending_route_spec is not None and not self._mission_active()
-        self.sidebar.set_mission_controls(route_ready, self._start_enabled())
+        self.log(f'/mission/route published: {mission_id} ({route_id})', 'info')
 
     # ─── 配置变更 (F-8.2) ──────────────────────────────
 
-    def _on_config_change(self, ip: str, port: int,
-                          yes_conf: float, axis_tolerance: float):
-        self._udp_ip = ip
-        self._udp_port = port
+    def _on_detector_config_change(self, yes_conf: float, axis_tolerance: float):
         self._yes_conf = yes_conf
         self._axis_tolerance = axis_tolerance
+        self.log(f'识别参数已更新: yes_conf={yes_conf}, axis_tol={axis_tolerance}', 'info')
 
     # ─── 轨迹参数变更 (F-11.8 F-11.9) ──────────────────
-
-    def _on_traj_params_change(self, r_min, r_max, dt, vs, vt):
-        """轨迹参数变更：内存更新 + 持久化 + 热生效"""
-        self._pursuit_r_min = r_min
-        self._pursuit_r_max = r_max
-        self._pursuit_delta_thresh = dt
-        self._pursuit_v_straight = vs
-        self._pursuit_v_turn = vt
-        # 持久化
-        self._save_pursuit_settings()
-        # 热生效：若 UdpSender 正在运行，立即更新参数
-        if self.udp_sender and self.udp_sender.isRunning():
-            self.udp_sender.update_params(r_min, r_max, dt, vs, vt)
-            self.log('轨迹参数热生效', 'info')
-
-    def _save_pursuit_settings(self):
-        """读取 settings.json → 合并 pursuit_* → 写回"""
-        path = os.path.join(self._project_root(), 'config', 'settings.json')
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                cfg = json.load(f)
-        except Exception:
-            cfg = {}
-        cfg.update({
-            'pursuit_r_min': self._pursuit_r_min,
-            'pursuit_r_max': self._pursuit_r_max,
-            'pursuit_delta_thresh': self._pursuit_delta_thresh,
-            'pursuit_v_straight': self._pursuit_v_straight,
-            'pursuit_v_turn': self._pursuit_v_turn,
-        })
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(cfg, f, indent=2, ensure_ascii=False)
 
     def _save_settings(self):
         """[IMPL] F-13.x 合并写回 settings.json，不覆盖已有字段"""
@@ -1464,48 +1209,8 @@ class MainWindow(QMainWindow):
 
     # ─── UDP 发送 (F-7.1 ~ F-7.3) ─────────────────────
 
-    def _start_udp_send(self, path_nodes: list):
-        """启动 UDP 逐帧发送路径点（Pure Pursuit F-11.1~F-11.5）"""
-        if self._authority_mode == AuthorityMode.MISSION_NAV2.value:
-            self.log('mission_nav2: UDP send blocked by authority mode', 'warn')
-            return
-        self._stop_udp_send()  # 先停掉旧线程
-        self.udp_sender = UdpSender(
-            path_nodes,
-            ip=self._udp_ip,
-            port=self._udp_port,
-            r_min=self._pursuit_r_min,
-            r_max=self._pursuit_r_max,
-            delta_thresh=self._pursuit_delta_thresh,
-            v_straight=self._pursuit_v_straight,
-            v_turn=self._pursuit_v_turn,
-        )
-        self.udp_sender.frame_sent.connect(
-            lambda idx: self.statusBar().showMessage(
-                f'UDP 发送中  帧 {idx}/{len(path_nodes)}  '
-                f'目标 {self._udp_ip}:{self._udp_port}'
-            )
-        )
-        self.udp_sender.finished.connect(self._on_udp_finished)
-        self.udp_sender.start()
-
-    def _stop_udp_send(self):
-        """停止并清理 UDP 发送线程"""
-        if self.udp_sender and self.udp_sender.isRunning():
-            self.udp_sender._running = False
-            self.udp_sender.wait(2000)
-        self.udp_sender = None
-
-    def _on_udp_finished(self):
-        """UDP 发送完成回调"""
-        self.statusBar().showMessage('UDP 路径发送完毕', 3000)
-        self.udp_sender = None
-
     def closeEvent(self, event):
         self._stop_mission_bridge()
-        self._stop_plan_publisher()
-        self._stop_pose_receiver()
-        self._stop_udp_send()
         try:
             from core.ros_runtime import shutdown_rclpy_once
             shutdown_rclpy_once()

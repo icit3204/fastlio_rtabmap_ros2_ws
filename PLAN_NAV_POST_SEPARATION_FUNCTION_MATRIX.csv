@@ -1,0 +1,26 @@
+Function,Post-separation state,Normal GUI control,Authority,Regression result,Notes
+Import RTAB database,KEPT,Import .db file,PlanNav,PASS,Uses sibling topology workspace
+Load nodes,KEPT,Database import,PlanNav,PASS,Topology core unchanged
+Load edges,KEPT,Database import,PlanNav,PASS,Direction and edge_id preserved
+Create/edit/delete nodes,KEPT,Authoring tools,PlanNav,PASS,Existing reindex risk documented only
+Create/delete directed edges,KEPT,Authoring tools,PlanNav,PASS,No semantic change
+Trajectory playback/processing,KEPT,Authoring controls,PlanNav,PASS,No runtime chassis authority
+Recognition-assisted node creation,KEPT,auto_node + recognition settings,PlanNav,PASS,UDP/pursuit settings removed independently
+Start Node selection,KEPT,Planning mode first click,PlanNav,PASS,Reviewed 1 -> 10
+Goal Node selection,KEPT,Planning mode second click,PlanNav,PASS,Reviewed 1 -> 10
+Weighted directed Dijkstra,KEPT,Planning mode,PlanNav,PASS,"1,2,3,4,5,6,7,8,9,10; 34.133 m"
+Reverse directed route,KEPT,Planning mode,PlanNav,PASS,10 -> 1 = NO_TOPOLOGICAL_ROUTE
+Selected-route overlay,KEPT,Canvas path overlay,PlanNav,PASS,Genuine graphical inspection completed
+RouteSpec construction,KEPT,Automatic after valid route,PlanNav,PASS,Topology version and edge identities unchanged
+Typed RouteMission publication,KEPT,Publish RouteMission,PlanNav,PASS,Explicit intent publication only; no auto-start
+Mission START,REMOVED,None,Operator GUI,PASS,No client remains in PlanNav bridge
+Mission PAUSE,REMOVED,None,Operator GUI,PASS,No client remains in PlanNav bridge
+Mission RESUME,REMOVED,None,Operator GUI,PASS,No client remains in PlanNav bridge
+Mission CANCEL,REMOVED,None,Operator GUI,PASS,No client remains in PlanNav bridge
+Mission runtime state display,REMOVED,None,Operator GUI,PASS,PlanNav shows route-publication status only
+Legacy UDP send,QUARANTINED,None,Historical source only,PASS,Sender module retained unbound
+Legacy UDP configuration/preview,REMOVED,None,Historical source only,PASS,Not required by authoring
+Legacy Pure Pursuit tuning,REMOVED,None,Historical source only,PASS,MPPI owns current controller semantics
+Legacy /plan_nav publication,QUARANTINED,None,Historical source only,PASS,No normal UI binding
+Direct NavigateToPose,ABSENT,None,BT/Operator chain,PASS,No ActionClient found
+Velocity or CAN commands,ABSENT,None,Canonical safety/backend only,PASS,No PlanNav publisher/client

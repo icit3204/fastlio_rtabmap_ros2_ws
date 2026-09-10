@@ -1,12 +1,10 @@
-"""Typed Mission Manager transport bridge for plan_nav mission mode."""
+"""Typed RouteMission publication bridge for PlanNav route intent."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 import threading
-import time
 import uuid
 
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -19,20 +17,6 @@ from core.topology_identity import (
     load_topology,
     read_manifest,
 )
-
-
-class AuthorityMode(str, Enum):
-    LEGACY = "legacy"
-    MISSION_NAV2 = "mission_nav2"
-
-
-TERMINAL_MISSION_STATES = {
-    7,   # CANCELLED
-    8,   # SUCCEEDED
-    10,  # BLOCKED
-    11,  # FAILED
-    12,  # HELP_REQUIRED
-}
 
 
 @dataclass(frozen=True)
@@ -137,33 +121,18 @@ def route_spec_to_msg(route: RouteSpec, node) -> object:
 
 
 class MissionBridgeNode:
-    """Thin ROS transport adapter. Mission Manager remains authoritative."""
+    """Publish route intent only; runtime mission control belongs to Operator GUI."""
 
-    def __init__(self, *, state_callback=None, service_callback=None, node_name: str = "plan_nav_mission_bridge"):
+    def __init__(self, *, node_name: str = "plan_nav_route_publisher"):
         from rclpy.node import Node
         from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
-        from std_srvs.srv import SetBool, Trigger
-        from parking_robot_interfaces.msg import MissionState, RouteMission
+        from parking_robot_interfaces.msg import RouteMission
 
-        self._Node = Node
-        self._Trigger = Trigger
-        self._SetBool = SetBool
-        self._MissionState = MissionState
         self.node = Node(node_name)
         route_qos = QoSProfile(depth=1)
         route_qos.reliability = ReliabilityPolicy.RELIABLE
         route_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
-        state_qos = QoSProfile(depth=10)
-        state_qos.reliability = ReliabilityPolicy.RELIABLE
-        state_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
-        self._state_callback = state_callback
-        self._service_callback = service_callback
         self._route_pub = self.node.create_publisher(RouteMission, "/mission/route", route_qos)
-        self._state_sub = self.node.create_subscription(MissionState, "/mission/state", self._on_state, state_qos)
-        self._start_client = self.node.create_client(Trigger, "/mission/start")
-        self._cancel_client = self.node.create_client(Trigger, "/mission/cancel")
-        self._pause_client = self.node.create_client(SetBool, "/mission/pause")
-        self.futures = []
         self.published_missions: list[str] = []
 
     def destroy(self) -> None:
@@ -175,64 +144,10 @@ class MissionBridgeNode:
         self.published_missions.append(msg.mission_id)
         return msg
 
-    def request_start(self):
-        return self._call_trigger(self._start_client, "start")
-
-    def request_cancel(self):
-        return self._call_trigger(self._cancel_client, "cancel")
-
-    def request_pause(self, pause: bool):
-        req = self._SetBool.Request()
-        req.data = bool(pause)
-        return self._call_async(self._pause_client, req, "pause" if pause else "resume")
-
-    def services_ready(self) -> bool:
-        return (
-            self._start_client.service_is_ready()
-            and self._cancel_client.service_is_ready()
-            and self._pause_client.service_is_ready()
-        )
-
-    def _call_trigger(self, client, name: str):
-        req = self._Trigger.Request()
-        return self._call_async(client, req, name)
-
-    def _call_async(self, client, req, name: str):
-        if not client.service_is_ready():
-            if self._service_callback:
-                self._service_callback(name, False, "SERVICE_UNAVAILABLE", f"{name} service unavailable")
-            return None
-        future = client.call_async(req)
-        self.futures.append(future)
-        future.add_done_callback(lambda done, service_name=name: self._on_service_result(service_name, done))
-        return future
-
-    def _on_service_result(self, name: str, future) -> None:
-        try:
-            result = future.result()
-            success = bool(getattr(result, "success", False))
-            message = str(getattr(result, "message", ""))
-            reason = "REQUEST_ACCEPTED" if success else "REQUEST_REJECTED"
-        except Exception as exc:
-            success = False
-            reason = "SERVICE_EXCEPTION"
-            message = f"{type(exc).__name__}: {exc}"
-        if self._service_callback:
-            self._service_callback(name, success, reason, message)
-
-    def _on_state(self, msg) -> None:
-        if self._state_callback:
-            self._state_callback(msg)
-
-    def prune_futures(self) -> None:
-        self.futures = [future for future in self.futures if not future.done()]
-
-
 class MissionBridgeThread(QThread):
-    """QThread wrapper that emits Qt signals from ROS callbacks."""
+    """QThread wrapper for explicit, queued RouteMission publication."""
 
-    mission_state_received = pyqtSignal(object)
-    service_result_received = pyqtSignal(str, bool, str, str)
+    route_published = pyqtSignal(str, str)
     connected = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
 
@@ -241,6 +156,7 @@ class MissionBridgeThread(QThread):
         self._running = False
         self._bridge: MissionBridgeNode | None = None
         self._lock = threading.Lock()
+        self._pending_routes: list[RouteSpec] = []
 
     def run(self) -> None:
         self._running = True
@@ -249,18 +165,20 @@ class MissionBridgeThread(QThread):
             from core.ros_runtime import ensure_rclpy_initialized
 
             ensure_rclpy_initialized(args=[])
-            bridge = MissionBridgeNode(
-                state_callback=self.mission_state_received.emit,
-                service_callback=self.service_result_received.emit,
-            )
+            bridge = MissionBridgeNode()
             executor = SingleThreadedExecutor()
             executor.add_node(bridge.node)
             with self._lock:
                 self._bridge = bridge
-            self.connected.emit("/mission bridge ready")
+            self.connected.emit("/mission/route publisher ready")
             while self._running:
+                with self._lock:
+                    pending = list(self._pending_routes)
+                    self._pending_routes.clear()
+                for route in pending:
+                    bridge.publish_route(route)
+                    self.route_published.emit(route.mission_id, route.route_id)
                 executor.spin_once(timeout_sec=0.05)
-                bridge.prune_futures()
             executor.remove_node(bridge.node)
             bridge.destroy()
         except Exception as exc:
@@ -271,37 +189,7 @@ class MissionBridgeThread(QThread):
 
     def publish_route(self, route: RouteSpec) -> bool:
         with self._lock:
-            bridge = self._bridge
-        if bridge is None:
-            self.error_occurred.emit("MissionBridge: bridge not ready")
-            return False
-        bridge.publish_route(route)
-        return True
-
-    def request_start(self) -> bool:
-        return self._request("start")
-
-    def request_cancel(self) -> bool:
-        return self._request("cancel")
-
-    def request_pause(self) -> bool:
-        return self._request("pause", True)
-
-    def request_resume(self) -> bool:
-        return self._request("pause", False)
-
-    def _request(self, name: str, value=None) -> bool:
-        with self._lock:
-            bridge = self._bridge
-        if bridge is None:
-            self.error_occurred.emit("MissionBridge: bridge not ready")
-            return False
-        if name == "start":
-            bridge.request_start()
-        elif name == "cancel":
-            bridge.request_cancel()
-        elif name == "pause":
-            bridge.request_pause(bool(value))
+            self._pending_routes.append(route)
         return True
 
     def stop(self) -> None:
