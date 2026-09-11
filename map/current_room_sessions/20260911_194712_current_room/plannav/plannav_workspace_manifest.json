@@ -1,0 +1,17 @@
+{
+  "approved_at_utc": "2026-09-11T12:47:25.827596+00:00",
+  "coordinate_semantic": "OPTIMIZED_RTAB_GRAPH",
+  "created_at_utc": "2026-09-11T12:37:51.294726+00:00",
+  "database_path": "/home/dog/fastlio_rtabmap_ros2_ws/map/current_room_sessions/20260911_194712_current_room/rtabmap_2d.db",
+  "database_sha256": "550227ccf65470946d78317f28f200f3dcc904dfa053291f69f5f06b67fdd127",
+  "edge_count": 2,
+  "frame": "map",
+  "import_mode": "OPTIMIZED_GRAPH_MAP_FRAME",
+  "importer_version": "p5a-mk2h1m-r1-v1",
+  "mapping_session_id": "20260911_194712_current_room",
+  "node_count": 3,
+  "schema_version": 1,
+  "topology_id": "topology-sha256:47b58b2498a2ab9b43fb934561bc207cfe5d2ef0b79e26e2f00e70a3c4cfb1b8",
+  "topology_status": "OPERATOR_APPROVED",
+  "topology_version": "sha256:948217a0129dbf785b4364cdff94fe5424563719495a6aeb1bfc2780814d1a2e"
+}

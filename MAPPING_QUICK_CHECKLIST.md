@@ -1,0 +1,23 @@
+# Mapping quick checklist
+
+- [ ] Unique, unused session directory selected.
+- [ ] MID-360 and IMU connected; physical CAN disconnected.
+- [ ] Historical DB hash recorded; historical DB path not used as output.
+- [ ] Accepted `body -> base_footprint` static transform active.
+- [ ] Mapping launch explicitly uses `imu_topic:=/livox/imu`.
+- [ ] MID-360, IMU, FAST-LIO odometry, TF, and RTAB updates healthy.
+- [ ] Robot pushed manually; no powered command authority.
+- [ ] Outbound pass completed without stopping mapping.
+- [ ] Return pass completed in the same session.
+- [ ] RTAB stopped gracefully and DB flush confirmed.
+- [ ] New DB integrity/hash/size recorded.
+- [ ] Map shown to operator and visually confirmed.
+- [ ] Localization uses a unique runtime DB copy and localization-only mode.
+- [ ] Short manual localization movement remains continuous and bounded.
+- [ ] PlanNav uses optimized ROS `map` coordinates—not raw `Node.pose`.
+- [ ] The **Import Optimized map DB** control was used and the PlanNav log reports `OPTIMIZED_RTAB_GRAPH / frame=map`.
+- [ ] `plannav_workspace_manifest.json` matches the exact session DB path and SHA-256.
+- [ ] Proposed nodes/edges were visually reviewed before topology persistence.
+- [ ] Workspace DB hash and topology version recorded before planner preflight.
+- [ ] Directed Dijkstra and typed RouteMission validate offline; reverse route is not assumed.
+- [ ] All processes stopped; SocketCAN absent; CAN TX unchanged.

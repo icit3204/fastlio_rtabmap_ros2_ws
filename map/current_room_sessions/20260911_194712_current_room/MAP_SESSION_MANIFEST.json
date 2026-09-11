@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "session_id": "20260911_194712_current_room",
+  "created_at": "2026-09-11T19:47:12+08:00",
+  "purpose": "Current physical room RTAB mapping, localization validation, and PlanNav bootstrap",
+  "physical_environment_label": "current_room",
+  "database_path": "/home/dog/fastlio_rtabmap_ros2_ws/map/current_room_sessions/20260911_194712_current_room/rtabmap_2d.db",
+  "database_sha256": "550227ccf65470946d78317f28f200f3dcc904dfa053291f69f5f06b67fdd127",
+  "database_size_bytes": 4059136,
+  "historical_database": {
+    "path": "/home/dog/fastlio_rtabmap_ros2_ws/map/rtabmap_2d.db",
+    "sha256_before": "73788305089e9ceb302ae8a68c3164ca35e2e1cd985458b755eeedee5efadaed",
+    "preservation": "READ_ONLY_HISTORICAL_DO_NOT_OVERWRITE"
+  },
+  "mapping_launch": "ros2 launch robot_bringup fastlio_mapping.launch.py database_path:=/home/dog/fastlio_rtabmap_ros2_ws/map/current_room_sessions/20260911_194712_current_room/rtabmap_2d.db delete_db_on_start:=true imu_topic:=/livox/imu rviz:=false rtabmap_viz:=false",
+  "supplemental_tf_launch": "ros2 run tf2_ros static_transform_publisher --x 0.452466 --y -0.183290 --z -1.396285 --roll 0.0 --pitch -0.49741883681838395 --yaw 0.0 --frame-id body --child-frame-id base_footprint",
+  "mapping_config": {
+    "sensor_sources": ["/livox/lidar", "/livox/imu"],
+    "fastlio_config": "mid360.yaml",
+    "fastlio_odometry": "/Odometry",
+    "rtab_scan_cloud": "/cloud_registered_body",
+    "rtab_mode": "MAPPING_INCREMENTAL",
+    "rtab_registration": "ICP",
+    "online_database_write": true
+  },
+  "frames": {
+    "map": "RTAB optimized graph / ROS map frame",
+    "odom": "FAST-LIO continuous odometry",
+    "base": "base_footprint",
+    "tf_ownership": "RTAB map->odom; FAST-LIO odom->body; accepted calibrated static body->base_footprint"
+  },
+  "operator_movement_mode": "MANUAL_PUSH",
+  "physical_can": "DISCONNECTED_UNUSED",
+  "software_powered_motion": "FORBIDDEN",
+  "mapping_start_time": "2026-09-11T19:52:43+08:00",
+  "mapping_stop_time": "2026-09-11T19:57:16+08:00",
+  "outbound_checkpoint": {
+    "operator_confirmed_at": "2026-09-11T19:56:00+08:00",
+    "rtab_working_memory_nodes": 24,
+    "map_to_base_footprint_xy": [6.976, -0.167],
+    "mapping_health": "HEALTHY_CONTINUING",
+    "loop_closure_observation": "Several proposed proximity loop closures were rejected by RTAB graph-error validation; no accepted loop closure claimed at outbound checkpoint."
+  },
+  "return_checkpoint": {
+    "operator_confirmed": true,
+    "final_live_map_pose_xyz": [2.706, 0.172, -1.332],
+    "final_live_map_pose_yaw_deg": 177.283
+  },
+  "optimized_graph": {
+    "persisted_pose_count": 38,
+    "node_id_range": [1, 232],
+    "neighbor_links": 74,
+    "local_space_closure_links": 40,
+    "global_closure_links": 0,
+    "gravity_links": 37,
+    "database_integrity_check": "ok"
+  },
+  "map_bounds": {
+    "resolution_m": 0.05,
+    "width_cells": 234,
+    "height_cells": 158,
+    "origin_xy": [-3.320039987564087, -4.165565013885498],
+    "metric_min_xy": [-3.320039987564087, -4.165565013885498],
+    "metric_max_xy": [8.379960186779499, 3.7344351038336754]
+  },
+  "operator_map_confirmation": {
+    "result": "CONFIRMED",
+    "operator_note": "Map corresponds to the current room; robot returned approximately to the starting position."
+  },
+  "localization_validation": {
+    "mode": "LOCALIZATION_ONLY",
+    "runtime_database_copy": "/tmp/mk2h1m-localization-PshjhR/rtabmap_2d.db",
+    "source_database_sha256": "550227ccf65470946d78317f28f200f3dcc904dfa053291f69f5f06b67fdd127",
+    "working_memory_nodes": 38,
+    "initial_map_to_base_footprint_xyz": [2.851, 0.179, -1.346],
+    "initial_yaw_deg": 178.46,
+    "initial_stationary_result": "STABLE_AND_PLAUSIBLE",
+    "manual_movement_result": {
+      "operator_confirmed": true,
+      "post_movement_map_to_base_footprint_xyz": [1.198, 0.315, -1.356],
+      "post_movement_yaw_deg": 170.601,
+      "fastlio_odometry_rate_hz": 9.964,
+      "rtab_processing_rate_hz": 0.991,
+      "result": "PASS_CONTINUOUS_AND_BOUNDED",
+      "observation": "Three transient candidate rejections occurred during movement, followed by sustained normal updates; no gross pose jump or persistent localization loss was observed."
+    }
+  },
+  "plannav_workspace": {
+    "result": "OPERATOR_APPROVED_OPTIMIZED_MAP_FRAME_TOPOLOGY",
+    "path": "/home/dog/fastlio_rtabmap_ros2_ws/map/current_room_sessions/20260911_194712_current_room/plannav",
+    "database_sha256": "550227ccf65470946d78317f28f200f3dcc904dfa053291f69f5f06b67fdd127",
+    "frame": "map",
+    "coordinate_semantic": "OPTIMIZED_RTAB_GRAPH",
+    "import_mode": "OPTIMIZED_GRAPH_MAP_FRAME",
+    "importer_version": "p5a-mk2h1m-r1-v1",
+    "topology_version": "sha256:948217a0129dbf785b4364cdff94fe5424563719495a6aeb1bfc2780814d1a2e",
+    "topology_id": "topology-sha256:47b58b2498a2ab9b43fb934561bc207cfe5d2ef0b79e26e2f00e70a3c4cfb1b8",
+    "node_count": 3,
+    "edge_count": 2
+  },
+  "status": "MAP_LOCALIZATION_AND_PLANNAV_BOOTSTRAP_QUALIFIED"
+}

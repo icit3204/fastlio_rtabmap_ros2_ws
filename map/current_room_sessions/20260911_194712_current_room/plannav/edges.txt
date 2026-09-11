@@ -1,0 +1,3 @@
+# edge_id, from_id, to_id, length_m, direction, traj_file
+edge-000001, 1, 2, 3.712, uni, edge_1_traj.txt
+edge-000002, 2, 3, 2.932, uni, edge_2_traj.txt

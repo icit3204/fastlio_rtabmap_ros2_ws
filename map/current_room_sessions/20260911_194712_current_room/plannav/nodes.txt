@@ -1,0 +1,4 @@
+# node_id, label, annotation, x, y, z, yaw_deg, timestamp_unix, traj_idx
+1, WP-01, Recording%2Fstart%20area, 0.4669, -0.1887, -1.3987, 0.38, 1789127561.810, 0
+2, WP-02, Middle%2Fopen%20corridor, 4.1310, -0.7819, -1.3365, -3.76, 1789127714.110, 10
+3, WP-03, Far%20turning%20area, 6.9889, -0.1279, -1.3086, 98.41, 1789127748.211, 22

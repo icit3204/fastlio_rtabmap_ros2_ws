@@ -1,0 +1,15 @@
+{
+  "edge_count": 2,
+  "edge_id_next_index": 3,
+  "edge_identity_policy": "persisted edge_id; deleted edge IDs are not reused within this topology identity",
+  "edges_content_sha256": "f212463fb4ed9c0a52d2f0d00a0944179667c88caedc9d5a01fd46d4f802c6f5",
+  "generated_at": "migration:p3b1",
+  "generation_tool_version": "p3b1-topology-identity-v1",
+  "node_count": 3,
+  "node_identity_policy": "persisted numeric node IDs from nodes.txt; legacy delete may reindex and changes topology_version",
+  "nodes_content_sha256": "2b4e211a7b07624e54ebe1b0af59c7332403cf203483b00618e4068c252924cf",
+  "schema_version": 2,
+  "topology_id": "topology-sha256:47b58b2498a2ab9b43fb934561bc207cfe5d2ef0b79e26e2f00e70a3c4cfb1b8",
+  "topology_version": "sha256:948217a0129dbf785b4364cdff94fe5424563719495a6aeb1bfc2780814d1a2e",
+  "trajectory_manifest_sha256": "d65b86f9f0d6ec97dff06f2bbb0ece65790bec187845121149e60b693eb91d67"
+}

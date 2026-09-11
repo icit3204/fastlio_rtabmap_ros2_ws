@@ -10,6 +10,7 @@ class Sidebar(QWidget):
     """Authoring-only sidebar; runtime mission controls live in Operator GUI."""
 
     import_requested = pyqtSignal()
+    optimized_import_requested = pyqtSignal()
     play_toggled = pyqtSignal()
     reset_requested = pyqtSignal()
     tool_changed = pyqtSignal(str)
@@ -37,6 +38,12 @@ class Sidebar(QWidget):
         self._btn_import.setStyleSheet(_btn_style('#1d9e75', '#ffffff'))
         self._btn_import.clicked.connect(self.import_requested.emit)
         layout.addWidget(self._btn_import)
+
+        self._btn_import_optimized = QPushButton('导入优化 map DB')
+        self._btn_import_optimized.setFont(font_main)
+        self._btn_import_optimized.setStyleSheet(_btn_style('#185fa5', '#ffffff'))
+        self._btn_import_optimized.clicked.connect(self.optimized_import_requested.emit)
+        layout.addWidget(self._btn_import_optimized)
 
         self.progress = QProgressBar()
         self.progress.setFont(font_small)

@@ -29,7 +29,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 
-from core.db_loader import load_db
+from core.db_loader import load_db, load_optimized_map_trajectory
+from core.optimized_workspace import prepare_optimized_workspace
 # [COMMENTED] 暂时注释地图解码，仅显示轨迹
 # from core.map_decoder import decode_map
 from core.trajectory import TrajectoryPlayer
@@ -323,6 +324,7 @@ class MainWindow(QMainWindow):
 
         # ─── 信号连接 ───
         self.sidebar.import_requested.connect(self.import_db)
+        self.sidebar.optimized_import_requested.connect(self.import_optimized_db)
         self.sidebar.play_toggled.connect(self._on_play_toggle)
         self.sidebar.tool_changed.connect(self._on_tool_change)
         self.sidebar.reset_requested.connect(self._on_reset)
@@ -385,13 +387,28 @@ class MainWindow(QMainWindow):
 
     def import_db(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, '导入 RTAB-Map 数据库', '',
+            self, '导入 RTAB-Map 原始 Node.pose 数据库（旧版）', '',
             'RTAB-Map DB (*.db);;All Files (*)'
         )
         if not path:
             return
+        self._import_db_path(path, optimized=False)
 
-        self.log('导入 ' + os.path.basename(path))
+    def import_optimized_db(self):
+        """Open a DB in authoritative optimized RTAB graph / ROS map mode."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, '导入 RTAB-Map 优化图（ROS map 坐标）', '',
+            'RTAB-Map DB (*.db);;All Files (*)'
+        )
+        if not path:
+            return
+        self._import_db_path(path, optimized=True)
+
+    def _import_db_path(self, path: str, optimized: bool):
+        """Shared import flow; optimized mode is explicit and DB read-only."""
+
+        mode_label = '优化图 / ROS map' if optimized else '旧版 Node.pose'
+        self.log(f'导入 [{mode_label}] ' + os.path.basename(path))
 
         # 重置图片回放，避免复用旧数据集的图片
         self.pic_player = None
@@ -401,14 +418,29 @@ class MainWindow(QMainWindow):
             self._hover_preview = None
 
         # F-1.1: 解析数据库（带进度回调）
-        data = load_db(path, progress_callback=self.sidebar.set_progress)
+        loader = load_optimized_map_trajectory if optimized else load_db
+        data = loader(path, progress_callback=self.sidebar.set_progress)
         self.db_data = data
         self.log(f'解析完成: {len(data["nodes"])} 个节点, {len(data["links"])} 条约束')
 
         # F-1.4: 创建工作目录
-        stem = os.path.splitext(os.path.basename(path))[0]
-        work_dir = os.path.join(os.path.dirname(path) or '.', stem)
-        os.makedirs(work_dir, exist_ok=True)
+        if optimized:
+            database = Path(path).resolve()
+            work_dir = str(database.parent / 'plannav')
+            workspace_manifest = prepare_optimized_workspace(
+                database_path=database,
+                workspace_path=work_dir,
+                session_id=database.parent.name,
+            )
+            self.log(
+                '坐标权威: OPTIMIZED_RTAB_GRAPH / frame=map / '
+                f'DB SHA={workspace_manifest["database_sha256"][:12]}…',
+                'warn',
+            )
+        else:
+            stem = os.path.splitext(os.path.basename(path))[0]
+            work_dir = os.path.join(os.path.dirname(path) or '.', stem)
+            os.makedirs(work_dir, exist_ok=True)
         self.log(f'工作目录: {work_dir}', 'info')
 
         # [COMMENTED] 暂时注释地图解码和底图加载，仅显示轨迹
