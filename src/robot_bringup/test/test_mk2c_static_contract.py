@@ -71,9 +71,10 @@ def test_tmini_driver_and_tf_use_frozen_authority():
 
 def test_calibrated_launch_anchors_horizontal_chassis_odom_frame():
     text = (ROOT / "launch" / "mkmini_calibrated_localization.launch.py").read_text()
-    assert '_conditional_static_node("mkmini_odom_to_odom_chassis", "odom", "odom_chassis", body_to_base, start_fast_lio)' in text
+    assert '_conditional_static_node("mkmini_odom_chassis_to_odom", "odom_chassis", "odom", base_to_body, start_fast_lio)' in text
     assert 'load_current_frame_authority(mkmini_share)' in text
     assert 'body_to_base = authority["body_to_base_footprint"]' in text
+    assert 'base_to_body = authority["base_footprint_to_body"]' in text
     assert "BODY_TO_BASE_FOOTPRINT" not in text
 
 

@@ -31,11 +31,18 @@ def generate_launch_description() -> LaunchDescription:
             default_value=EnvironmentVariable('PARKING_ROBOT_RTABMAP_DATABASE', default_value=''),
             description='RTAB-Map database path. Explicit launch argument overrides PARKING_ROBOT_RTABMAP_DATABASE.',
         ),
-        DeclareLaunchArgument('rtabmap_args', default_value=''),
+        # This is intentionally explicit rather than relying on RTAB-Map's
+        # default (false): a scan-cloud map must retain ray-traced free cells.
+        DeclareLaunchArgument('rtabmap_args', default_value='--Grid/RayTracing true'),
         DeclareLaunchArgument('frame_id', default_value='base_footprint'),
         DeclareLaunchArgument('map_frame_id', default_value='map'),
         DeclareLaunchArgument('odom_topic', default_value='/Odometry'),
-        DeclareLaunchArgument('imu_topic', default_value='/unused_imu'),
+        # A non-empty odom_frame_id selects RTAB-Map's native TF-odometry
+        # input.  odom_chassis re-expresses FAST-LIO's tilted sensor basis in
+        # the calibrated horizontal chassis basis without changing FAST-LIO.
+        DeclareLaunchArgument('odom_frame_id', default_value='odom_chassis'),
+        # Deliberately distinct from FAST-LIO's ``imu_topic`` launch argument.
+        DeclareLaunchArgument('rtabmap_imu_topic', default_value='/unused_imu'),
         DeclareLaunchArgument('gps_topic', default_value='/sensors/gps/fix'),
         DeclareLaunchArgument('scan_cloud_topic', default_value='/cloud_registered_body'),
         DeclareLaunchArgument('rgb_topic', default_value='/sensors/camera/rgb/image_rect'),
@@ -62,8 +69,9 @@ def generate_launch_description() -> LaunchDescription:
             'map_frame_id': LaunchConfiguration('map_frame_id'),
             'publish_tf_map': 'true',
             'odom_topic': LaunchConfiguration('odom_topic'),
+            'odom_frame_id': LaunchConfiguration('odom_frame_id'),
             'publish_tf_odom': 'false',
-            'imu_topic': LaunchConfiguration('imu_topic'),
+            'imu_topic': LaunchConfiguration('rtabmap_imu_topic'),
             'wait_imu_to_init': LaunchConfiguration('wait_imu_to_init'),
             'gps_topic': LaunchConfiguration('gps_topic'),
             'scan_cloud_topic': LaunchConfiguration('scan_cloud_topic'),

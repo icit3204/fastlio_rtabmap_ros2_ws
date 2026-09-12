@@ -109,15 +109,30 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument(
             'rtabmap_runtime_dir', default_value='/home/dog/phase5_runtime/rtabmap',
             description='Persistent per-run RTAB-Map localization working-copy directory.'),
-        DeclareLaunchArgument('rtabmap_args', default_value=''),
+        # The current calibrated body/base transform defines a planar
+        # ``odom_chassis`` authority for RTAB-Map.  RTAB's native TF odometry
+        # mode must use it instead of interpreting FAST-LIO's sensor-oriented
+        # ``odom`` basis as a horizontal chassis frame.  Ray tracing is needed
+        # to persist observed free space from the 3-D scan cloud.
+        DeclareLaunchArgument('rtabmap_args', default_value='--Grid/RayTracing true'),
         DeclareLaunchArgument('nav2_params_file', default_value=PathJoinSubstitution([robot_bringup_share, 'config', 'nav2_common.yaml'])),
         DeclareLaunchArgument('rtabmap_frame_id', default_value='base_footprint'),
         DeclareLaunchArgument('rtabmap_map_frame', default_value='map'),
         DeclareLaunchArgument('rtabmap_odom_topic', default_value='/Odometry'),
+        DeclareLaunchArgument('rtabmap_odom_frame_id', default_value='odom_chassis'),
         DeclareLaunchArgument(
             'imu_topic',
             default_value='/unused_imu',
-            description='Optional IMU topic for RTAB-Map and navsat_transform when GPS is enabled.',
+            description='Optional IMU topic for navsat_transform when GPS is enabled.',
+        ),
+        # Keep RTAB-Map's optional gravity input independent of FAST-LIO's
+        # ``imu_topic`` launch argument. Nested launch descriptions share
+        # launch-configuration names; reusing ``imu_topic`` let FAST-LIO's
+        # sensor-frame IMU silently become RTAB-Map's map-correction input.
+        DeclareLaunchArgument(
+            'rtabmap_imu_topic',
+            default_value='/unused_imu',
+            description='Optional RTAB-Map IMU topic; disabled by default for the calibrated chassis mapping path.',
         ),
         DeclareLaunchArgument('gps_fix_topic', default_value='/sensors/gps/fix'),
         DeclareLaunchArgument('scan_cloud_topic', default_value='/cloud_registered_body'),
@@ -199,7 +214,8 @@ def generate_launch_description() -> LaunchDescription:
             'frame_id': LaunchConfiguration('rtabmap_frame_id'),
             'map_frame_id': LaunchConfiguration('rtabmap_map_frame'),
             'odom_topic': LaunchConfiguration('rtabmap_odom_topic'),
-            'imu_topic': LaunchConfiguration('imu_topic'),
+            'odom_frame_id': LaunchConfiguration('rtabmap_odom_frame_id'),
+            'rtabmap_imu_topic': LaunchConfiguration('rtabmap_imu_topic'),
             'gps_topic': LaunchConfiguration('gps_fix_topic'),
             'scan_cloud_topic': LaunchConfiguration('scan_cloud_topic'),
             # <修改 version3 YDLIDAR 2D雷达支持>

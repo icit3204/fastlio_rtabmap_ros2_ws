@@ -176,6 +176,7 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[{"robot_description": robot_description, "use_sim_time": use_sim_time}],
     )
     body_to_base = authority["body_to_base_footprint"]
+    base_to_body = authority["base_footprint_to_body"]
 
     return LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="false"),
@@ -187,6 +188,10 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("startup_stable_window_sec", default_value="2.0"),
         robot_state,
         _conditional_static_node("mkmini_body_to_base_footprint", "body", "base_footprint", body_to_base, start_fast_lio),
-        _conditional_static_node("mkmini_odom_to_odom_chassis", "odom", "odom_chassis", body_to_base, start_fast_lio),
+        # RTAB-Map publishes map->odom_chassis when it consumes the native
+        # chassis TF odometry.  Making odom_chassis the parent of raw FAST-LIO
+        # odom keeps one parent per frame and preserves the qualified planar
+        # composition: odom_chassis->base_footprint = B^-1 * odom->body * B.
+        _conditional_static_node("mkmini_odom_chassis_to_odom", "odom_chassis", "odom", base_to_body, start_fast_lio),
         freshness, fast_lio, livox,
     ])
