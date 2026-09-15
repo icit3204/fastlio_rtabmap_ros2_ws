@@ -11,12 +11,14 @@ wheelchair_controller_node:
     'can_interface': 'can0'
     'can_frame_id': 416035536        # 0x18C4D2D0，MK-mini ctrl_cmd 扩展帧 ID
     'can_velocity_limit': 16380      # 下发速度的绝对限幅(mm/s)
-    'can_wheel_half_track_mm': 300.0 # 兼容保留；MK-mini Ackermann 编码不使用
+    # TEMPORARY MK-mini chassis authority: rear-axle reference, L=600 mm,
+    # T=518 mm, CAN field is the signed inner-front-wheel angle.
     'can_straight_radius_threshold_mm': 10000.0
-    'can_min_turn_radius_mm': 1000.0
+    'can_min_turn_radius_mm': 1298.230485 # atan(L/(R-T/2)) = 30 deg
     'can_invert_radius': true        # 复刻旧 UDP 下位机逻辑：收到非直行半径后先取反
     'can_send_period_ms': 20.0       # CAN 保持帧发送周期
     'can_use_command_distance': false
     'can_default_distance': 0
-    'wheelbase_mm': 1000.0
+    'wheelbase_mm': 600.0
+    'track_width_mm': 518.0
     'max_steer_angle_deg': 30.0

@@ -12,9 +12,12 @@ struct BackendConfig
   uint32_t can_id{0x18C4D2D0U};
   int velocity_limit_mmps{16380};
   double straight_radius_threshold_mm{10000.0};
-  double minimum_turn_radius_mm{1000.0};
+  // Rear-axle-centre radius derived from L=600 mm, T=518 mm and the
+  // conservative 30 degree inner-front-wheel software limit.
+  double minimum_turn_radius_mm{1298.230485};
   bool invert_radius{true};
-  double wheelbase_mm{1000.0};
+  double wheelbase_mm{600.0};
+  double track_width_mm{518.0};
   double maximum_steering_deg{30.0};
   double command_timeout_sec{0.500};
 };

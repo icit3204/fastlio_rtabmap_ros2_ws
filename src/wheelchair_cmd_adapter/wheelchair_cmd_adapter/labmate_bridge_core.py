@@ -33,7 +33,8 @@ class LabmateBridgeConfig:
     max_forward_velocity_mps: float = 0.25
     max_reverse_velocity_mps: float = 0.25
     max_angular_velocity_rps: float = 0.50
-    minimum_radius_m: float = 1.0
+    # Rear-axle radius for 30 deg inner steering: L/tan(30 deg) + T/2.
+    minimum_radius_m: float = 1.298230485
     straight_radius_m: float = 10.0
     unsupported_axis_epsilon: float = 1e-6
 

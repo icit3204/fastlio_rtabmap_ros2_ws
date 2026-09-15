@@ -28,6 +28,7 @@ MkminiBackendCore::MkminiBackendCore(BackendConfig config)
 : config_(config)
 {
   if (config_.command_timeout_sec <= 0.0 || config_.wheelbase_mm <= 0.0 ||
+    config_.track_width_mm <= 0.0 ||
     config_.straight_radius_threshold_mm <= 0.0 || config_.minimum_turn_radius_mm <= 0.0)
   {
     throw std::invalid_argument("invalid MK-mini backend configuration");
@@ -91,8 +92,16 @@ EncodedFrame MkminiBackendCore::encode(
   if (std::abs(frame.normalized_radius_mm) >= 1e-6 &&
     std::abs(frame.normalized_radius_mm) < config_.straight_radius_threshold_mm)
   {
-    double steering_deg = std::atan(config_.wheelbase_mm / frame.normalized_radius_mm) *
-      180.0 / kPi;
+    // frame.normalized_radius_mm is the signed rear-axle-centre radius. The
+    // MK-mini CAN field is the signed inner-front-wheel Ackermann angle.
+    const double abs_radius_mm = std::abs(frame.normalized_radius_mm);
+    const double inner_rear_radius_mm = abs_radius_mm - config_.track_width_mm / 2.0;
+    if (inner_rear_radius_mm <= 0.0) {
+      throw std::logic_error("invalid Ackermann inner-rear radius");
+    }
+    double steering_deg = std::copysign(
+      std::atan(config_.wheelbase_mm / inner_rear_radius_mm) * 180.0 / kPi,
+      frame.normalized_radius_mm);
     steering_deg = std::clamp(
       steering_deg, -config_.maximum_steering_deg, config_.maximum_steering_deg);
     steering_raw = static_cast<int>(std::llround(steering_deg / 0.01));

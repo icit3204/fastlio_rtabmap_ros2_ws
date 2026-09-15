@@ -45,6 +45,7 @@ public:
     config.minimum_turn_radius_mm = get_parameter("can_min_turn_radius_mm").as_double();
     config.invert_radius = get_parameter("can_invert_radius").as_bool();
     config.wheelbase_mm = get_parameter("wheelbase_mm").as_double();
+    config.track_width_mm = get_parameter("track_width_mm").as_double();
     config.maximum_steering_deg = get_parameter("max_steer_angle_deg").as_double();
     config.command_timeout_sec = get_parameter("command_timeout_ms").as_double() / 1000.0;
     core_ = std::make_unique<wheelchair_controller::MkminiBackendCore>(config);
@@ -113,15 +114,15 @@ private:
     declare_parameter<std::string>("can_interface", "can0");
     declare_parameter<int>("can_frame_id", 0x18C4D2D0);
     declare_parameter<int>("can_velocity_limit", 16380);
-    declare_parameter<double>("can_wheel_half_track_mm", 300.0);
     declare_parameter<double>("can_straight_radius_threshold_mm", 10000.0);
-    declare_parameter<double>("can_min_turn_radius_mm", 1000.0);
+    declare_parameter<double>("can_min_turn_radius_mm", 1298.230485);
     declare_parameter<bool>("can_invert_radius", true);
     declare_parameter<double>("can_send_period_ms", 20.0);
     declare_parameter<double>("command_timeout_ms", 500.0);
     declare_parameter<bool>("can_use_command_distance", false);
     declare_parameter<int>("can_default_distance", 0);
-    declare_parameter<double>("wheelbase_mm", 1000.0);
+    declare_parameter<double>("wheelbase_mm", 600.0);
+    declare_parameter<double>("track_width_mm", 518.0);
     declare_parameter<double>("max_steer_angle_deg", 30.0);
   }
 

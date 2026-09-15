@@ -8,4 +8,7 @@ gate_to_labmate_bridge:
     max_forward_velocity_mps: 0.25
     max_reverse_velocity_mps: 0.25
     max_angular_velocity_rps: 0.50
-    minimum_radius_m: 1.0
+    # Rear-axle-centre radius from MK-mini L=0.600, T=0.518 and the retained
+    # 30 degree software steering envelope. This is chassis-bridge policy,
+    # not Generic Gate policy.
+    minimum_radius_m: 1.298230485

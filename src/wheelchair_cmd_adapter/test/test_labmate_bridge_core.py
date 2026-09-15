@@ -60,3 +60,14 @@ def test_unsupported_axis_and_zero_are_fail_closed():
     zero = convert_safe_twist(command(0.0, 0.0), now_ros_sec=10.0, receipt_age_sec=0.01)
     assert not zero.valid
     assert zero.output == (0.0, 0.0, 0.0)
+
+
+def test_mkmini_30_degree_rear_axle_boundary_is_enforced_before_backend():
+    # v/w is the base_footprint rear-axle radius. 1.30 m is inside the
+    # retained 30 degree envelope; 1.29 m would require more than 30 deg.
+    accepted = convert_safe_twist(command(0.13, 0.10), now_ros_sec=10.0, receipt_age_sec=0.01)
+    assert accepted.valid
+    assert accepted.output == pytest.approx((-1300.0, 130.0, 0.0))
+    rejected = convert_safe_twist(command(0.129, 0.10), now_ros_sec=10.0, receipt_age_sec=0.01)
+    assert not rejected.valid
+    assert rejected.reason is BridgeReason.RADIUS_LIMIT
