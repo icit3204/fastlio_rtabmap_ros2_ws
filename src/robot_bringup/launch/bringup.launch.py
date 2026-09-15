@@ -218,6 +218,9 @@ def generate_launch_description() -> LaunchDescription:
             'rtabmap_imu_topic': LaunchConfiguration('rtabmap_imu_topic'),
             'gps_topic': LaunchConfiguration('gps_fix_topic'),
             'scan_cloud_topic': LaunchConfiguration('scan_cloud_topic'),
+            # TEMPORARY_MKMINI_SELF_BODY_CROP: opt-in only for the current
+            # measured MK-mini platform. The generic bridge defaults false.
+            'enable_rtabmap_self_filter': 'true',
             # <修改 version3 YDLIDAR 2D雷达支持>
             'use_fast_lio': use_fast_lio,
             'use_fake_odom': use_fake_odom,

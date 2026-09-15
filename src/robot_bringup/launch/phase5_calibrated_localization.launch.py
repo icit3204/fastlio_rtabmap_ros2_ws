@@ -117,6 +117,9 @@ def generate_launch_description() -> LaunchDescription:
             "odom_topic": "/Odometry",
             "imu_topic": "/unused_imu",
             "scan_cloud_topic": "/cloud_registered_body",
+            # Explicitly opt in for the measured current MK-mini platform.
+            # The generic bridge remains disabled by default for future robots.
+            "enable_rtabmap_self_filter": "true",
             "rviz": "false",
             "rtabmap_viz": "false",
             "delete_db_on_start": "false",

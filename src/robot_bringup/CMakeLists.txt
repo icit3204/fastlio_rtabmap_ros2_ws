@@ -2,6 +2,21 @@ cmake_minimum_required(VERSION 3.5)
 project(robot_bringup)
 
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+
+add_executable(rtabmap_self_body_filter src/rtabmap_self_body_filter.cpp)
+target_include_directories(rtabmap_self_body_filter PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(rtabmap_self_body_filter rclcpp sensor_msgs tf2 tf2_ros)
+
+install(TARGETS rtabmap_self_body_filter
+  DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY include/
+  DESTINATION include)
 
 install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
@@ -74,6 +89,15 @@ if(BUILD_TESTING)
   ament_add_test(test_mk2h1_live_operator_contract
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO
     COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1_live_operator_contract.py)
+  ament_add_test(test_mk2h1m_r3g_occupancy_contract
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1m_r3g_occupancy_contract.py)
+  ament_add_test(test_mk2h1m_r3g_r1_self_crop_contract
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1m_r3g_r1_self_crop_contract.py)
+  add_executable(test_asymmetric_self_crop test/test_asymmetric_self_crop.cpp)
+  target_include_directories(test_asymmetric_self_crop PRIVATE include)
+  add_test(NAME test_asymmetric_self_crop COMMAND test_asymmetric_self_crop)
   set_tests_properties(
     test_mk2c_static_contract
     test_mk2c_retired_detector_guard
@@ -85,6 +109,8 @@ if(BUILD_TESTING)
     test_mk2f3_bt_navigator_contract
     test_mk2f4_mission_manager_contract
     test_mk2h1_live_operator_contract
+    test_mk2h1m_r3g_occupancy_contract
+    test_mk2h1m_r3g_r1_self_crop_contract
     PROPERTIES ENVIRONMENT "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1")
 endif()
 

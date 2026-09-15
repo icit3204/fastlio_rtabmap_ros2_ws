@@ -14,6 +14,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.conditions import IfCondition
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -32,8 +34,23 @@ def generate_launch_description() -> LaunchDescription:
             description='RTAB-Map database path. Explicit launch argument overrides PARKING_ROBOT_RTABMAP_DATABASE.',
         ),
         # This is intentionally explicit rather than relying on RTAB-Map's
-        # default (false): a scan-cloud map must retain ray-traced free cells.
-        DeclareLaunchArgument('rtabmap_args', default_value='--Grid/RayTracing true'),
+        # defaults.  The calibrated /cloud_registered_body input has no valid
+        # supplied normals in the saved PointXYZINormal records.  RTAB-Map
+        # 0.23.4's normals-segmentation path trusts those normals, so the
+        # mapping path uses the measured base-frame height band instead:
+        # floor [-0.20, 0.15] m, navigational obstacles [0.15, 2.0] m.
+        # Keep 3-D ray tracing enabled so observed floor remains free space.
+        DeclareLaunchArgument(
+            'rtabmap_args',
+            default_value=(
+                '--Grid/3D true '
+                '--Grid/NormalsSegmentation false '
+                '--Grid/MinGroundHeight -0.20 '
+                '--Grid/MaxGroundHeight 0.15 '
+                '--Grid/MaxObstacleHeight 2.0 '
+                '--Grid/RayTracing true'
+            ),
+        ),
         DeclareLaunchArgument('frame_id', default_value='base_footprint'),
         DeclareLaunchArgument('map_frame_id', default_value='map'),
         DeclareLaunchArgument('odom_topic', default_value='/Odometry'),
@@ -45,6 +62,11 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('rtabmap_imu_topic', default_value='/unused_imu'),
         DeclareLaunchArgument('gps_topic', default_value='/sensors/gps/fix'),
         DeclareLaunchArgument('scan_cloud_topic', default_value='/cloud_registered_body'),
+        # Disabled by default so this temporary MK-mini volume cannot be
+        # inherited automatically by a future platform. Current MK-mini
+        # bringup opts in explicitly.
+        DeclareLaunchArgument('enable_rtabmap_self_filter', default_value='false'),
+        DeclareLaunchArgument('filtered_scan_cloud_topic', default_value='/cloud_registered_rtabmap'),
         DeclareLaunchArgument('rgb_topic', default_value='/sensors/camera/rgb/image_rect'),
         DeclareLaunchArgument('depth_topic', default_value='/sensors/camera/depth/image_rect'),
         DeclareLaunchArgument('camera_info_topic', default_value='/sensors/camera/rgb/camera_info'),
@@ -74,7 +96,11 @@ def generate_launch_description() -> LaunchDescription:
             'imu_topic': LaunchConfiguration('rtabmap_imu_topic'),
             'wait_imu_to_init': LaunchConfiguration('wait_imu_to_init'),
             'gps_topic': LaunchConfiguration('gps_topic'),
-            'scan_cloud_topic': LaunchConfiguration('scan_cloud_topic'),
+            'scan_cloud_topic': PythonExpression([
+                "'", LaunchConfiguration('filtered_scan_cloud_topic'),
+                "' if '", LaunchConfiguration('enable_rtabmap_self_filter'),
+                "' == 'true' else '", LaunchConfiguration('scan_cloud_topic'), "'",
+            ]),
             'subscribe_scan_cloud': 'true',
             'subscribe_scan': 'false',
             'visual_odometry': 'false',
@@ -141,5 +167,15 @@ def generate_launch_description() -> LaunchDescription:
 
     for action in declare_args:
         ld.add_action(action)
+    ld.add_action(Node(
+        package='robot_bringup',
+        executable='rtabmap_self_body_filter',
+        name='rtabmap_self_body_filter',
+        output='screen',
+        condition=IfCondition(LaunchConfiguration('enable_rtabmap_self_filter')),
+        parameters=[PathJoinSubstitution([
+            FindPackageShare('robot_bringup'), 'config', 'mkmini_rtabmap_self_body_crop.yaml'
+        ])],
+    ))
     ld.add_action(rtabmap_launch)
     return ld

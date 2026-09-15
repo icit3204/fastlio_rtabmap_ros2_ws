@@ -1,0 +1,16 @@
+rtabmap_self_body_filter:
+  ros__parameters:
+    # TEMPORARY_MKMINI_SELF_BODY_CROP
+    # Qualified only for the current MK-mini research platform. Final robot
+    # platforms must default disabled and receive a new physical measurement.
+    input_topic: /cloud_registered_body
+    output_topic: /cloud_registered_rtabmap
+    expected_input_frame: body
+    crop_frame: base_footprint
+    tf_timeout_sec: 0.10
+    x_min: 0.540
+    x_max: 0.670
+    y_min: -0.140
+    y_max: 0.150
+    z_min: 0.530
+    z_max: 0.580
