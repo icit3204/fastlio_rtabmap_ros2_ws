@@ -19,21 +19,17 @@ def test_minimal_launch_uses_real_local_costmap_only():
         assert prohibited not in text.lower()
 
 
-def test_production_local_costmap_cloud_contract_is_explicit():
+def test_production_local_costmap_geometry_contract_is_explicit():
     config = yaml.safe_load((ROOT / "config" / "nav2_common.yaml").read_text())
     params = config["local_costmap"]["local_costmap"]["ros__parameters"]
-    voxel = params["voxel_layer"]
-    source = voxel["lidar_cloud"]
+    obstacle = params["tmini_obstacle_layer"]
     assert params["global_frame"] == "odom_chassis"
     assert params["robot_base_frame"] == "base_footprint"
     assert params["footprint"] == "[[ 0.755, 0.300 ],[ 0.755, -0.300 ],[-0.145, -0.300 ],[-0.145, 0.300 ]]"
-    assert voxel["plugin"] == "nav2_costmap_2d::VoxelLayer"
-    assert (voxel["origin_z"], voxel["z_resolution"], voxel["z_voxels"]) == (0.0, 0.1, 16)
-    assert source["topic"] == "/cloud_registered_body"
-    assert source["data_type"] == "PointCloud2"
-    assert (source["min_obstacle_height"], source["max_obstacle_height"]) == (0.1, 1.6)
-    assert (source["obstacle_min_range"], source["obstacle_max_range"]) == (0.0, 3.0)
-    assert (source["raytrace_min_range"], source["raytrace_max_range"]) == (0.0, 3.5)
+    assert params["plugins"] == ["tmini_obstacle_layer", "inflation_layer"]
+    assert obstacle["plugin"] == "nav2_costmap_2d::ObstacleLayer"
+    assert obstacle["observation_persistence"] == 0.0
+    assert "lidar_cloud" not in obstacle
 
 
 def test_production_costmaps_never_use_sensor_tilted_body_as_global_frame():
@@ -44,9 +40,9 @@ def test_production_costmaps_never_use_sensor_tilted_body_as_global_frame():
 def test_production_local_costmap_has_native_tmini_scan_source():
     config = yaml.safe_load((ROOT / "config" / "nav2_common.yaml").read_text())
     params = config["local_costmap"]["local_costmap"]["ros__parameters"]
-    voxel = params["voxel_layer"]
-    assert voxel["observation_sources"] == "lidar_cloud tmini_scan"
-    scan = voxel["tmini_scan"]
+    obstacle = params["tmini_obstacle_layer"]
+    assert obstacle["observation_sources"] == "tmini_scan"
+    scan = obstacle["tmini_scan"]
     assert scan["topic"] == "/scan"
     assert scan["data_type"] == "LaserScan"
     assert scan["marking"] is True and scan["clearing"] is True

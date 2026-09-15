@@ -29,7 +29,7 @@ def test_rtab_only_topic_branch_and_disabled_generic_default():
     assert "'enable_rtabmap_self_filter': 'true'" in BRINGUP
     assert '"enable_rtabmap_self_filter": "true"' in CALIBRATED_LOCALIZATION
     assert "'scan_cloud_topic': LaunchConfiguration('scan_cloud_topic')" not in BRIDGE
-    assert "topic: /cloud_registered_body" in NAV2
+    assert "topic: /cloud_registered_body" not in NAV2
     assert 'topic: "/cloud_registered_body"' in COLLISION
 
 
