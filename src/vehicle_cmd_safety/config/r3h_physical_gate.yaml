@@ -1,0 +1,25 @@
+guarded_vehicle_cmd_gate:
+  ros__parameters:
+    frame_id: base_footprint
+    heartbeat_hz: 20.0
+    safe_twist_timeout_sec: 0.25
+    # Physical Nav2 bootstrap has no /cmd_vel until a route is accepted.
+    # Arm pending with an explicit zero output, then require a fresh command
+    # received after the arm request before admitting any nonzero motion.
+    safe_zero_quiescence_enabled: true
+    localization_timeout_sec: 0.50
+    controller_timeout_sec: 0.50
+    collision_valid_timeout_sec: 0.25
+    authority_stability_sec: 1.0
+    max_forward_velocity: 0.040
+    max_angular_velocity: 0.022857142857142857
+    max_linear_increase_rate: 2.50
+    max_angular_increase_rate: 2.50
+    max_slew_dt_sec: 0.10
+    safe_input_topic: /cmd_vel
+    output_topic: /vehicle_cmd_safe
+    localization_valid_topic: /system/localization_valid
+    controller_valid_topic: /system/controller_valid
+    collision_valid_topic: /system/collision_monitor_valid
+    state_topic: /vehicle_cmd_safety/state
+    arm_service: /vehicle_cmd_safety/arm

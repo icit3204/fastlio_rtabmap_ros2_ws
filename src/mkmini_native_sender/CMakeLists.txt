@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+project(mkmini_native_sender)
+find_package(ament_cmake REQUIRED)
+add_executable(mkmini_native_sender src/mkmini_native_sender.cpp)
+target_compile_features(mkmini_native_sender PRIVATE cxx_std_17)
+install(TARGETS mkmini_native_sender DESTINATION lib/${PROJECT_NAME})
+ament_package()

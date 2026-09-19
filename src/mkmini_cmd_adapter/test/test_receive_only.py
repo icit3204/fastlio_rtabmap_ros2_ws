@@ -252,6 +252,52 @@ def test_redundant_receiver_deduplicates_kernel_identical_frames_and_has_no_send
     transport.close()
 
 
+def test_redundant_receiver_projects_kernel_receive_time_to_monotonic_for_freshness():
+    wire = raw_frame(CTRL_FB_ID, valid_ctrl(0))
+    sockets = [
+        FakeRecvmsgSocket([wire], [100_000_000_000]),
+        FakeRecvmsgSocket([wire], [100_000_000_000]),
+    ]
+    transport = RedundantSocketCanReadOnlyTransport(
+        "test0",
+        filters=(ReceiveFilter(CTRL_FB_ID),),
+        socket_module=FakeRedundantSocketApi,
+        socket_factory=lambda *_args: sockets.pop(0),
+        clock=lambda: 500.020,
+        wall_clock=lambda: 100.020,
+        receive_timeout_sec=0.01,
+    )
+    transport.open()
+    record = transport.receive()
+    # The userspace dequeue is 20 ms after the kernel timestamp. Freshness
+    # must reflect the frame arrival, not the receiver thread's scheduling.
+    assert record.received_monotonic_sec == pytest.approx(500.0)
+    assert record.kernel_timestamp_ns == 100_000_000_000
+    transport.close()
+
+
+def test_redundant_receiver_does_not_refresh_an_old_kernel_frame_at_dequeue():
+    wire = raw_frame(CTRL_FB_ID, valid_ctrl(0))
+    sockets = [
+        FakeRecvmsgSocket([wire], [99_940_000_000]),
+        FakeRecvmsgSocket([wire], [99_940_000_000]),
+    ]
+    transport = RedundantSocketCanReadOnlyTransport(
+        "test0",
+        filters=(ReceiveFilter(CTRL_FB_ID),),
+        socket_module=FakeRedundantSocketApi,
+        socket_factory=lambda *_args: sockets.pop(0),
+        clock=lambda: 500.020,
+        wall_clock=lambda: 100.020,
+        receive_timeout_sec=0.01,
+    )
+    transport.open()
+    record = transport.receive()
+    assert record.received_monotonic_sec == pytest.approx(499.940)
+    assert 500.020 - record.received_monotonic_sec > 0.050
+    transport.close()
+
+
 def test_redundant_receiver_preserves_frame_missed_by_one_source():
     wire0 = raw_frame(CTRL_FB_ID, valid_ctrl(0))
     wire1 = raw_frame(CTRL_FB_ID, valid_ctrl(1))

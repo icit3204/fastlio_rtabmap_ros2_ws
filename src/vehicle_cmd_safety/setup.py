@@ -26,6 +26,7 @@ setup(
             "guarded_vehicle_cmd_gate = vehicle_cmd_safety.guarded_vehicle_cmd_gate:main",
             "collision_monitor_validity_monitor = vehicle_cmd_safety.collision_monitor_validity_monitor:main",
             "localization_validity_monitor = vehicle_cmd_safety.localization_validity_monitor:main",
+            "nav2_controller_validity_monitor = vehicle_cmd_safety.nav2_controller_validity_monitor:main",
             "required_perception_validity = vehicle_cmd_safety.required_perception_validity:main",
             "phase4_p4c_permission_fixture = vehicle_cmd_safety.phase4_p4c_permission_fixture:main",
             "phase4_p4c_safe_twist_fixture = vehicle_cmd_safety.phase4_p4c_safe_twist_fixture:main",

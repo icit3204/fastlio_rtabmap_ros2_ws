@@ -1,6 +1,17 @@
 # Current-room map-to-navigation operator runbook
 
-Status: mapping, localization, and operator-approved optimized-map-frame PlanNav bootstrap validated on 2026-09-11.
+Status: superseded for current MK-mini work by the R3H-qualified mapping path on 2026-09-15. Historical commands below remain evidence only; do not reuse their legacy static transform or `phase5_calibrated_localization.launch.py` for current-room production work.
+
+## R3H-qualified current-room path
+
+1. Before creating a session, confirm MID-360 Ethernet RX is increasing on `enP8p1s0` (`192.168.168.50/24`), the MID-360 at `192.168.168.20` responds, `/livox/lidar` advances at approximately 10 Hz, `/livox/imu` at approximately 200 Hz, and FAST-LIO `/Odometry` advances at approximately 10 Hz.
+2. Use the committed `mkmini_calibrated_localization.launch.py` current calibrated body-to-`base_footprint` authority. Preserve raw FAST-LIO `odom -> body`; RTAB must use `frame_id=base_footprint`, native TF odometry `odom_frame_id=odom_chassis`, and isolated RTAB IMU `/unused_imu`.
+3. Confirm RTAB mapping uses `Grid/3D=true`, `Grid/NormalsSegmentation=false`, `Grid/MinGroundHeight=-0.20`, `Grid/MaxGroundHeight=0.15`, `Grid/MaxObstacleHeight=2.0`, and `Grid/RayTracing=true`.
+4. On this temporary MK-mini platform only, enable the RTAB-only self-filtered cloud branch. It removes the measured cooler/collar self-volume in `base_footprint`: X `0.540..0.670 m`, Y `-0.140..0.150 m`, Z `0.530..0.580 m`. Raw `/cloud_registered_body`, FAST-LIO, and safety perception topics remain unchanged. Requalify or disable this crop on any final robot.
+5. Before manual mapping movement, verify filtered RTAB cloud timestamps/frame are healthy and it contains zero points in that self-volume while raw external returns outside it remain present.
+6. After mapping, require planar trajectory, free-cell audit, local-grid self-return audit, and visual review before accepting the DB. Do not promote a map with self-body breadcrumbs or unexplained occupied speckles in clear observed floor.
+7. Localize only against a runtime copy. Seed the new map with native `/initialpose`; visually confirm map-to-`base_footprint`, then manually validate a 0.5–1.0 m move.
+8. Screen live start and every waypoint using the full production footprint: zero unknown, lethal, and inscribed footprint cells. Use the unchanged Smac Hybrid DUBIN planner (`minimum_turning_radius=1.75 m`, `allow_unknown=false`) as the topology edge oracle. Validate live-start-to-first-waypoint and every persisted directed edge before any later mission milestone.
 
 1. Keep physical CAN disconnected. Connect the MID-360 and its IMU. The T-mini is not required for map acquisition or this localization check.
 2. Choose a unique session name in `YYYYMMDD_HHMMSS_label` form and create `map/current_room_sessions/<SESSION_ID>/`. Never reuse an existing directory.

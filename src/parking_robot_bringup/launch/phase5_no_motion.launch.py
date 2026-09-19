@@ -7,8 +7,9 @@ state, and the only chassis adapter publishes the explicitly mock topic.
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -17,6 +18,7 @@ def generate_launch_description() -> LaunchDescription:
     bringup = FindPackageShare("parking_robot_bringup")
     safety = FindPackageShare("vehicle_cmd_safety")
     adapter = FindPackageShare("wheelchair_cmd_adapter")
+    mkmini = FindPackageShare("mkmini_cmd_adapter")
     robot = FindPackageShare("robot_bringup")
 
     nav = PathJoinSubstitution([bringup, "config", "phase5_no_motion_nav2.yaml"])
@@ -27,10 +29,12 @@ def generate_launch_description() -> LaunchDescription:
     localization_validity = PathJoinSubstitution([safety, "config", "phase5_localization_validity.yaml"])
     gate = PathJoinSubstitution([bringup, "config", "phase5_gate_mock.yaml"])
     adapter_params = PathJoinSubstitution([adapter, "config", "mock_wheelchair_cmd_adapter.yaml"])
+    physical_params = PathJoinSubstitution([mkmini, "config", "r11_physical_backend_commissioning.yaml"])
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     start_livox = LaunchConfiguration("start_livox")
     database_path = LaunchConfiguration("database_path")
+    backend_mode = LaunchConfiguration("backend_mode")
 
     nodes = [
         IncludeLaunchDescription(
@@ -76,11 +80,17 @@ def generate_launch_description() -> LaunchDescription:
         Node(package="vehicle_cmd_safety", executable="guarded_vehicle_cmd_gate",
              name="guarded_vehicle_cmd_gate", output="screen", parameters=[gate]),
         Node(package="wheelchair_cmd_adapter", executable="mock_wheelchair_cmd_adapter",
-             name="mock_wheelchair_cmd_adapter", output="screen", parameters=[adapter_params]),
+             name="mock_wheelchair_cmd_adapter", output="screen", parameters=[adapter_params],
+             condition=IfCondition(PythonExpression(["'", backend_mode, "' == 'mock'"]))),
+        Node(package="mkmini_cmd_adapter", executable="mkmini_physical_ros_backend",
+             name="mkmini_physical_ros_backend", output="screen", parameters=[physical_params],
+             condition=IfCondition(PythonExpression(["'", backend_mode, "' == 'physical_mkmini'"]))),
     ]
 
     return LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="false"),
+        DeclareLaunchArgument("backend_mode", default_value="mock",
+                              description="Exactly one endpoint: mock or physical_mkmini."),
         DeclareLaunchArgument(
             "start_livox",
             default_value="true",

@@ -2,9 +2,12 @@
 
 - [ ] Unique, unused session directory selected.
 - [ ] MID-360 and IMU connected; physical CAN disconnected.
+- [ ] MID-360 Ethernet RX preflight passes: `enP8p1s0=192.168.168.50/24`, MID-360 reachable, RX increasing.
 - [ ] Historical DB hash recorded; historical DB path not used as output.
-- [ ] Accepted `body -> base_footprint` static transform active.
-- [ ] Mapping launch explicitly uses `imu_topic:=/livox/imu`.
+- [ ] Current calibrated `body -> base_footprint` authority active; no legacy mapping-specific transform is active.
+- [ ] RTAB uses `frame_id=base_footprint`, `odom_frame_id=odom_chassis`, isolated `/unused_imu`, and `Grid/RayTracing=true`.
+- [ ] R3G 3-D ground/height settings are active.
+- [ ] Temporary MK-mini RTAB-only self-body crop is active; raw FAST-LIO and safety clouds remain unchanged.
 - [ ] MID-360, IMU, FAST-LIO odometry, TF, and RTAB updates healthy.
 - [ ] Robot pushed manually; no powered command authority.
 - [ ] Outbound pass completed without stopping mapping.
@@ -12,6 +15,7 @@
 - [ ] RTAB stopped gracefully and DB flush confirmed.
 - [ ] New DB integrity/hash/size recorded.
 - [ ] Map shown to operator and visually confirmed.
+- [ ] Planar trajectory, free-cell, and self-breadcrumb audits pass.
 - [ ] Localization uses a unique runtime DB copy and localization-only mode.
 - [ ] Short manual localization movement remains continuous and bounded.
 - [ ] PlanNav uses optimized ROS `map` coordinates—not raw `Node.pose`.
@@ -20,4 +24,5 @@
 - [ ] Proposed nodes/edges were visually reviewed before topology persistence.
 - [ ] Workspace DB hash and topology version recorded before planner preflight.
 - [ ] Directed Dijkstra and typed RouteMission validate offline; reverse route is not assumed.
+- [ ] Live start to the first persisted waypoint and every directed route edge pass the unchanged planner preflight.
 - [ ] All processes stopped; SocketCAN absent; CAN TX unchanged.

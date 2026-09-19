@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import math
+import os
 import queue
 import socket as _socket
 import struct
@@ -230,7 +231,9 @@ class RedundantSocketCanReadOnlyTransport:
         socket_module: Any = _socket,
         socket_factory: Callable[..., Any] | None = None,
         clock: Callable[[], float] = time.monotonic,
+        wall_clock: Callable[[], float] = time.time,
         receive_buffer_bytes: int = 4 << 20,
+        worker_cpus: tuple[int, int] | None = None,
     ) -> None:
         if not interface_name.strip():
             raise ValueError("interface_name must be non-empty")
@@ -244,7 +247,9 @@ class RedundantSocketCanReadOnlyTransport:
         self._socket_module = socket_module
         self._socket_factory = socket_factory or socket_module.socket
         self._clock = clock
+        self._wall_clock = wall_clock
         self._receive_buffer_bytes = receive_buffer_bytes
+        self._worker_cpus = worker_cpus
         self._sockets: list[Any] = []
         self._threads: list[threading.Thread] = []
         self._stop = threading.Event()
@@ -318,6 +323,14 @@ class RedundantSocketCanReadOnlyTransport:
         return kernel_ns, overflow
 
     def _receive_loop(self, index: int, sock: Any) -> None:
+        if self._worker_cpus is not None:
+            try:
+                os.sched_setaffinity(0, {self._worker_cpus[index]})
+            except (AttributeError, OSError):
+                # Failure remains observable through actual feedback freshness
+                # and the unchanged interlock.  Other platforms may not expose
+                # Linux thread affinity controls.
+                pass
         while not self._stop.is_set():
             try:
                 raw, ancdata, _flags, _address = sock.recvmsg(16, 128)
@@ -328,9 +341,22 @@ class RedundantSocketCanReadOnlyTransport:
                     with self._lock:
                         self._errors[index] = f"{type(exc).__name__}: {exc}"
                 return
-            received = self._clock()
+            monotonic_before = self._clock()
             try:
                 kernel_ns, overflow = self._ancillary(ancdata)
+                if kernel_ns is None:
+                    received = monotonic_before
+                else:
+                    # SO_TIMESTAMPNS is a kernel CLOCK_REALTIME timestamp.
+                    # Project it into the monotonic domain using a bracketed
+                    # local offset, so userspace dequeue scheduling cannot
+                    # make a fresh queued CAN frame appear stale. A genuinely
+                    # old kernel timestamp remains old and fails the existing
+                    # feedback freshness bound.
+                    realtime_now = self._wall_clock()
+                    monotonic_after = self._clock()
+                    offset = ((monotonic_before + monotonic_after) * 0.5) - realtime_now
+                    received = kernel_ns * 1.0e-9 + offset
                 record = _captured_from_wire(raw, received)
             except Exception as exc:
                 with self._lock:

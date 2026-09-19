@@ -1,0 +1,17 @@
+mkmini_physical_ros_backend:
+  ros__parameters:
+    can_interface: can0
+    physical_enabled: false
+    command_timeout_sec: 0.25
+    command_speed_ceiling_mps: 0.040
+    command_steering_ceiling_deg: 30.0
+    # Professor-authorized development MK-mini mode. Chassis feedback is
+    # diagnostic only; restore FEEDBACK_INTERLOCKED on the final robot.
+    backend_policy_mode: TEMPORARY_MKMINI_OPEN_LOOP
+    actual_speed_ceiling_mps: 0.070
+    safe_command_topic: /vehicle_cmd_safe
+    state_topic: /mkmini_physical_backend/state
+    enable_service: /mkmini_physical_backend/enable
+    # Keep native TX and diagnostic RX on reserved CPU 6; executor is 5 and
+    # command supervisor is 7.
+    native_sender_cpu: 6

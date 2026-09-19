@@ -4,6 +4,8 @@ from .codec import (
     AliveCounter,
     AliveObservation,
     AliveTracker,
+    FeedbackAliveObservation,
+    FeedbackAliveObserver,
     ChecksumError,
     FrameValidationError,
     ManufacturerCommandValidator,
@@ -118,11 +120,21 @@ from .contained_continuity import (
     classify_stationary_encoder_one_count_dither,
     classify_stationary_encoder_boundary_dither,
 )
+from .backend_interlock import (
+    BackendCommand,
+    BackendFeedback,
+    BackendInterlockConfig,
+    BackendInterlockResult,
+    BackendInterlockState,
+    MkminiBackendInterlock,
+)
 
 __all__ = [
     "AliveCounter",
     "AliveObservation",
     "AliveTracker",
+    "FeedbackAliveObservation",
+    "FeedbackAliveObserver",
     "CanFrame",
     "ChecksumError",
     "CtrlCommand",
@@ -224,4 +236,10 @@ __all__ = [
     "classify_stationary_one_count_jitter",
     "classify_stationary_encoder_one_count_dither",
     "classify_stationary_encoder_boundary_dither",
+    "BackendCommand",
+    "BackendFeedback",
+    "BackendInterlockConfig",
+    "BackendInterlockResult",
+    "BackendInterlockState",
+    "MkminiBackendInterlock",
 ]

@@ -5,13 +5,14 @@ from pathlib import Path
 PACKAGE_DIR = Path(__file__).resolve().parents[1] / "mkmini_cmd_adapter"
 READ_ONLY_MODULE = PACKAGE_DIR / "receive_only.py"
 TX_MODULE = PACKAGE_DIR / "tx.py"
+NATIVE_SENDER_MODULE = PACKAGE_DIR / "native_sender.py"
 
 
 def test_pure_package_has_no_real_can_import_or_transport_calls():
     forbidden_imports = {"can", "python_can", "socket", "socketcan"}
     forbidden_names = {"socket", "cansend", "candump"}
     for path in PACKAGE_DIR.glob("*.py"):
-        if path in (READ_ONLY_MODULE, TX_MODULE):
+        if path in (READ_ONLY_MODULE, TX_MODULE, NATIVE_SENDER_MODULE):
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
@@ -64,3 +65,12 @@ def test_tx_transport_has_only_explicit_frame_send_surface():
     assert {"open", "send_frame", "close"}.issubset(methods)
     assert "encode_ctrl_cmd" not in TX_MODULE.read_text(encoding="utf-8")
     assert "require_tx" in TX_MODULE.read_text(encoding="utf-8")
+
+
+def test_native_sender_python_bridge_uses_only_local_unix_datagrams():
+    source = NATIVE_SENDER_MODULE.read_text(encoding="utf-8")
+    assert "socket.AF_UNIX" in source
+    assert "socket.SOCK_DGRAM" in source
+    assert "PF_CAN" not in source
+    assert "CAN_RAW" not in source
+    assert "SocketCanTxTransport" not in source

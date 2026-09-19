@@ -149,6 +149,17 @@ class AliveObservation:
     expected_previous_successor: int | None
 
 
+@dataclass(frozen=True)
+class FeedbackAliveObservation:
+    valid: bool
+    reason: str
+    value: int
+    previous: int | None
+    delta_mod16: int | None
+    interval_sec: float | None
+    warning: bool = False
+
+
 class AliveCounter:
     """Explicit caller-owned 4-bit transmit counter."""
 
@@ -198,6 +209,63 @@ class AliveTracker:
         )
         self._last = value
         return observation
+
+
+class FeedbackAliveObserver:
+    """Freshness-bounded 4-bit feedback sequence observer.
+
+    The manufacturer counter increments for every transmitted frame. A small
+    forward delta therefore proves that intermediate frames existed but were
+    not observed by this userspace socket. It is retained as a loss warning,
+    while replay/repeat, backward or implausibly large deltas, stale timing,
+    timestamp reversal, and bad checksums remain invalid.
+    """
+
+    def __init__(self, *, maximum_interval_sec: float = 0.05, maximum_forward_delta: int = 5) -> None:
+        if not math.isfinite(maximum_interval_sec) or maximum_interval_sec <= 0.0:
+            raise ValueError("maximum_interval_sec must be finite and positive")
+        if isinstance(maximum_forward_delta, bool) or not 1 <= maximum_forward_delta <= 15:
+            raise ValueError("maximum_forward_delta must be in [1, 15]")
+        self.maximum_interval_sec = maximum_interval_sec
+        self.maximum_forward_delta = maximum_forward_delta
+        self._last: int | None = None
+        self._last_timestamp_sec: float | None = None
+
+    @property
+    def last(self) -> int | None:
+        return self._last
+
+    def observe(self, value: int, timestamp_sec: float, *, checksum_valid: bool) -> FeedbackAliveObservation:
+        AliveCounter._validate(value)
+        if not math.isfinite(timestamp_sec):
+            return FeedbackAliveObservation(False, "TIMESTAMP_INVALID", value, self._last, None, None)
+        previous = self._last
+        previous_stamp = self._last_timestamp_sec
+        interval = None if previous_stamp is None else timestamp_sec - previous_stamp
+        delta = None if previous is None else (value - previous) & 0x0F
+        if checksum_valid is not True:
+            return FeedbackAliveObservation(False, "CHECKSUM_INVALID", value, previous, delta, interval)
+        if interval is not None and interval <= 0.0:
+            return FeedbackAliveObservation(False, "TIMESTAMP_REVERSED_OR_DUPLICATE", value, previous, delta, interval)
+        if interval is not None and interval > self.maximum_interval_sec:
+            return FeedbackAliveObservation(False, "STALE_SEQUENCE", value, previous, delta, interval)
+        if previous is None:
+            self._last = value
+            self._last_timestamp_sec = timestamp_sec
+            return FeedbackAliveObservation(True, "FIRST_SAMPLE", value, None, None, None)
+        if delta == 0:
+            return FeedbackAliveObservation(False, "REPEATED_REPLAY", value, previous, delta, interval)
+        if delta == 1:
+            self._last = value
+            self._last_timestamp_sec = timestamp_sec
+            return FeedbackAliveObservation(True, "NORMAL_INCREMENT", value, previous, delta, interval)
+        if 2 <= delta <= self.maximum_forward_delta:
+            self._last = value
+            self._last_timestamp_sec = timestamp_sec
+            return FeedbackAliveObservation(
+                True, "FORWARD_OBSERVATION_GAP", value, previous, delta, interval, warning=True
+            )
+        return FeedbackAliveObservation(False, "BACKWARD_OR_IMPLAUSIBLE_DELTA", value, previous, delta, interval)
 
 
 def checksum(data: Iterable[int]) -> int:

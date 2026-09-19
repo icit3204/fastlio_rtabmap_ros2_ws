@@ -58,6 +58,11 @@ class SocketCanTxTransport:
             sock = self._socket_factory()
         try:
             sock.bind((self.interface_name,))
+            # A full SocketCAN TX queue is a safety fault, not permission to
+            # block the heartbeat scheduler past its watchdog deadline.
+            setblocking = getattr(sock, "setblocking", None)
+            if setblocking is not None:
+                setblocking(False)
         except Exception:
             close = getattr(sock, "close", None)
             if close is not None:
