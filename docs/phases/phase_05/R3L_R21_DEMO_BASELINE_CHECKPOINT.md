@@ -6,7 +6,8 @@ no runtime database or generated evidence.
 ## Checkpoint
 
 - Baseline branch: `main`
-- Baseline commit: recorded after the approved checkpoint commit
+- Source baseline commit: `9a9f637`
+- Final checkpoint metadata commit: recorded in the annotated tag target
 - Tag: `phase5a_r3l_r21_demo_baseline`
 - Development branch: `dev/r3h_perception_reconciliation`
 - CAN: unavailable at checkpoint time; no CAN TX was performed
