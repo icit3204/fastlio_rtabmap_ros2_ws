@@ -15,10 +15,11 @@ from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, EmitEvent,
                             IncludeLaunchDescription, LogInfo,
                             OpaqueFunction, RegisterEventHandler, TimerAction)
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -66,12 +67,23 @@ def generate_launch_description():
     start_livox = LaunchConfiguration("start_livox")
     database_path = LaunchConfiguration("database_path")
     runtime_dir = LaunchConfiguration("rtabmap_runtime_dir")
+    collision_monitor_mode = LaunchConfiguration("collision_monitor_mode")
     nav = PathJoinSubstitution([robot, "config", "nav2_common.yaml"])
     collision = PathJoinSubstitution([robot, "config", "collision_monitor_dual_sensor.yaml"])
     gate = PathJoinSubstitution([safety, "config", "r3h_physical_gate.yaml"])
     localization_validity = PathJoinSubstitution([safety, "config", "phase5_localization_validity.yaml"])
     tmini_validity = PathJoinSubstitution([safety, "config", "phase5_dual_tmini_validity.yaml"])
     physical = PathJoinSubstitution([mkmini, "config", "r11_physical_backend_commissioning.yaml"])
+    experimental_geometry = PathJoinSubstitution([
+        robot, "config", "motion_aware_collision_geometry.experimental.yaml"])
+
+    def validate_collision_monitor_mode(context):
+        mode = collision_monitor_mode.perform(context)
+        if mode not in ("fixed_qualified", "motion_aware_experimental"):
+            raise RuntimeError(
+                "collision_monitor_mode must be fixed_qualified or "
+                f"motion_aware_experimental, got {mode!r}")
+        return []
 
     # This process owns an OS file lock for the lifetime of the composition.
     # Its delayed dependent actions ensure a conflicting second launch exits
@@ -150,6 +162,14 @@ def generate_launch_description():
         Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_navigation", output="screen", parameters=[{"autostart": True, "bond_timeout": 0.0, "node_names": ["planner_server", "controller_server", "bt_navigator"]}]),
     ]
     safety_nodes = [
+        # R23_SHADOW_ONLY: even in experimental mode, this publisher only
+        # visualizes candidate geometry. The qualified fixed Collision Monitor
+        # below remains the sole command-filtering authority.
+        Node(package="robot_bringup", executable="motion_aware_collision_geometry",
+             name="motion_aware_collision_geometry", output="screen",
+             parameters=[experimental_geometry],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
         Node(package="nav2_collision_monitor", executable="collision_monitor", name="collision_monitor", output="screen", parameters=[collision], prefix="taskset -c 7"),
         Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_collision_monitor", output="screen", parameters=[{"autostart": True, "bond_timeout": 0.0, "node_names": ["collision_monitor"]}]),
         Node(package="vehicle_cmd_safety", executable="localization_validity_monitor", name="localization_validity_monitor", output="screen", parameters=[localization_validity], prefix="taskset -c 7"),
@@ -184,8 +204,10 @@ def generate_launch_description():
         OpaqueFunction(function=isolate_r3h_navigation_processes),
         DeclareLaunchArgument("use_sim_time", default_value="false"),
         DeclareLaunchArgument("start_livox", default_value="true"),
+        DeclareLaunchArgument("collision_monitor_mode", default_value="fixed_qualified"),
         DeclareLaunchArgument("database_path", default_value=R3H_DB),
         DeclareLaunchArgument(
             "rtabmap_runtime_dir", default_value="/home/dog/phase5_runtime/r3h_rtabmap"),
+        OpaqueFunction(function=validate_collision_monitor_mode),
         instance_guard, guard_exit_shutdown, guarded_composition,
     ])
