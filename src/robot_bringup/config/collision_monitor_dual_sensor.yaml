@@ -38,7 +38,9 @@ collision_monitor:
     observation_sources: ["mid360_body_cloud", "tmini_scan"]
     mid360_body_cloud:
       type: "pointcloud"
-      topic: "/cloud_registered_body"
+      # R22: use the same finite, self-cropped, ground-excluded obstacle set
+      # as Nav2. Polygons and independent safety ownership remain unchanged.
+      topic: "/cloud_registered_nav2_obstacles"
       min_height: 0.10
       max_height: 1.60
       enabled: true

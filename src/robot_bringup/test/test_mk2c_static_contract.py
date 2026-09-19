@@ -26,7 +26,8 @@ def test_production_local_costmap_geometry_contract_is_explicit():
     assert params["global_frame"] == "odom_chassis"
     assert params["robot_base_frame"] == "base_footprint"
     assert params["footprint"] == "[[ 0.755, 0.300 ],[ 0.755, -0.300 ],[-0.145, -0.300 ],[-0.145, 0.300 ]]"
-    assert params["plugins"] == ["tmini_obstacle_layer", "inflation_layer"]
+    assert params["plugins"] == [
+        "tmini_obstacle_layer", "mid360_obstacle_layer", "inflation_layer"]
     assert obstacle["plugin"] == "nav2_costmap_2d::ObstacleLayer"
     assert obstacle["observation_persistence"] == 0.0
     assert "lidar_cloud" not in obstacle
@@ -136,7 +137,7 @@ def test_canonical_collision_monitor_uses_dual_real_sources_and_physical_zones()
     assert p["Phase5Stop"]["max_points"] == p["Phase5Slow"]["max_points"] == 3
     assert p["observation_sources"] == ["mid360_body_cloud", "tmini_scan"]
     assert p["mid360_body_cloud"] == {
-        "type": "pointcloud", "topic": "/cloud_registered_body",
+        "type": "pointcloud", "topic": "/cloud_registered_nav2_obstacles",
         "min_height": 0.10, "max_height": 1.60, "enabled": True,
     }
     assert p["tmini_scan"] == {"type": "scan", "topic": "/scan", "enabled": True}
@@ -169,7 +170,7 @@ def test_stationary_fail_close_gate_requires_both_real_sources_and_is_isolated()
     assert "executable='required_perception_validity'" in text
     assert "executable='guarded_vehicle_cmd_gate'" in text
     safety = ROOT.parent / "vehicle_cmd_safety" / "config"
-    assert "/cloud_registered_body" in (safety / "phase5_dual_mid360_validity.yaml").read_text()
+    assert "/cloud_registered_nav2_obstacles" in (safety / "phase5_dual_mid360_validity.yaml").read_text()
     assert "/scan" in (safety / "phase5_dual_tmini_validity.yaml").read_text()
     gate = (safety / "phase5_dual_fail_close_gate.yaml").read_text()
     assert "safe_input_topic: /phase5/cm_test/cmd_vel_out" in gate

@@ -150,6 +150,19 @@ def generate_launch_description() -> LaunchDescription:
         output='screen',
         condition=IfCondition(start_ydlidar),
         parameters=[LaunchConfiguration('ydlidar_params_file')],
+        remappings=[('/scan', '/scan_raw')],
+    )
+
+    tmini_scan_normalizer = Node(
+        package='robot_bringup',
+        executable='tmini_scan_normalizer',
+        name='tmini_scan_normalizer',
+        output='screen',
+        condition=IfCondition(start_ydlidar),
+        parameters=[{
+            'input_topic': '/scan_raw',
+            'output_topic': LaunchConfiguration('scan_topic'),
+        }],
     )
 
     # <修改 version3 新式参数: 老式参数在ROS2 Humble中已不发布/tf_static>
@@ -236,6 +249,18 @@ def generate_launch_description() -> LaunchDescription:
     rtabmap_bridge = GroupAction(
         condition=IfCondition(LaunchConfiguration('start_rtabmap')),
         actions=[rtabmap_bridge_launch],
+    )
+
+    # R22 navigation-only branch. Input is already protected by the qualified
+    # temporary MK-mini self crop in rtabmap_bridge; raw FAST-LIO is untouched.
+    mid360_nav_obstacle_filter = Node(
+        package='robot_bringup',
+        executable='mid360_nav_obstacle_filter',
+        name='mid360_nav_obstacle_filter',
+        output='screen',
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'navigation'"])),
+        parameters=[PathJoinSubstitution([
+            robot_bringup_share, 'config', 'mkmini_mid360_nav_filter.yaml'])],
     )
 
     def prepare_rtabmap_working_copy(context):
@@ -615,10 +640,12 @@ def generate_launch_description() -> LaunchDescription:
     ld.add_action(calibrated_localization)
     # <修改 version3 YDLIDAR 2D雷达节点>
     ld.add_action(ydlidar_node)
+    ld.add_action(tmini_scan_normalizer)
     ld.add_action(ydlidar_tf)
     ld.add_action(navsat_transform)
     ld.add_action(OpaqueFunction(function=prepare_rtabmap_working_copy))
     ld.add_action(rtabmap_bridge)
+    ld.add_action(mid360_nav_obstacle_filter)
     ld.add_action(rviz_node)
     ld.add_action(nav2_launch)
     ld.add_action(OpaqueFunction(function=stationary_local_costmap_actions))

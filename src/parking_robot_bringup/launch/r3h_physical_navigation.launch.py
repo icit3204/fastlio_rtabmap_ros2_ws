@@ -125,13 +125,25 @@ def generate_launch_description():
                           "enable_rtabmap_self_filter": "true", "delete_db_on_start": "false"}.items())
     tmini = Node(package="ydlidar_ros2_driver", executable="ydlidar_ros2_driver_node",
                  name="ydlidar_ros2_driver_node", output="screen",
-                 parameters=[PathJoinSubstitution([robot, "config", "tmini_mk2c.yaml"])])
+                 parameters=[PathJoinSubstitution([robot, "config", "tmini_mk2c.yaml"])],
+                 remappings=[("/scan", "/scan_raw")])
+    tmini_scan_normalizer = Node(
+        package="robot_bringup", executable="tmini_scan_normalizer",
+        name="tmini_scan_normalizer", output="screen",
+        parameters=[{"input_topic": "/scan_raw", "output_topic": "/scan"}])
     tmini_tf = Node(package="tf2_ros", executable="static_transform_publisher",
                     name="r3h_base_link_to_laser_frame", output="screen",
                     arguments=["--x", "0.703", "--y", "0.0", "--z", "0.1923",
                                "--roll", "0.0", "--pitch", "0.0", "--yaw", "0.0",
                                "--frame-id", "base_link", "--child-frame-id", "laser_frame"])
     nav_nodes = [
+        # R22: consume the already self-cropped MID branch, classify points in
+        # base_footprint, and preserve the source ``body`` frame so costmap
+        # ray tracing starts at the real MID/FAST-LIO sensor origin.
+        Node(package="robot_bringup", executable="mid360_nav_obstacle_filter",
+             name="mid360_nav_obstacle_filter", output="screen",
+             parameters=[PathJoinSubstitution([
+                 robot, "config", "mkmini_mid360_nav_filter.yaml"])]),
         Node(package="nav2_planner", executable="planner_server", name="planner_server", output="screen", parameters=[nav]),
         Node(package="nav2_controller", executable="controller_server", name="controller_server", output="screen", parameters=[nav], remappings=[("/cmd_vel", "/cmd_vel_nav")]),
         Node(package="nav2_bt_navigator", executable="bt_navigator", name="bt_navigator", output="screen", parameters=[nav]),
@@ -158,7 +170,8 @@ def generate_launch_description():
     ]
     guarded_composition = TimerAction(period=0.75, actions=[
         OpaqueFunction(function=prepare_rtabmap_working_copy),
-        localization, rtabmap, tmini, tmini_tf, *nav_nodes, *safety_nodes,
+        localization, rtabmap, tmini, tmini_scan_normalizer, tmini_tf,
+        *nav_nodes, *safety_nodes,
     ])
     guard_exit_shutdown = RegisterEventHandler(OnProcessExit(
         target_action=instance_guard,

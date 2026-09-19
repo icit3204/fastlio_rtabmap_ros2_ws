@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     source_type: pointcloud
-    source_topic: /cloud_registered_body
+    source_topic: /cloud_registered_nav2_obstacles
     expected_frame: body
     source_freshness_sec: 0.50
     recovery_stability_sec: 0.30
@@ -9,7 +9,7 @@
     collision_monitor_node_name: collision_monitor
     expected_observation_source_name: mid360_body_cloud
     expected_observation_source_type: pointcloud
-    expected_observation_source_topic: /cloud_registered_body
+    expected_observation_source_topic: /cloud_registered_nav2_obstacles
     validity_output_topic: /phase5/perception/mid360_valid
     query_watchdog_sec: 1.00
     query_retry_interval_sec: 0.50

@@ -1,0 +1,25 @@
+mid360_nav_obstacle_filter:
+  ros__parameters:
+    # Consume only the already self-cropped branch. Raw FAST-LIO and the
+    # qualified RTAB input/output contracts remain unchanged.
+    input_topic: /cloud_registered_rtabmap
+    obstacle_topic: /cloud_registered_nav2_obstacles
+    clearing_topic: /cloud_registered_nav2_clearing
+    expected_input_frame: body
+    filter_frame: base_footprint
+    tf_timeout_sec: 0.10
+
+    # Ground/obstacle boundary matches the qualified R3G RTAB local-grid
+    # contract. The upper bound matches the production Collision Monitor.
+    obstacle_min_height: 0.15
+    obstacle_max_height: 1.60
+    obstacle_min_range: 0.10
+    obstacle_max_range: 3.00
+
+    # Clearing uses real finite returns (including floor/background returns)
+    # but never marks them. Keeping this as a separate topic prevents ground
+    # occupancy while allowing removed obstacles to clear by ray tracing.
+    clearing_min_height: -0.20
+    clearing_max_height: 2.00
+    clearing_min_range: 0.10
+    clearing_max_range: 3.50
