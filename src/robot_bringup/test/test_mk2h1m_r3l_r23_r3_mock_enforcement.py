@@ -82,6 +82,7 @@ def test_config_and_launch_are_mock_only():
     assert values["command_timeout_sec"] == 0.250
     assert values["watchdog_zero_deadline_sec"] == 0.225
     assert values["watchdog_period_sec"] == 0.005
+    assert values.get("integration_mock_enabled", False) is False
     launch = (ROOT.parent / "parking_robot_bringup/launch/r3h_physical_navigation.launch.py").read_text()
     assert 'executable="motion_aware_collision_mock"' in launch
     assert "R23-R3 MOCK ONLY" in launch

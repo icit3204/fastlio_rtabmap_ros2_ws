@@ -190,6 +190,7 @@ def main() -> None:
                 "tmini_topic": "/scan_collision_experimental",
                 "output_topic": "/cmd_vel_motion_aware_mock",
                 "state_topic": "/motion_aware_collision_mock/state",
+                "integration_mock_enabled": False,
                 "base_frame": "base_footprint",
                 "max_points": 3,
                 "slowdown_ratio": 0.30,
@@ -218,7 +219,11 @@ def main() -> None:
                                 float(value("tmini_sensor_yaw")))
             output_topic = str(value("output_topic"))
             forbidden = {"/vehicle_cmd_safe", "/cmd_vel", "/cmd_vel_collision_monitor"}
-            if output_topic in forbidden or not output_topic.endswith("_mock"):
+            integration_mock = bool(value("integration_mock_enabled"))
+            integration_topic = "/r23_r5/collision_selected"
+            output_allowed = (output_topic.endswith("_mock") or
+                              (integration_mock and output_topic == integration_topic))
+            if output_topic in forbidden or not output_allowed:
                 raise RuntimeError("experimental output must be an isolated *_mock topic")
 
             self.publisher = self.create_publisher(Twist, output_topic, 10)

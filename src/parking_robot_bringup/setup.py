@@ -51,6 +51,7 @@ setup(
             "phase4_p4e6c_live_driver = parking_robot_bringup.phase4_p4e6c_live_driver:main",
             "phase4_p4e6b_collision_reason_observer = parking_robot_bringup.phase4_p4e6b_collision_reason_observer:main",
             "r3h_instance_guard = parking_robot_bringup.r3h_instance_guard:main",
+            "selected_collision_status = parking_robot_bringup.selected_collision_status:main",
         ],
     },
 )
