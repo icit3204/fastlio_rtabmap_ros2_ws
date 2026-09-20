@@ -10,6 +10,8 @@ fixed-qualified Collision Monitor and Generic Gate remain authoritative.
 from dataclasses import dataclass
 import json
 import math
+import threading
+import time
 from typing import Iterable, Sequence, Tuple
 
 try:
@@ -46,6 +48,23 @@ class MockConfig:
     max_points: int = 3
     slowdown_ratio: float = 0.30
     deescalation_observations: int = 2
+
+
+@dataclass(frozen=True)
+class StaleTimingConfig:
+    """Monotonic deadman schedule with margin ahead of the policy limit."""
+
+    stale_threshold_sec: float = 0.250
+    zero_deadline_sec: float = 0.225
+    watchdog_period_sec: float = 0.005
+
+    def validate(self) -> None:
+        values = (self.stale_threshold_sec, self.zero_deadline_sec,
+                  self.watchdog_period_sec)
+        if not all(math.isfinite(value) and value > 0.0 for value in values):
+            raise ValueError("stale timing values must be finite and positive")
+        if self.zero_deadline_sec >= self.stale_threshold_sec:
+            raise ValueError("zero deadline must retain margin before stale threshold")
 
 
 @dataclass(frozen=True)
@@ -146,6 +165,7 @@ class RiskStatePolicy:
 def main() -> None:
     import rclpy
     from geometry_msgs.msg import Twist
+    from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
     from rclpy.duration import Duration
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
@@ -175,6 +195,8 @@ def main() -> None:
                 "slowdown_ratio": 0.30,
                 "deescalation_observations": 2,
                 "source_timeout_sec": 0.50,
+                "watchdog_zero_deadline_sec": 0.225,
+                "watchdog_period_sec": 0.005,
                 "tmini_sensor_x": 0.703,
                 "tmini_sensor_y": 0.0,
                 "tmini_sensor_yaw": 0.0,
@@ -185,6 +207,11 @@ def main() -> None:
             self.mock = MockConfig(int(value("max_points")), float(value("slowdown_ratio")),
                                    int(value("deescalation_observations")))
             self.source_timeout = float(value("source_timeout_sec"))
+            self.stale_timing = StaleTimingConfig(
+                stale_threshold_sec=float(self.geometry.command_timeout_sec),
+                zero_deadline_sec=float(value("watchdog_zero_deadline_sec")),
+                watchdog_period_sec=float(value("watchdog_period_sec")))
+            self.stale_timing.validate()
             self.base_frame = str(value("base_frame"))
             self.sensor_pose = (float(value("tmini_sensor_x")),
                                 float(value("tmini_sensor_y")),
@@ -196,11 +223,20 @@ def main() -> None:
 
             self.publisher = self.create_publisher(Twist, output_topic, 10)
             self.state_publisher = self.create_publisher(String, str(value("state_topic")), 10)
+            self.command_group = MutuallyExclusiveCallbackGroup()
+            self.sensor_group = ReentrantCallbackGroup()
+            self.observation_group = MutuallyExclusiveCallbackGroup()
+            self.watchdog_group = MutuallyExclusiveCallbackGroup()
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
             self.policy = RiskStatePolicy(self.mock.deescalation_observations)
+            self.state_lock = threading.Lock()
+            self.publish_lock = threading.Lock()
             self.command = None
             self.command_time = None
+            self.command_accepted_monotonic_ns = None
+            self.command_generation = 0
+            self.watchdog_latched_generation = None
             self.mid_points: Tuple[Point, ...] = ()
             self.mid_time = None
             self.tmini_points: Tuple[Point, ...] = ()
@@ -208,18 +244,34 @@ def main() -> None:
             self.mid_valid = False
             self.tmini_valid = False
             self.create_subscription(Twist, str(value("input_cmd_topic")),
-                                     self.command_callback, 10)
+                                     self.command_callback, 10,
+                                     callback_group=self.command_group)
             self.create_subscription(PointCloud2, str(value("mid_topic")),
-                                     self.mid_callback, qos_profile_sensor_data)
+                                     self.mid_callback, qos_profile_sensor_data,
+                                     callback_group=self.sensor_group)
             self.create_subscription(LaserScan, str(value("tmini_topic")),
-                                     self.tmini_callback, qos_profile_sensor_data)
-            self.create_timer(0.05, self.tick)
+                                     self.tmini_callback, qos_profile_sensor_data,
+                                     callback_group=self.sensor_group)
+            self.create_timer(0.05, self.tick,
+                              callback_group=self.observation_group)
+            # This short, independent watchdog never waits for a sensor callback
+            # to invoke the command deadman.  The 0.225 s publication deadline
+            # preserves 25 ms scheduling margin inside the exact 0.250 s stale
+            # policy boundary.
+            self.create_timer(self.stale_timing.watchdog_period_sec,
+                              self.watchdog_tick,
+                              callback_group=self.watchdog_group)
             self.get_logger().warning(
                 f"R23-R3 MOCK ONLY: publishing {output_topic}; no physical authority")
 
         def command_callback(self, message: Twist) -> None:
-            self.command = message
-            self.command_time = self.get_clock().now()
+            accepted_ns = time.monotonic_ns()
+            with self.state_lock:
+                self.command = message
+                self.command_time = self.get_clock().now()
+                self.command_accepted_monotonic_ns = accepted_ns
+                self.command_generation += 1
+                self.watchdog_latched_generation = None
 
         @staticmethod
         def _transform(point, transform) -> Point:
@@ -244,11 +296,13 @@ def main() -> None:
                         message, field_names=("x", "y", "z"), skip_nans=True):
                     points.append(self._transform((float(xyz[0]), float(xyz[1]), float(xyz[2])),
                                                   transform))
-                self.mid_points = tuple(points)
-                self.mid_valid = True
-                self.mid_time = self.get_clock().now()
+                with self.state_lock:
+                    self.mid_points = tuple(points)
+                    self.mid_valid = True
+                    self.mid_time = time.monotonic_ns()
             except (TransformException, ValueError, IndexError) as error:
-                self.mid_valid = False
+                with self.state_lock:
+                    self.mid_valid = False
                 self.get_logger().error(f"MID observation rejected: {error}")
 
         def tmini_callback(self, message: LaserScan) -> None:
@@ -264,64 +318,156 @@ def main() -> None:
                 angle = message.angle_min + index * message.angle_increment + syaw
                 points.append((sx + distance * math.cos(angle),
                                sy + distance * math.sin(angle)))
-            self.tmini_points = tuple(points)
-            self.tmini_valid = True
-            self.tmini_time = self.get_clock().now()
+            with self.state_lock:
+                self.tmini_points = tuple(points)
+                self.tmini_valid = True
+                self.tmini_time = time.monotonic_ns()
 
-        def _age(self, timestamp, now) -> float:
-            return math.inf if timestamp is None else (now - timestamp).nanoseconds * 1.0e-9
+        @staticmethod
+        def _monotonic_age(timestamp_ns, now_ns) -> float:
+            return math.inf if timestamp_ns is None else (now_ns - timestamp_ns) * 1.0e-9
 
-        def tick(self) -> None:
-            now = self.get_clock().now()
-            command_age = self._age(self.command_time, now)
-            mid_age = self._age(self.mid_time, now)
-            tmini_age = self._age(self.tmini_time, now)
-            sources_valid = (self.mid_valid and self.tmini_valid and
-                             mid_age <= self.source_timeout and
-                             tmini_age <= self.source_timeout)
-            command_valid = (self.command is not None and
-                             command_age <= self.geometry.command_timeout_sec)
-            fallback = not (command_valid and sources_valid)
-            if fallback:
-                zones = build_zones(0.0, 0.0, math.inf, self.geometry)
-                counts = observation_counts(self.mid_points, self.tmini_points, zones)
-                state = self.policy.force_stop()
-                input_linear = input_angular = 0.0
-            else:
-                input_linear = float(self.command.linear.x)
-                input_angular = float(self.command.angular.z)
-                zones = build_zones(input_linear, input_angular, command_age, self.geometry)
-                if zones.state != "MOTION_AWARE":
-                    fallback = True
-                    state = self.policy.force_stop()
-                counts = observation_counts(self.mid_points, self.tmini_points, zones)
-                if not fallback:
-                    state = self.policy.update(classify_counts(counts, self.mock.max_points))
+        def _publish(self, state, fallback, input_linear, input_angular,
+                     counts, zones, command_age, mid_age, tmini_age,
+                     accepted_ns, fallback_decision_ns=0,
+                     zero_publication_ns=0, reason="observation") -> None:
             output_linear, output_angular = filter_command(
                 input_linear, input_angular, state, self.mock.slowdown_ratio)
             output = Twist()
             output.linear.x = output_linear
             output.angular.z = output_angular
-            self.publisher.publish(output)
+            try:
+                self.publisher.publish(output)
+            except Exception:
+                # SIGINT can invalidate the ROS context while the independent
+                # watchdog callback is already in flight. Suppress only that
+                # shutdown race; runtime publication errors still propagate.
+                if not rclpy.ok():
+                    return
+                raise
+            if state == STOP and output_linear == 0.0 and output_angular == 0.0:
+                zero_publication_ns = time.monotonic_ns()
+            threshold_ns = (0 if accepted_ns is None else
+                            accepted_ns + int(self.stale_timing.stale_threshold_sec * 1e9))
             diagnostic = String()
             diagnostic.data = json.dumps({
                 "state": STATE_NAMES[state], "fallback": fallback,
+                "fallback_reason": reason,
                 "input_v": input_linear, "input_w": input_angular,
                 "output_v": output_linear, "output_w": output_angular,
                 "mid_stop": counts.mid_stop, "mid_slow": counts.mid_slow,
                 "tmini_stop": counts.tmini_stop, "tmini_slow": counts.tmini_slow,
                 "command_age_sec": command_age, "mid_age_sec": mid_age,
                 "tmini_age_sec": tmini_age, "polygon_state": zones.state,
+                "last_command_accepted_monotonic_ns": accepted_ns or 0,
+                "stale_threshold_crossing_monotonic_ns": threshold_ns,
+                "fallback_decision_monotonic_ns": fallback_decision_ns,
+                "zero_publication_monotonic_ns": zero_publication_ns,
+                "zero_publication_command_age_sec": (
+                    math.inf if accepted_ns is None or zero_publication_ns == 0 else
+                    (zero_publication_ns - accepted_ns) * 1.0e-9),
             }, sort_keys=True)
-            self.state_publisher.publish(diagnostic)
+            try:
+                self.state_publisher.publish(diagnostic)
+            except Exception:
+                if not rclpy.ok():
+                    return
+                raise
+
+        def watchdog_tick(self) -> None:
+            decision_ns = time.monotonic_ns()
+            with self.publish_lock:
+                with self.state_lock:
+                    accepted_ns = self.command_accepted_monotonic_ns
+                    generation = self.command_generation
+                    if accepted_ns is None:
+                        return
+                    age = (decision_ns - accepted_ns) * 1.0e-9
+                    if (age < self.stale_timing.zero_deadline_sec or
+                            self.watchdog_latched_generation == generation):
+                        return
+                    self.watchdog_latched_generation = generation
+                    mid_points = self.mid_points
+                    tmini_points = self.tmini_points
+                    mid_age = self._monotonic_age(self.mid_time, decision_ns)
+                    tmini_age = self._monotonic_age(self.tmini_time, decision_ns)
+                zones = build_zones(0.0, 0.0, math.inf, self.geometry)
+                counts = observation_counts(mid_points, tmini_points, zones)
+                state = self.policy.force_stop()
+                self._publish(
+                    state, True, 0.0, 0.0, counts, zones, age,
+                    mid_age, tmini_age, accepted_ns,
+                    fallback_decision_ns=decision_ns,
+                    reason="COMMAND_WATCHDOG_DEADLINE")
+
+        def tick(self) -> None:
+            now_ns = time.monotonic_ns()
+            with self.state_lock:
+                command = self.command
+                accepted_ns = self.command_accepted_monotonic_ns
+                generation = self.command_generation
+                latched = self.watchdog_latched_generation == generation
+                mid_points = self.mid_points
+                tmini_points = self.tmini_points
+                mid_valid = self.mid_valid
+                tmini_valid = self.tmini_valid
+                mid_time = self.mid_time
+                tmini_time = self.tmini_time
+            command_age = self._monotonic_age(accepted_ns, now_ns)
+            mid_age = self._monotonic_age(mid_time, now_ns)
+            tmini_age = self._monotonic_age(tmini_time, now_ns)
+            sources_valid = (mid_valid and tmini_valid and
+                             mid_age <= self.source_timeout and
+                             tmini_age <= self.source_timeout)
+            command_valid = (command is not None and not latched and
+                             command_age < self.stale_timing.zero_deadline_sec)
+            fallback = not (command_valid and sources_valid)
+            if fallback:
+                zones = build_zones(0.0, 0.0, math.inf, self.geometry)
+                counts = observation_counts(mid_points, tmini_points, zones)
+                state = self.policy.force_stop()
+                input_linear = input_angular = 0.0
+            else:
+                input_linear = float(command.linear.x)
+                input_angular = float(command.angular.z)
+                zones = build_zones(input_linear, input_angular, command_age, self.geometry)
+                if zones.state != "MOTION_AWARE":
+                    fallback = True
+                    state = self.policy.force_stop()
+                counts = observation_counts(mid_points, tmini_points, zones)
+                if not fallback:
+                    state = self.policy.update(classify_counts(counts, self.mock.max_points))
+            with self.publish_lock:
+                # A watchdog may have latched while point classification was
+                # running. Never publish a late nonzero sample after that latch.
+                with self.state_lock:
+                    still_current = generation == self.command_generation
+                    latched = self.watchdog_latched_generation == generation
+                if not still_current:
+                    return
+                if latched:
+                    zones = build_zones(0.0, 0.0, math.inf, self.geometry)
+                    counts = observation_counts(mid_points, tmini_points, zones)
+                    state = self.policy.force_stop()
+                    fallback = True
+                    input_linear = input_angular = 0.0
+                self._publish(
+                    state, fallback, input_linear, input_angular, counts, zones,
+                    command_age, mid_age, tmini_age, accepted_ns,
+                    fallback_decision_ns=(now_ns if fallback else 0),
+                    reason=("COMMAND_WATCHDOG_LATCHED" if latched else
+                            "SOURCE_OR_COMMAND_INVALID" if fallback else "observation"))
 
     rclpy.init()
     node = MotionAwareCollisionMock()
+    executor = rclpy.executors.MultiThreadedExecutor(num_threads=4)
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
+        executor.shutdown()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

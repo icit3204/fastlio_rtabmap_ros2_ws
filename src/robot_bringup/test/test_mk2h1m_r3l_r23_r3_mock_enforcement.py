@@ -1,5 +1,7 @@
 import importlib.util
 import math
+import statistics
+import time
 from pathlib import Path
 import sys
 
@@ -77,6 +79,9 @@ def test_config_and_launch_are_mock_only():
     assert values["max_points"] == 3
     assert values["tmini_topic"] == "/scan_collision_experimental"
     assert values["mid_topic"] == "/cloud_registered_nav2_obstacles"
+    assert values["command_timeout_sec"] == 0.250
+    assert values["watchdog_zero_deadline_sec"] == 0.225
+    assert values["watchdog_period_sec"] == 0.005
     launch = (ROOT.parent / "parking_robot_bringup/launch/r3h_physical_navigation.launch.py").read_text()
     assert 'executable="motion_aware_collision_mock"' in launch
     assert "R23-R3 MOCK ONLY" in launch
@@ -90,3 +95,38 @@ def test_r22_and_real_authorities_are_unchanged():
     assert "/cmd_vel_motion_aware_mock" not in collision
     assert "/cmd_vel_motion_aware_mock" not in nav
     assert "minimum_turning_radius: 1.75" in nav
+
+
+def test_stale_timing_contract_and_20_trial_monotonic_schedule():
+    timing = module.StaleTimingConfig()
+    timing.validate()
+    assert timing.stale_threshold_sec == 0.250
+    assert timing.zero_deadline_sec == 0.225
+    assert timing.watchdog_period_sec == 0.005
+
+    # Exercise the monotonic scheduling arithmetic twenty times. Runtime ROS
+    # qualification separately measures publisher and subscriber timestamps.
+    ages = []
+    for _ in range(20):
+        accepted = time.monotonic_ns()
+        deadline = accepted + int(timing.zero_deadline_sec * 1e9)
+        threshold = accepted + int(timing.stale_threshold_sec * 1e9)
+        assert deadline < threshold
+        ages.append((deadline - accepted) * 1e-9)
+    assert len(ages) == 20
+    assert max(ages) <= 0.250
+    assert statistics.mean(ages) == 0.225
+
+
+def test_invalid_stale_schedules_fail_closed_at_configuration():
+    for timing in (
+        module.StaleTimingConfig(zero_deadline_sec=0.250),
+        module.StaleTimingConfig(zero_deadline_sec=0.251),
+        module.StaleTimingConfig(watchdog_period_sec=0.0),
+    ):
+        try:
+            timing.validate()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid stale schedule was accepted")

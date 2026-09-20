@@ -12,6 +12,10 @@ motion_aware_collision_mock:
     slowdown_ratio: 0.30
     deescalation_observations: 2
     source_timeout_sec: 0.50
+    # Exact command stale policy remains 0.250 s below. Publish the mock zero
+    # 25 ms early so executor scheduling cannot violate that hard boundary.
+    watchdog_zero_deadline_sec: 0.225
+    watchdog_period_sec: 0.005
 
     tmini_sensor_x: 0.703
     tmini_sensor_y: 0.0
