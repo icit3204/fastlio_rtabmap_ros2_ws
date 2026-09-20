@@ -13,11 +13,13 @@ VALID_MODES = ("fixed_qualified", "motion_aware_experimental")
 
 def generate_launch_description():
     mode = LaunchConfiguration("collision_monitor_mode")
+    mid_topic = LaunchConfiguration("mid_obstacle_topic")
+    scan_topic = LaunchConfiguration("tmini_scan_topic")
+    publish_test_static_tf = LaunchConfiguration("publish_test_static_tf")
     robot = FindPackageShare("robot_bringup")
     bringup = FindPackageShare("parking_robot_bringup")
     safety = FindPackageShare("vehicle_cmd_safety")
     bridge = FindPackageShare("wheelchair_cmd_adapter")
-    controller = FindPackageShare("wheelchair_controller")
 
     def validate_mode(context):
         selected = mode.perform(context)
@@ -35,8 +37,8 @@ def generate_launch_description():
         remappings=[
             ("/cmd_vel_nav", "/r23_r5/nav_cmd"),
             ("/cmd_vel", "/r23_r5/collision_selected"),
-            ("/cloud_registered_nav2_obstacles", "/r23_r5/mid_obstacles"),
-            ("/scan", "/r23_r5/scan")],
+            ("/cloud_registered_nav2_obstacles", mid_topic),
+            ("/scan", scan_topic)],
         condition=IfCondition(PythonExpression([
             "'", mode, "' == 'fixed_qualified'"])))
     fixed_manager = Node(
@@ -51,33 +53,29 @@ def generate_launch_description():
         package="robot_bringup", executable="tmini_collision_self_mask",
         name="tmini_collision_self_mask", output="screen",
         parameters=[PathJoinSubstitution([
-            robot, "config", "tmini_collision_self_mask.experimental.yaml"]), {
-                "input_topic": "/r23_r5/scan",
-                "output_topic": "/r23_r5/scan_experimental"}],
+            bringup, "config", "r23_r5_tmini_collision_self_mask.yaml"])],
+        remappings=[("/r23_r5/scan", scan_topic)],
         condition=IfCondition(PythonExpression([
             "'", mode, "' == 'motion_aware_experimental'"])))
     experimental = Node(
         package="robot_bringup", executable="motion_aware_collision_mock",
         name="motion_aware_collision_mock", output="screen",
         parameters=[PathJoinSubstitution([
-            robot, "config", "motion_aware_collision_mock.experimental.yaml"]), {
-                "input_cmd_topic": "/r23_r5/nav_cmd",
-                "mid_topic": "/r23_r5/mid_obstacles",
-                "tmini_topic": "/r23_r5/scan_experimental",
-                "output_topic": "/r23_r5/collision_selected",
-                "state_topic": "/r23_r5/experimental_state",
-                "integration_mock_enabled": True}],
+            bringup, "config", "r23_r5_motion_aware_collision_mock.yaml"])],
+        remappings=[("/r23_r5/mid_obstacles", mid_topic)],
         condition=IfCondition(PythonExpression([
             "'", mode, "' == 'motion_aware_experimental'"])))
 
     common = [
         Node(package="tf2_ros", executable="static_transform_publisher",
              name="r23_r5_odom_base_tf", output="screen",
-             arguments=["0", "0", "0", "0", "0", "0", "odom", "base_footprint"]),
+             arguments=["0", "0", "0", "0", "0", "0", "odom", "base_footprint"],
+             condition=IfCondition(publish_test_static_tf)),
         Node(package="tf2_ros", executable="static_transform_publisher",
              name="r23_r5_base_laser_tf", output="screen",
              arguments=["0.703", "0", "0.1923", "0", "0", "0",
-                        "base_footprint", "laser_frame"]),
+                        "base_footprint", "laser_frame"],
+             condition=IfCondition(publish_test_static_tf)),
         Node(package="parking_robot_bringup", executable="selected_collision_status",
              name="selected_collision_status", output="screen", parameters=[{
                  "active_mode": mode,
@@ -102,16 +100,18 @@ def generate_launch_description():
         Node(package="wheelchair_controller", executable="wheelchair_controller_node",
              name="wheelchair_controller_node", output="screen",
              parameters=[PathJoinSubstitution([
-                 controller, "config", "wheelchair_controller_param.yaml"]), {
-                     "output_transport": "mock", "auto_start": True,
-                     "can_send_period_ms": 20.0,
-                     "wheelbase_mm": 600.0, "track_width_mm": 518.0,
-                     "max_steer_angle_deg": 30.0}]),
+                 bringup, "config", "r23_r5_wheelchair_controller_mock.yaml"])]),
     ]
 
     return LaunchDescription([
         DeclareLaunchArgument(
             "collision_monitor_mode", default_value="fixed_qualified"),
+        DeclareLaunchArgument(
+            "mid_obstacle_topic", default_value="/r23_r5/mid_obstacles"),
+        DeclareLaunchArgument(
+            "tmini_scan_topic", default_value="/r23_r5/scan"),
+        DeclareLaunchArgument(
+            "publish_test_static_tf", default_value="true"),
         OpaqueFunction(function=validate_mode),
         fixed, fixed_manager, experimental_mask, experimental, *common,
     ])

@@ -90,6 +90,13 @@ def test_config_and_launch_are_mock_only():
     assert "/vehicle_cmd_safe" not in (ROOT / "scripts/motion_aware_collision_mock.py").read_text().split("forbidden =", 1)[0]
 
 
+def test_identical_command_refresh_does_not_starve_live_classification():
+    source = (SCRIPTS / "motion_aware_collision_mock.py").read_text()
+    assert "if signature != self.command_signature:" in source
+    assert "self.command_generation += 1" in source
+    assert "self.watchdog_latched_generation = None" in source
+
+
 def test_r22_and_real_authorities_are_unchanged():
     collision = (ROOT / "config/collision_monitor_dual_sensor.yaml").read_text()
     nav = (ROOT / "config/nav2_common.yaml").read_text()

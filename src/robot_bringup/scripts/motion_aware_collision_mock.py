@@ -238,6 +238,7 @@ def main() -> None:
             self.state_lock = threading.Lock()
             self.publish_lock = threading.Lock()
             self.command = None
+            self.command_signature = None
             self.command_time = None
             self.command_accepted_monotonic_ns = None
             self.command_generation = 0
@@ -271,11 +272,22 @@ def main() -> None:
 
         def command_callback(self, message: Twist) -> None:
             accepted_ns = time.monotonic_ns()
+            signature = (
+                float(message.linear.x), float(message.linear.y),
+                float(message.linear.z), float(message.angular.x),
+                float(message.angular.y), float(message.angular.z),
+            )
             with self.state_lock:
                 self.command = message
                 self.command_time = self.get_clock().now()
                 self.command_accepted_monotonic_ns = accepted_ns
-                self.command_generation += 1
+                # Repeated controller refreshes of the same command must not
+                # invalidate an in-flight live-cloud classification. A real
+                # command change still advances the generation and discards
+                # any result computed for the prior geometry.
+                if signature != self.command_signature:
+                    self.command_generation += 1
+                    self.command_signature = signature
                 self.watchdog_latched_generation = None
 
         @staticmethod

@@ -1,0 +1,16 @@
+wheelchair_controller_node:
+  ros__parameters:
+    output_transport: mock
+    auto_start: true
+    min_command_interval_ms: 20.0
+    command_timeout_ms: 500.0
+    can_send_period_ms: 20.0
+    can_velocity_limit: 16380
+    can_straight_radius_threshold_mm: 10000.0
+    can_min_turn_radius_mm: 1298.230485
+    can_invert_radius: true
+    can_use_command_distance: false
+    can_default_distance: 0
+    wheelbase_mm: 600.0
+    track_width_mm: 518.0
+    max_steer_angle_deg: 30.0
