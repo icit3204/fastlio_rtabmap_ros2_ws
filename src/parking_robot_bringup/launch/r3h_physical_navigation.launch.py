@@ -61,6 +61,7 @@ def isolate_r3h_navigation_processes(context):
 
 def generate_launch_description():
     robot = FindPackageShare("robot_bringup")
+    bringup = FindPackageShare("parking_robot_bringup")
     safety = FindPackageShare("vehicle_cmd_safety")
     mkmini = FindPackageShare("mkmini_cmd_adapter")
     use_sim_time = LaunchConfiguration("use_sim_time")
@@ -74,12 +75,10 @@ def generate_launch_description():
     localization_validity = PathJoinSubstitution([safety, "config", "phase5_localization_validity.yaml"])
     tmini_validity = PathJoinSubstitution([safety, "config", "phase5_dual_tmini_validity.yaml"])
     physical = PathJoinSubstitution([mkmini, "config", "r11_physical_backend_commissioning.yaml"])
-    experimental_geometry = PathJoinSubstitution([
-        robot, "config", "motion_aware_collision_geometry.experimental.yaml"])
     experimental_tmini_mask = PathJoinSubstitution([
         robot, "config", "tmini_collision_self_mask.experimental.yaml"])
-    experimental_mock = PathJoinSubstitution([
-        robot, "config", "motion_aware_collision_mock.experimental.yaml"])
+    experimental_enforcer = PathJoinSubstitution([
+        bringup, "config", "r3h_motion_aware_collision_physical.yaml"])
 
     def validate_collision_monitor_mode(context):
         mode = collision_monitor_mode.perform(context)
@@ -166,34 +165,57 @@ def generate_launch_description():
         Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_navigation", output="screen", parameters=[{"autostart": True, "bond_timeout": 0.0, "node_names": ["planner_server", "controller_server", "bt_navigator"]}]),
     ]
     safety_nodes = [
-        # R23-R2 SHADOW ONLY: raw /scan and all R22 consumers remain unchanged.
-        # This dedicated branch masks only returns inside the measured rigid
-        # body and is not connected to active Collision Monitor enforcement.
+        # The fixed and experimental filters are mutually exclusive and both
+        # publish only the existing Generic Gate input /cmd_vel.
         Node(package="robot_bringup", executable="tmini_collision_self_mask",
              name="tmini_collision_self_mask", output="screen",
              parameters=[experimental_tmini_mask],
              condition=IfCondition(PythonExpression([
                  "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
-        # R23_SHADOW_ONLY: even in experimental mode, this publisher only
-        # visualizes candidate geometry. The qualified fixed Collision Monitor
-        # below remains the sole command-filtering authority.
-        Node(package="robot_bringup", executable="motion_aware_collision_geometry",
-             name="motion_aware_collision_geometry", output="screen",
-             parameters=[experimental_geometry],
-             condition=IfCondition(PythonExpression([
-                 "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
-        # R23-R3 MOCK ONLY: complete command-filtering semantics are exercised
-        # on /cmd_vel_motion_aware_mock. This output has no Gate, backend, or
-        # physical subscriber and cannot supersede fixed-qualified authority.
         Node(package="robot_bringup", executable="motion_aware_collision_mock",
              name="motion_aware_collision_mock", output="screen",
-             parameters=[experimental_mock],
+             parameters=[experimental_enforcer], prefix="taskset -c 7",
              condition=IfCondition(PythonExpression([
                  "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
-        Node(package="nav2_collision_monitor", executable="collision_monitor", name="collision_monitor", output="screen", parameters=[collision], prefix="taskset -c 7"),
-        Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_collision_monitor", output="screen", parameters=[{"autostart": True, "bond_timeout": 0.0, "node_names": ["collision_monitor"]}]),
+        Node(package="nav2_collision_monitor", executable="collision_monitor",
+             name="collision_monitor", output="screen", parameters=[collision],
+             prefix="taskset -c 7",
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'fixed_qualified'"]))),
+        Node(package="nav2_lifecycle_manager", executable="lifecycle_manager",
+             name="lifecycle_manager_collision_monitor", output="screen",
+             parameters=[{"autostart": True, "bond_timeout": 0.0,
+                          "node_names": ["collision_monitor"]}],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'fixed_qualified'"]))),
+        Node(package="parking_robot_bringup", executable="selected_collision_status",
+             name="selected_collision_status", output="screen", parameters=[{
+                 "active_mode": "fixed_qualified",
+                 "input_topic": "/cmd_vel_nav",
+                 "selected_output_topic": "/cmd_vel",
+                 "status_topic": "/collision_filter_selected/state",
+                 "publish_validity": False}],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'fixed_qualified'"]))),
+        Node(package="parking_robot_bringup", executable="selected_collision_status",
+             name="selected_collision_status", output="screen", parameters=[{
+                 "active_mode": "motion_aware_experimental",
+                 "input_topic": "/cmd_vel_nav",
+                 "selected_output_topic": "/cmd_vel",
+                 "experimental_state_topic": "/motion_aware_collision/state",
+                 "status_topic": "/collision_filter_selected/state",
+                 "publish_validity": True,
+                 "validity_topic": "/system/collision_monitor_valid"}],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
         Node(package="vehicle_cmd_safety", executable="localization_validity_monitor", name="localization_validity_monitor", output="screen", parameters=[localization_validity], prefix="taskset -c 7"),
-        Node(package="vehicle_cmd_safety", executable="collision_monitor_validity_monitor", name="collision_monitor_validity_monitor", output="screen", parameters=[tmini_validity, {"validity_output_topic": "/system/collision_monitor_valid"}], prefix="taskset -c 7"),
+        Node(package="vehicle_cmd_safety", executable="collision_monitor_validity_monitor",
+             name="collision_monitor_validity_monitor", output="screen",
+             parameters=[tmini_validity, {
+                 "validity_output_topic": "/system/collision_monitor_valid"}],
+             prefix="taskset -c 7",
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'fixed_qualified'"]))),
         Node(package="vehicle_cmd_safety", executable="nav2_controller_validity_monitor", name="nav2_controller_validity_monitor", output="screen", parameters=[{
             "controller_node_name": "controller_server",
             "validity_output_topic": "/system/controller_valid",
@@ -229,5 +251,6 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "rtabmap_runtime_dir", default_value="/home/dog/phase5_runtime/r3h_rtabmap"),
         OpaqueFunction(function=validate_collision_monitor_mode),
+        LogInfo(msg=["ACTIVE_COLLISION_MODE=", collision_monitor_mode]),
         instance_guard, guard_exit_shutdown, guarded_composition,
     ])

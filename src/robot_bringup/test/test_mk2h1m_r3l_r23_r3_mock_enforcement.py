@@ -85,9 +85,11 @@ def test_config_and_launch_are_mock_only():
     assert values.get("integration_mock_enabled", False) is False
     launch = (ROOT.parent / "parking_robot_bringup/launch/r3h_physical_navigation.launch.py").read_text()
     assert 'executable="motion_aware_collision_mock"' in launch
-    assert "R23-R3 MOCK ONLY" in launch
+    assert "r3h_motion_aware_collision_physical.yaml" in launch
     assert 'default_value="fixed_qualified"' in launch
-    assert "/vehicle_cmd_safe" not in (ROOT / "scripts/motion_aware_collision_mock.py").read_text().split("forbidden =", 1)[0]
+    enforcer = (ROOT / "scripts/motion_aware_collision_mock.py").read_text()
+    assert 'forbidden = {"/vehicle_cmd_safe", "/cmd_vel_collision_monitor"}' in enforcer
+    assert '(physical_enforcement and output_topic == "/cmd_vel")' in enforcer
 
 
 def test_identical_command_refresh_does_not_starve_live_classification():

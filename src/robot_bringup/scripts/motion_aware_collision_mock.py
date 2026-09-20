@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Experimental, isolated motion-aware command filter.
+"""Qualified motion-aware command filter with explicit authority modes.
 
-This node is deliberately incapable of commanding the MK-mini.  It consumes
-the Nav2 command and the two qualified experimental perception branches, then
-publishes only ``/cmd_vel_motion_aware_mock`` plus JSON diagnostics.  The
-fixed-qualified Collision Monitor and Generic Gate remain authoritative.
+The default remains an isolated mock output. Physical-launch enforcement is
+accepted only when an explicit parameter binds the output to ``/cmd_vel``,
+which is the existing Generic Gate input. The node can never publish directly
+to ``/vehicle_cmd_safe`` or a chassis/backend topic.
 """
 
 from dataclasses import dataclass
@@ -191,6 +191,7 @@ def main() -> None:
                 "output_topic": "/cmd_vel_motion_aware_mock",
                 "state_topic": "/motion_aware_collision_mock/state",
                 "integration_mock_enabled": False,
+                "physical_enforcement_enabled": False,
                 "base_frame": "base_footprint",
                 "max_points": 3,
                 "slowdown_ratio": 0.30,
@@ -218,13 +219,20 @@ def main() -> None:
                                 float(value("tmini_sensor_y")),
                                 float(value("tmini_sensor_yaw")))
             output_topic = str(value("output_topic"))
-            forbidden = {"/vehicle_cmd_safe", "/cmd_vel", "/cmd_vel_collision_monitor"}
+            forbidden = {"/vehicle_cmd_safe", "/cmd_vel_collision_monitor"}
             integration_mock = bool(value("integration_mock_enabled"))
+            physical_enforcement = bool(value("physical_enforcement_enabled"))
             integration_topic = "/r23_r5/collision_selected"
-            output_allowed = (output_topic.endswith("_mock") or
-                              (integration_mock and output_topic == integration_topic))
+            if integration_mock and physical_enforcement:
+                raise RuntimeError("mock and physical integration modes are exclusive")
+            output_allowed = (
+                (not integration_mock and not physical_enforcement and
+                 output_topic.endswith("_mock")) or
+                (integration_mock and output_topic == integration_topic) or
+                (physical_enforcement and output_topic == "/cmd_vel")
+            )
             if output_topic in forbidden or not output_allowed:
-                raise RuntimeError("experimental output must be an isolated *_mock topic")
+                raise RuntimeError("motion-aware output authority contract rejected")
 
             self.publisher = self.create_publisher(Twist, output_topic, 10)
             self.state_publisher = self.create_publisher(String, str(value("state_topic")), 10)
@@ -267,8 +275,11 @@ def main() -> None:
             self.create_timer(self.stale_timing.watchdog_period_sec,
                               self.watchdog_tick,
                               callback_group=self.watchdog_group)
+            authority = ("PHYSICAL_GATE_INPUT" if physical_enforcement else
+                         "INTEGRATION_MOCK" if integration_mock else "ISOLATED_MOCK")
             self.get_logger().warning(
-                f"R23-R3 MOCK ONLY: publishing {output_topic}; no physical authority")
+                f"ACTIVE_COLLISION_MODE=motion_aware_experimental "
+                f"authority={authority} output={output_topic}")
 
         def command_callback(self, message: Twist) -> None:
             accepted_ns = time.monotonic_ns()

@@ -72,9 +72,9 @@ def test_r22_topics_are_not_modified_by_self_mask_contract():
     assert 'topic: "/scan"' in collision
 
 
-def test_mask_is_wired_only_to_experimental_shadow_mode():
+def test_mask_is_wired_only_to_experimental_selected_mode():
     launch = R3H_LAUNCH.read_text()
     assert 'executable="tmini_collision_self_mask"' in launch
     assert '"motion_aware_experimental"' in launch
-    assert "R23-R2 SHADOW ONLY" in launch
+    assert "r3h_motion_aware_collision_physical.yaml" in launch
     assert "fixed_qualified" in launch

@@ -11,10 +11,16 @@ from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from std_msgs.msg import String
 
 
 VALID_MODES = ("fixed_qualified", "motion_aware_experimental")
+
+
+def selected_validity(state):
+    """A selected filter is healthy in risk states; STALE is fail-closed."""
+    return state in {"CLEAR", "SLOW", "STOP"}
 
 
 def classify_selected(input_twist, output_twist, *, input_age, output_age,
@@ -51,6 +57,8 @@ class SelectedCollisionStatus(Node):
         self.declare_parameter("selected_output_topic", "/cmd_vel_collision_selected")
         self.declare_parameter("experimental_state_topic", "/motion_aware_collision_mock/state")
         self.declare_parameter("status_topic", "/collision_filter_selected/state")
+        self.declare_parameter("publish_validity", False)
+        self.declare_parameter("validity_topic", "/system/collision_monitor_valid")
         self.declare_parameter("timeout_sec", 0.25)
         self.mode = str(self.get_parameter("active_mode").value)
         if self.mode not in VALID_MODES:
@@ -69,6 +77,13 @@ class SelectedCollisionStatus(Node):
             self._experimental, 10)
         self.publisher = self.create_publisher(
             DiagnosticStatus, str(self.get_parameter("status_topic").value), 10)
+        self.validity_publisher = None
+        if bool(self.get_parameter("publish_validity").value):
+            if self.mode != "motion_aware_experimental":
+                raise RuntimeError("selected validity is exclusive to experimental mode")
+            self.validity_publisher = self.create_publisher(
+                Bool, str(self.get_parameter("validity_topic").value), 10)
+        self.get_logger().warning(f"ACTIVE_COLLISION_MODE={self.mode}")
         self.create_timer(0.05, self._publish)
 
     def _input(self, message):
@@ -97,7 +112,11 @@ class SelectedCollisionStatus(Node):
         if self.mode == "motion_aware_experimental":
             experimental_age = (
                 math.inf if self.experimental_time is None else now - self.experimental_time)
-            if experimental_age > self.timeout or not self.experimental_state:
+            if state == "STALE":
+                # Never let a diagnostic message override a missing/stale
+                # selected Twist at the actual Generic Gate boundary.
+                pass
+            elif experimental_age > self.timeout or not self.experimental_state:
                 state = "STALE"
             elif self.experimental_state.get("fallback", False):
                 state = "STALE"
@@ -117,6 +136,10 @@ class SelectedCollisionStatus(Node):
             KeyValue(key="selected_output_age_sec", value=str(output_age)),
         ]
         self.publisher.publish(status)
+        if self.validity_publisher is not None:
+            validity = Bool()
+            validity.data = selected_validity(state)
+            self.validity_publisher.publish(validity)
 
 
 def main(args=None):

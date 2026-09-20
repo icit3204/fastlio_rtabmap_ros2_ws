@@ -93,4 +93,5 @@ def test_r22_sensor_contract_and_fixed_default_are_unchanged():
     launch = (ROOT.parent / "parking_robot_bringup/launch/r3h_physical_navigation.launch.py").read_text()
     assert 'DeclareLaunchArgument("collision_monitor_mode", default_value="fixed_qualified")' in launch
     assert "motion_aware_experimental" in launch
-    assert "R23_SHADOW_ONLY" in launch
+    assert "r3h_motion_aware_collision_physical.yaml" in launch
+    assert '"ACTIVE_COLLISION_MODE=", collision_monitor_mode' in launch
