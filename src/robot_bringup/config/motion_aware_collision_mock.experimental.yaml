@@ -1,0 +1,36 @@
+motion_aware_collision_mock:
+  ros__parameters:
+    # R23-R3 MOCK ONLY. This topic must never feed the Gate or physical backend.
+    input_cmd_topic: /cmd_vel_nav
+    mid_topic: /cloud_registered_nav2_obstacles
+    tmini_topic: /scan_collision_experimental
+    output_topic: /cmd_vel_motion_aware_mock
+    state_topic: /motion_aware_collision_mock/state
+    base_frame: base_footprint
+
+    max_points: 3
+    slowdown_ratio: 0.30
+    deescalation_observations: 2
+    source_timeout_sec: 0.50
+
+    tmini_sensor_x: 0.703
+    tmini_sensor_y: 0.0
+    tmini_sensor_yaw: 0.0
+
+    footprint_x_min: -0.145
+    footprint_x_max: 0.755
+    footprint_y_min: -0.300
+    footprint_y_max: 0.300
+    footprint_padding: 0.030
+    minimum_turning_radius: 1.750
+    stop_horizon_sec: 2.0
+    slow_horizon_sec: 5.0
+    stop_base_distance: 0.10
+    slow_base_distance: 0.15
+    stop_max_distance: 0.45
+    slow_max_distance: 0.80
+    stop_extra_margin: 0.02
+    slow_extra_margin: 0.12
+    sample_step: 0.025
+    command_timeout_sec: 0.25
+    zero_speed_epsilon: 0.0001

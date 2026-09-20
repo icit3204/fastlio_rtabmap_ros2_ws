@@ -71,6 +71,14 @@ install(PROGRAMS scripts/motion_aware_collision_geometry.py
   DESTINATION lib/${PROJECT_NAME}
   RENAME motion_aware_collision_geometry
 )
+install(PROGRAMS scripts/tmini_collision_self_mask.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME tmini_collision_self_mask
+)
+install(PROGRAMS scripts/motion_aware_collision_mock.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME motion_aware_collision_mock
+)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_test REQUIRED)
@@ -117,6 +125,12 @@ if(BUILD_TESTING)
   ament_add_test(test_mk2h1m_r3l_r23_motion_aware_geometry
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO
     COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1m_r3l_r23_motion_aware_geometry.py)
+  ament_add_test(test_mk2h1m_r3l_r23_r2_tmini_self_mask
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1m_r3l_r23_r2_tmini_self_mask.py)
+  ament_add_test(test_mk2h1m_r3l_r23_r3_mock_enforcement
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    COMMAND ${Python3_EXECUTABLE} -m pytest -q ${CMAKE_CURRENT_SOURCE_DIR}/test/test_mk2h1m_r3l_r23_r3_mock_enforcement.py)
   add_executable(test_asymmetric_self_crop test/test_asymmetric_self_crop.cpp)
   target_include_directories(test_asymmetric_self_crop PRIVATE include)
   add_test(NAME test_asymmetric_self_crop COMMAND test_asymmetric_self_crop)
@@ -141,6 +155,8 @@ if(BUILD_TESTING)
     test_mk2h1m_r3g_r1_self_crop_contract
     test_mk2h1m_r3l_r22_dual_sensor_costmap_contract
     test_mk2h1m_r3l_r23_motion_aware_geometry
+    test_mk2h1m_r3l_r23_r2_tmini_self_mask
+    test_mk2h1m_r3l_r23_r3_mock_enforcement
     PROPERTIES ENVIRONMENT "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1")
 endif()
 

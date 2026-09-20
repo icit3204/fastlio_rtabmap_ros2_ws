@@ -76,6 +76,10 @@ def generate_launch_description():
     physical = PathJoinSubstitution([mkmini, "config", "r11_physical_backend_commissioning.yaml"])
     experimental_geometry = PathJoinSubstitution([
         robot, "config", "motion_aware_collision_geometry.experimental.yaml"])
+    experimental_tmini_mask = PathJoinSubstitution([
+        robot, "config", "tmini_collision_self_mask.experimental.yaml"])
+    experimental_mock = PathJoinSubstitution([
+        robot, "config", "motion_aware_collision_mock.experimental.yaml"])
 
     def validate_collision_monitor_mode(context):
         mode = collision_monitor_mode.perform(context)
@@ -162,12 +166,28 @@ def generate_launch_description():
         Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_navigation", output="screen", parameters=[{"autostart": True, "bond_timeout": 0.0, "node_names": ["planner_server", "controller_server", "bt_navigator"]}]),
     ]
     safety_nodes = [
+        # R23-R2 SHADOW ONLY: raw /scan and all R22 consumers remain unchanged.
+        # This dedicated branch masks only returns inside the measured rigid
+        # body and is not connected to active Collision Monitor enforcement.
+        Node(package="robot_bringup", executable="tmini_collision_self_mask",
+             name="tmini_collision_self_mask", output="screen",
+             parameters=[experimental_tmini_mask],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
         # R23_SHADOW_ONLY: even in experimental mode, this publisher only
         # visualizes candidate geometry. The qualified fixed Collision Monitor
         # below remains the sole command-filtering authority.
         Node(package="robot_bringup", executable="motion_aware_collision_geometry",
              name="motion_aware_collision_geometry", output="screen",
              parameters=[experimental_geometry],
+             condition=IfCondition(PythonExpression([
+                 "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
+        # R23-R3 MOCK ONLY: complete command-filtering semantics are exercised
+        # on /cmd_vel_motion_aware_mock. This output has no Gate, backend, or
+        # physical subscriber and cannot supersede fixed-qualified authority.
+        Node(package="robot_bringup", executable="motion_aware_collision_mock",
+             name="motion_aware_collision_mock", output="screen",
+             parameters=[experimental_mock],
              condition=IfCondition(PythonExpression([
                  "'", collision_monitor_mode, "' == 'motion_aware_experimental'"]))),
         Node(package="nav2_collision_monitor", executable="collision_monitor", name="collision_monitor", output="screen", parameters=[collision], prefix="taskset -c 7"),

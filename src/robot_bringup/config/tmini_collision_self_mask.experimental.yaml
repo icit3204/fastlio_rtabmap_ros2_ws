@@ -1,0 +1,15 @@
+tmini_collision_self_mask:
+  ros__parameters:
+    # R23-R2 experimental observer branch only. These are the unpadded,
+    # measured MK-mini physical bounds; there is no external crop margin.
+    input_topic: /scan
+    output_topic: /scan_collision_experimental
+    expected_frame: laser_frame
+    footprint_x_min: -0.145
+    footprint_x_max: 0.755
+    footprint_y_min: -0.300
+    footprint_y_max: 0.300
+    # Frozen T-mini optical origin/yaw in base_footprint.
+    sensor_x: 0.703
+    sensor_y: 0.0
+    sensor_yaw: 0.0
